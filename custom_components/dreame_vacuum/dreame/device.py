@@ -28,6 +28,10 @@ from .types import (
     DreameVacuumStrAIProperty,
     DreameVacuumAIProperty,
     DreameVacuumPropertyMapping,
+    XiaomiVacuumPropertyMapping,
+    XiaomiVacuumActionMapping,
+    XIAOMI_STATE_MAPPING,
+    XIAOMI_TASK_STATUS_MAPPING,
     DreameVacuumAction,
     DreameVacuumActionMapping,
     DreameVacuumChargingStatus,
@@ -820,6 +824,11 @@ class DreameVacuumDevice:
     def _update_property(self, prop: DreameVacuumProperty, value: Any, delay=True) -> Any:
         """Update device property on memory and notify listeners."""
         if prop in self.property_mapping:
+            if self.info and "xiaomi.vacuum." in self.info.model and isinstance(value, int):
+                if prop == DreameVacuumProperty.STATE and value in XIAOMI_STATE_MAPPING:
+                    value = XIAOMI_STATE_MAPPING[value]
+                elif prop == DreameVacuumProperty.TASK_STATUS and value in XIAOMI_TASK_STATUS_MAPPING:
+                    value = XIAOMI_TASK_STATUS_MAPPING[value]
             if (
                 not self.capability.new_state
                 and prop == DreameVacuumProperty.STATE
@@ -1516,7 +1525,7 @@ class DreameVacuumDevice:
     def _dnd_task_changed(self, previous_dnd_task: Any = None) -> None:
         dnd_tasks = self.get_property(DreameVacuumProperty.DND_TASK)
         dnd_list = []
-        if dnd_tasks and dnd_tasks != "":
+        if dnd_tasks and isinstance(dnd_tasks, str) and dnd_tasks != "":
             dnd_list = [
                 DNDTask(task.get("id"), task.get("en"), task.get("st"), task.get("et"), task.get("wk"), task.get("ss"))
                 for task in json.loads(dnd_tasks)
@@ -1536,7 +1545,7 @@ class DreameVacuumDevice:
     def _schedule_changed(self, previous_schedule: Any = None) -> None:
         schedule = self.get_property(DreameVacuumProperty.SCHEDULE)
         schedule_list = []
-        if schedule and schedule != "":
+        if schedule and isinstance(schedule, str) and schedule != "":
             tasks = schedule.split(";")
             for task in tasks:
                 props = task.split("-")
@@ -1569,7 +1578,7 @@ class DreameVacuumDevice:
 
     def _stream_status_changed(self, previous_stream_status: Any = None) -> None:
         stream_status = self.get_property(DreameVacuumProperty.STREAM_STATUS)
-        if stream_status and stream_status != "" and stream_status != "null":
+        if stream_status and isinstance(stream_status, str) and stream_status != "" and stream_status != "null":
             stream_status = json.loads(stream_status)
             if stream_status and stream_status.get("result") == 0:
                 self.status.stream_session = stream_status.get("session")
@@ -1634,7 +1643,7 @@ class DreameVacuumDevice:
 
     def _off_peak_charging_changed(self, previous_off_peak_charging: Any = None) -> None:
         off_peak_charging = self.get_property(DreameVacuumProperty.OFF_PEAK_CHARGING)
-        if off_peak_charging and off_peak_charging != "":
+        if off_peak_charging and isinstance(off_peak_charging, str) and off_peak_charging != "":
             self.status.off_peak_charging_config = json.loads(off_peak_charging)
 
     def _suction_level_changed(self, previous_suction_level: Any = None) -> None:
@@ -2292,6 +2301,9 @@ class DreameVacuumDevice:
             self.info = DreameVacuumDeviceInfo(info)
             if self.mac is None:
                 self.mac = self.info.mac_address
+            if "xiaomi.vacuum." in self.info.model:
+                self.property_mapping = XiaomiVacuumPropertyMapping
+                self.action_mapping = XiaomiVacuumActionMapping
             _LOGGER.info(
                 "Connected to device: %s %s",
                 self.info.model,

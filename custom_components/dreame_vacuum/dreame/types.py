@@ -1792,6 +1792,62 @@ DreameVacuumActionMapping = {
     DreameVacuumAction.STREAM_CODE: {siid: 10001, aiid: 4},
 }
 
+# Xiaomi vacuum devices use different MIoT service IIDs than Dreame devices.
+# Override only properties/actions with different siid/piid values.
+# Based on: https://home.miot-spec.com/spec/xiaomi.vacuum.b108gl
+XiaomiVacuumPropertyMapping = {**DreameVacuumPropertyMapping, **{
+    DreameVacuumProperty.STATUS: {siid: 2, piid: 1},
+    DreameVacuumProperty.TASK_STATUS: {siid: 2, piid: 4},
+    DreameVacuumProperty.CLEANING_TIME: {siid: 2, piid: 6},
+    DreameVacuumProperty.CLEANED_AREA: {siid: 2, piid: 5},
+    DreameVacuumProperty.SUCTION_LEVEL: {siid: 2, piid: 8},
+    DreameVacuumProperty.WATER_VOLUME: {siid: 2, piid: 9},
+    DreameVacuumProperty.WATER_TANK: {siid: 6, piid: 1},
+    DreameVacuumProperty.CLEANING_MODE: {siid: 2, piid: 3},
+    DreameVacuumProperty.CARPET_BOOST: {siid: 6, piid: 6},
+    DreameVacuumProperty.CARPET_CLEANING: {siid: 2, piid: 20},
+    DreameVacuumProperty.CHILD_LOCK: {siid: 5, piid: 1},
+    DreameVacuumProperty.RESUME_CLEANING: {siid: 6, piid: 11},
+    DreameVacuumProperty.DND: {siid: 6, piid: 3},
+    DreameVacuumProperty.MAP_DATA: {siid: 7, piid: 1},
+    DreameVacuumProperty.OBJECT_NAME: {siid: 7, piid: 1},
+    DreameVacuumProperty.OLD_MAP_DATA: {siid: 7, piid: 2},
+    DreameVacuumProperty.MAP_LIST: {siid: 7, piid: 3},
+    DreameVacuumProperty.MULTI_FLOOR_MAP: {siid: 7, piid: 5},
+    DreameVacuumProperty.MAP_SAVING: {siid: 7, piid: 9},
+    DreameVacuumProperty.VOLUME: {siid: 4, piid: 2},
+    DreameVacuumProperty.MAIN_BRUSH_TIME_LEFT: {siid: 8, piid: 1},
+    DreameVacuumProperty.MAIN_BRUSH_LEFT: {siid: 8, piid: 2},
+    DreameVacuumProperty.SIDE_BRUSH_TIME_LEFT: {siid: 9, piid: 1},
+    DreameVacuumProperty.SIDE_BRUSH_LEFT: {siid: 9, piid: 2},
+    DreameVacuumProperty.FILTER_TIME_LEFT: {siid: 10, piid: 1},
+    DreameVacuumProperty.FILTER_LEFT: {siid: 10, piid: 2},
+    DreameVacuumProperty.MOP_PAD_LEFT: {siid: 11, piid: 2},
+    DreameVacuumProperty.MOP_PAD_TIME_LEFT: {siid: 11, piid: 1},
+    DreameVacuumProperty.SCHEDULE: {siid: 6, piid: 5},
+    DreameVacuumProperty.RELOCATION_STATUS: {siid: 6, piid: 9},
+    DreameVacuumProperty.CLEANING_PROPERTIES: {siid: 6, piid: 12},
+    DreameVacuumProperty.FAULTS: {siid: 6, piid: 13},
+}}
+
+XiaomiVacuumActionMapping = {**DreameVacuumActionMapping, **{
+    DreameVacuumAction.STOP: {siid: 2, aiid: 2},
+    DreameVacuumAction.PAUSE: {siid: 2, aiid: 6},
+    DreameVacuumAction.START_CUSTOM: {siid: 6, aiid: 7},
+    DreameVacuumAction.LOCATE: {siid: 6, aiid: 6},
+    DreameVacuumAction.RESET_MAIN_BRUSH: {siid: 8, aiid: 1},
+    DreameVacuumAction.RESET_SIDE_BRUSH: {siid: 9, aiid: 1},
+    DreameVacuumAction.RESET_FILTER: {siid: 10, aiid: 1},
+}}
+
+XIAOMI_STATE_MAPPING: Final = {
+    1: 2, 2: 6, 3: 6, 4: 1, 5: 3, 6: 5, 7: 19, 8: 13, 9: 11, 10: 14,
+}
+
+XIAOMI_TASK_STATUS_MAPPING: Final = {
+    1: 1, 4: 2, 5: 5, 6: 0, 7: 0, 8: 3, 9: 4,
+}
+
 
 PROPERTY_AVAILABILITY: Final = {
     DreameVacuumProperty.CUSTOMIZED_CLEANING.name: lambda device: not device.status.started
