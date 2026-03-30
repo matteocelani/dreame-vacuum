@@ -28,6 +28,14 @@ from .types import (
     DreameVacuumStrAIProperty,
     DreameVacuumAIProperty,
     DreameVacuumPropertyMapping,
+    XiaomiVacuumPropertyMapping,
+    XiaomiVacuumActionMapping,
+    XIAOMI_MODEL_MAPPINGS,
+    XIAOMI_STATE_MAPPING,
+    XIAOMI_TASK_STATUS_MAPPING,
+    D109GL_STATE_MAPPING,
+    D109GL_TASK_STATUS_MAPPING,
+    XIAOMI_VACUUM_MODELS_WITH_CUSTOM_MAPPING,
     DreameVacuumAction,
     DreameVacuumActionMapping,
     DreameVacuumChargingStatus,
@@ -482,6 +490,8 @@ class DreameVacuumDevice:
             auth_key,
         )
         if self._protocol.cloud:
+            ## Expose action mapping to protocol so map manager can use device-specific mappings
+            self._protocol._action_mapping = self.action_mapping
             self._map_manager = DreameMapVacuumMapManager(self._protocol)
 
             self.listen(self._map_list_changed, DreameVacuumProperty.MAP_LIST)
@@ -520,7 +530,7 @@ class DreameVacuumDevice:
                 properties = []
                 map_properties = []
                 for param in params:
-                    prop = DID(param["siid"], param["piid"])
+                    prop = DID(param["siid"], param["piid"], self.property_mapping)
                     if prop is not None:
                         if prop in self._default_properties:
                             param["did"] = str(prop.value)
@@ -548,6 +558,35 @@ class DreameVacuumDevice:
                     if self._ready:
                         self._property_changed()
 
+    def _convert_xiaomi_value(self, prop_id, value):
+        """Convert Xiaomi MIoT property values to Dreame equivalents.
+        Xiaomi MIoT uses different value ranges than Dreame for state, task, cleaning mode,
+        and suction level properties. Values may also arrive as strings from the cloud API.
+        """
+        if self.info and "xiaomi.vacuum." in self.info.model:
+            try:
+                int_value = int(value) if not isinstance(value, int) else value
+            except (ValueError, TypeError):
+                return value
+            # Select per-model state/task mapping
+            if self.info.model == "xiaomi.vacuum.d109gl":
+                state_map = D109GL_STATE_MAPPING
+                task_map = D109GL_TASK_STATUS_MAPPING
+            else:
+                state_map = XIAOMI_STATE_MAPPING
+                task_map = XIAOMI_TASK_STATUS_MAPPING
+            if prop_id == DreameVacuumProperty.STATE.value and int_value in state_map:
+                return state_map[int_value]
+            if prop_id == DreameVacuumProperty.TASK_STATUS.value and int_value in task_map:
+                return task_map[int_value]
+            # Xiaomi MIoT cleaning mode and suction level are 1-indexed,
+            # while Dreame uses 0-indexed values. Shift by -1.
+            if prop_id == DreameVacuumProperty.CLEANING_MODE.value and int_value > 0:
+                return int_value - 1
+            if prop_id == DreameVacuumProperty.SUCTION_LEVEL.value and int_value > 0:
+                return int_value - 1
+        return value
+
     def _handle_properties(self, properties) -> bool:
         changed = False
         callbacks = []
@@ -556,7 +595,7 @@ class DreameVacuumDevice:
                 continue
             did = int(prop["did"])
             if did not in DreameVacuumProperty._value2member_map_:
-                did = DID(prop["siid"], prop["piid"])
+                did = DID(prop["siid"], prop["piid"], self.property_mapping)
                 if did is None:
                     continue
                 did = int(did.value)
@@ -612,6 +651,15 @@ class DreameVacuumDevice:
                                 DreameVacuumProperty(did).name,
                                 value,
                             )
+                    # Convert Xiaomi vacuum state/task values to Dreame equivalents
+                    value = self._convert_xiaomi_value(did, value)
+                    ## Xiaomi MIoT protocol returns numeric values as strings.
+                    ## Convert to int to prevent type errors in comparisons downstream.
+                    if self.info and "xiaomi.vacuum." in self.info.model and isinstance(value, str):
+                        try:
+                            value = int(value)
+                        except (ValueError, TypeError):
+                            pass
                     self.data[did] = value
                     if did in self._property_update_callback:
                         for callback in self._property_update_callback[did]:
@@ -820,6 +868,7 @@ class DreameVacuumDevice:
     def _update_property(self, prop: DreameVacuumProperty, value: Any, delay=True) -> Any:
         """Update device property on memory and notify listeners."""
         if prop in self.property_mapping:
+            value = self._convert_xiaomi_value(prop.value, value)
             if (
                 not self.capability.new_state
                 and prop == DreameVacuumProperty.STATE
@@ -935,7 +984,15 @@ class DreameVacuumDevice:
     def _cleaning_mode_changed(self, previous_cleaning_mode: Any = None) -> None:
         value = self.get_property(DreameVacuumProperty.CLEANING_MODE)
         new_cleaning_mode = None
-        if self.capability.self_wash_base or self.capability.wetness or self.capability.custom_mopping_route:
+        # Xiaomi MIoT (mijia) devices use simple uint8 for cleaning mode,
+        # not Dreame's compound packed format. Value is already converted
+        # by _convert_xiaomi_value (1-indexed -> 0-indexed).
+        if self.capability.mijia:
+            if value is not None and value in DreameVacuumCleaningMode._value2member_map_:
+                new_cleaning_mode = DreameVacuumCleaningMode(value)
+            else:
+                new_cleaning_mode = DreameVacuumCleaningMode.UNKNOWN
+        elif self.capability.self_wash_base or self.capability.wetness or self.capability.custom_mopping_route:
             values = DreameVacuumDevice.split_group_value(value, self.capability.mop_pad_lifting)
             if values and len(values) == 3:
                 if (
@@ -1516,7 +1573,7 @@ class DreameVacuumDevice:
     def _dnd_task_changed(self, previous_dnd_task: Any = None) -> None:
         dnd_tasks = self.get_property(DreameVacuumProperty.DND_TASK)
         dnd_list = []
-        if dnd_tasks and dnd_tasks != "":
+        if dnd_tasks and isinstance(dnd_tasks, str) and dnd_tasks != "":
             dnd_list = [
                 DNDTask(task.get("id"), task.get("en"), task.get("st"), task.get("et"), task.get("wk"), task.get("ss"))
                 for task in json.loads(dnd_tasks)
@@ -1536,7 +1593,7 @@ class DreameVacuumDevice:
     def _schedule_changed(self, previous_schedule: Any = None) -> None:
         schedule = self.get_property(DreameVacuumProperty.SCHEDULE)
         schedule_list = []
-        if schedule and schedule != "":
+        if schedule and isinstance(schedule, str) and schedule != "":
             tasks = schedule.split(";")
             for task in tasks:
                 props = task.split("-")
@@ -1569,7 +1626,7 @@ class DreameVacuumDevice:
 
     def _stream_status_changed(self, previous_stream_status: Any = None) -> None:
         stream_status = self.get_property(DreameVacuumProperty.STREAM_STATUS)
-        if stream_status and stream_status != "" and stream_status != "null":
+        if stream_status and isinstance(stream_status, str) and stream_status != "" and stream_status != "null":
             stream_status = json.loads(stream_status)
             if stream_status and stream_status.get("result") == 0:
                 self.status.stream_session = stream_status.get("session")
@@ -1634,7 +1691,7 @@ class DreameVacuumDevice:
 
     def _off_peak_charging_changed(self, previous_off_peak_charging: Any = None) -> None:
         off_peak_charging = self.get_property(DreameVacuumProperty.OFF_PEAK_CHARGING)
-        if off_peak_charging and off_peak_charging != "":
+        if off_peak_charging and isinstance(off_peak_charging, str) and off_peak_charging != "":
             self.status.off_peak_charging_config = json.loads(off_peak_charging)
 
     def _suction_level_changed(self, previous_suction_level: Any = None) -> None:
@@ -1704,7 +1761,7 @@ class DreameVacuumDevice:
                 start = None
                 max = 25
                 total = self.get_property(DreameVacuumProperty.CLEANING_COUNT)
-                if total > 0:
+                if total is not None and int(total) > 0:
                     start = self.get_property(DreameVacuumProperty.FIRST_CLEANING_DATE)
 
                 if start is None:
@@ -1950,6 +2007,10 @@ class DreameVacuumDevice:
             self._keep_alive_timer.start()
 
     def _update_cleaning_mode(self, cleaning_mode) -> int:
+        # Xiaomi MIoT uses simple uint8 values - no compound encoding needed.
+        # The +1 conversion (0-indexed -> 1-indexed) is handled in set_property.
+        if self.capability.mijia:
+            return self.set_property(DreameVacuumProperty.CLEANING_MODE, cleaning_mode)
         if self.capability.self_wash_base:
             values = DreameVacuumDevice.split_group_value(
                 self.get_property(DreameVacuumProperty.CLEANING_MODE),
@@ -2292,6 +2353,19 @@ class DreameVacuumDevice:
             self.info = DreameVacuumDeviceInfo(info)
             if self.mac is None:
                 self.mac = self.info.mac_address
+            if self.info.model in XIAOMI_VACUUM_MODELS_WITH_CUSTOM_MAPPING:
+                if self.info.model in XIAOMI_MODEL_MAPPINGS:
+                    self.property_mapping, self.action_mapping = XIAOMI_MODEL_MAPPINGS[self.info.model]
+                    _LOGGER.info("Using model-specific mapping for %s", self.info.model)
+                else:
+                    self.property_mapping = XiaomiVacuumPropertyMapping
+                    self.action_mapping = XiaomiVacuumActionMapping
+                    _LOGGER.info("Using generic Xiaomi mapping for %s", self.info.model)
+                ## Update protocol's action mapping reference for map manager
+                if hasattr(self._protocol, '_action_mapping'):
+                    self._protocol._action_mapping = self.action_mapping
+            else:
+                _LOGGER.debug("Using standard Dreame mapping for %s", self.info.model)
             _LOGGER.info(
                 "Connected to device: %s %s",
                 self.info.model,
@@ -2780,7 +2854,14 @@ class DreameVacuumDevice:
 
             try:
                 mapping = self.property_mapping[prop]
-                result = self._protocol.set_property(mapping["siid"], mapping["piid"], value)
+                write_value = value
+                # Convert 0-indexed Dreame values to 1-indexed Xiaomi MIoT values
+                if self.info and "xiaomi.vacuum." in self.info.model:
+                    if prop is DreameVacuumProperty.CLEANING_MODE and isinstance(value, int):
+                        write_value = value + 1
+                    elif prop is DreameVacuumProperty.SUCTION_LEVEL and isinstance(value, int):
+                        write_value = value + 1
+                result = self._protocol.set_property(mapping["siid"], mapping["piid"], write_value)
 
                 if result is None or result[0]["code"] != 0:
                     _LOGGER.error(
@@ -7295,13 +7376,65 @@ class DreameVacuumDeviceStatus:
     def task_status(self) -> DreameVacuumTaskStatus:
         """Return task status of the device."""
         value = self._get_property(DreameVacuumProperty.TASK_STATUS)
-        if value is not None and value in DreameVacuumTaskStatus._value2member_map_:
+        ## Xiaomi MIoT vacuums map TASK_STATUS to sweep-type which reports the
+        ## cleaning TYPE (global/zone/area), not whether cleaning is active.
+        ## The value persists even when docked, so we must derive actual task
+        ## status from STATE and CHARGING_STATUS instead.
+        if self._device.info and "xiaomi.vacuum." in self._device.info.model:
+            pass  # Fall through to STATUS-based derivation below
+        elif value is not None and value in DreameVacuumTaskStatus._value2member_map_:
             if self.go_to_zone:
                 if value == DreameVacuumTaskStatus.ZONE_CLEANING.value:
                     return DreameVacuumTaskStatus.CRUISING_POINT
                 if value == DreameVacuumTaskStatus.ZONE_CLEANING_PAUSED.value:
                     return DreameVacuumTaskStatus.CRUISING_POINT_PAUSED
             return DreameVacuumTaskStatus(value)
+        if self._device.info and "xiaomi.vacuum." in self._device.info.model:
+            ## For mijia devices, STATUS property maps to alarm (bool) which is unreliable
+            ## for task detection. Use STATE (actual robot state) and CHARGING_STATUS instead.
+            try:
+                state_value = int(self._get_property(DreameVacuumProperty.STATE)) if self._get_property(DreameVacuumProperty.STATE) is not None else None
+            except (ValueError, TypeError):
+                state_value = None
+            try:
+                charging_value = int(self._get_property(DreameVacuumProperty.CHARGING_STATUS)) if self._get_property(DreameVacuumProperty.CHARGING_STATUS) is not None else None
+            except (ValueError, TypeError):
+                charging_value = None
+            # CHARGING_STATUS=1 (charging) or 3 (completed) → robot is docked, task done
+            if charging_value in (
+                DreameVacuumChargingStatus.CHARGING.value,
+                DreameVacuumChargingStatus.CHARGING_COMPLETED.value,
+            ):
+                return DreameVacuumTaskStatus.COMPLETED
+            # STATE (converted to Dreame values): idle, charging, returning → completed
+            if state_value in (
+                DreameVacuumState.IDLE.value,
+                DreameVacuumState.CHARGING.value,
+                DreameVacuumState.CHARGING_COMPLETED.value,
+                DreameVacuumState.RETURNING.value,
+            ):
+                return DreameVacuumTaskStatus.COMPLETED
+            if state_value in (
+                DreameVacuumState.PAUSED.value,
+                DreameVacuumState.WASHING_PAUSED.value,
+            ):
+                return DreameVacuumTaskStatus.AUTO_CLEANING_PAUSED
+            if state_value in (
+                DreameVacuumState.SWEEPING.value,
+                DreameVacuumState.MOPPING.value,
+                DreameVacuumState.SWEEPING_AND_MOPPING.value,
+            ):
+                return DreameVacuumTaskStatus.AUTO_CLEANING
+            if state_value in (
+                DreameVacuumState.WASHING.value,
+                DreameVacuumState.RETURNING_TO_WASH.value,
+                DreameVacuumState.DRYING.value,
+                DreameVacuumState.STATION_CLEANING.value,
+            ):
+                return DreameVacuumTaskStatus.COMPLETED
+            if state_value == DreameVacuumState.ERROR.value:
+                return DreameVacuumTaskStatus.COMPLETED
+            return DreameVacuumTaskStatus.COMPLETED
         if value is not None:
             _LOGGER.debug("TASK_STATUS not supported: %s", value)
         return DreameVacuumTaskStatus.UNKNOWN
@@ -7500,6 +7633,15 @@ class DreameVacuumDeviceStatus:
                     ## Device will report idle when charging is completed and vacuum card will display return to dock icon even when robot is docked
                     if self.charging_status is DreameVacuumChargingStatus.CHARGING_COMPLETED:
                         return DreameVacuumState.CHARGING_COMPLETED
+            ## Xiaomi MIoT vacuums may not update state property when returning to dock.
+            ## The state can remain stuck on SWEEPING/MOPPING even after task completion.
+            ## Use task_status and charging/docked as authoritative source for idle state.
+            elif not self.started and self.docked and not self.returning:
+                if self.charging:
+                    return DreameVacuumState.CHARGING
+                if self.charging_status is DreameVacuumChargingStatus.CHARGING_COMPLETED:
+                    return DreameVacuumState.CHARGING_COMPLETED
+                return DreameVacuumState.IDLE
             return vacuum_state
 
         if value is not None:
@@ -8417,7 +8559,15 @@ class DreameVacuumDeviceStatus:
     @property
     def cleaning_paused(self) -> bool:
         """Returns true when device battery is too low for resuming its task and needs to be charged before continuing."""
-        return bool(self._get_property(DreameVacuumProperty.CLEANING_PAUSED))
+        value = self._get_property(DreameVacuumProperty.CLEANING_PAUSED)
+        ## Xiaomi MIoT vacuums may not have this property (siid:4,piid:17 doesn't exist on b108gl).
+        ## The cloud can return stale/wrong values. Only trust it if it's a valid boolean-like value.
+        if value is not None and self._device.info and "xiaomi.vacuum." in self._device.info.model:
+            try:
+                return bool(int(value) == 1)
+            except (ValueError, TypeError):
+                return False
+        return bool(value)
 
     @property
     def charging(self) -> bool:
@@ -9899,7 +10049,17 @@ class DreameVacuumDeviceStatus:
                     prop_name = property.name.lower()
 
                 if prop[1] == True:
-                    value = bool(value > 0)
+                    if isinstance(value, bool):
+                        pass
+                    elif isinstance(value, (int, float)):
+                        value = bool(value > 0)
+                    elif isinstance(value, str):
+                        try:
+                            value = bool(int(value) > 0)
+                        except (ValueError, TypeError):
+                            value = bool(value)
+                    else:
+                        value = bool(value)
                 elif property is DreameVacuumProperty.ERROR:
                     value = self.error_name.replace("_", " ").capitalize()
                 elif property is DreameVacuumProperty.LOW_WATER_WARNING:
@@ -10090,7 +10250,17 @@ class DreameVacuumDeviceStatus:
                         attributes[f"{ATTR_AUTO_EMPTY_MODE}_list"] = [
                             v.replace("_", " ").capitalize() for v in self.auto_empty_mode_list.keys()
                         ]
-                    value = bool(value > 0)
+                    if isinstance(value, bool):
+                        pass
+                    elif isinstance(value, (int, float)):
+                        value = bool(value > 0)
+                    elif isinstance(value, str):
+                        try:
+                            value = bool(int(value) > 0)
+                        except (ValueError, TypeError):
+                            value = bool(value)
+                    else:
+                        value = bool(value)
                 elif property is DreameVacuumAutoSwitchProperty.SELF_CLEAN_FREQUENCY:
                     value = self.self_clean_frequency_name.replace("_", " ").capitalize()
                     attributes[f"{prop_name}_list"] = (

@@ -5,3 +5,6 @@
 /env
 *.zip
 .idea
+dreame_vacuum/dreame/__pycache__/
+__pycache__/
+*.pyc

@@ -202,6 +202,17 @@ class DreameMapVacuumMapManager:
         self._aes_key: str = None
         self._capability: DreameVacuumDeviceCapability = None
 
+    def _get_action_mapping(self, action: DreameVacuumAction) -> dict | None:
+        """Get action mapping for the current device, respecting device-specific overrides."""
+        action_mapping = getattr(self._protocol, '_action_mapping', None)
+        if action_mapping and action in action_mapping:
+            mapping = action_mapping[action]
+        else:
+            mapping = DreameVacuumActionMapping[action]
+        if "siid" not in mapping or "aiid" not in mapping:
+            return None
+        return mapping
+
     def _request_map_from_cloud(self) -> bool:
         if self._protocol.cloud.dreame_cloud:
             return True
@@ -291,7 +302,9 @@ class DreameMapVacuumMapManager:
 
         try:
             _LOGGER.info("Request map from device %s", payload)
-            mapping = DreameVacuumActionMapping[DreameVacuumAction.REQUEST_MAP]
+            mapping = self._get_action_mapping(DreameVacuumAction.REQUEST_MAP)
+            if not mapping:
+                return None
             return self._protocol.action(mapping["siid"], mapping["aiid"], payload, 0)
         except Exception as ex:
             _LOGGER.warning("Send request map failed: %s", ex)
@@ -441,7 +454,9 @@ class DreameMapVacuumMapManager:
     def _request_w_map(self) -> None:
         try:
             _LOGGER.info("Request wifi map from device")
-            mapping = DreameVacuumActionMapping[DreameVacuumAction.WIFI_MAP]
+            mapping = self._get_action_mapping(DreameVacuumAction.WIFI_MAP)
+            if not mapping:
+                return None
             return self._protocol.action(mapping["siid"], mapping["aiid"], None, 0)
         except Exception as ex:
             _LOGGER.warning("Send request map failed: %s", ex)

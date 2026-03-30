@@ -1792,6 +1792,215 @@ DreameVacuumActionMapping = {
     DreameVacuumAction.STREAM_CODE: {siid: 10001, aiid: 4},
 }
 
+# Models that require Xiaomi-specific property/action mapping.
+# Each model may need its own mapping due to different MIoT SIID/PIID assignments.
+XIAOMI_VACUUM_MODELS_WITH_CUSTOM_MAPPING: Final = [
+    "xiaomi.vacuum.b108gl",
+    "xiaomi.vacuum.d109gl",
+]
+
+# Per-model mapping selection (model -> (property_mapping, action_mapping))
+# Used in device.py to pick the correct mapping for each model.
+# Defined after the mapping dicts below.
+
+# Xiaomi vacuum devices use different MIoT service IIDs than Dreame devices.
+# Override only properties/actions with different siid/piid values.
+# Based on: https://home.miot-spec.com/spec/xiaomi.vacuum.b108gl
+XiaomiVacuumPropertyMapping_b108gl = {**DreameVacuumPropertyMapping, **{
+    DreameVacuumProperty.TASK_STATUS: {siid: 2, piid: 4},
+    DreameVacuumProperty.CLEANING_TIME: {siid: 2, piid: 6},
+    DreameVacuumProperty.CLEANED_AREA: {siid: 2, piid: 5},
+    DreameVacuumProperty.SUCTION_LEVEL: {siid: 2, piid: 8},
+    DreameVacuumProperty.WATER_VOLUME: {siid: 2, piid: 9},
+    DreameVacuumProperty.WATER_TANK: {siid: 6, piid: 1},
+    DreameVacuumProperty.CLEANING_MODE: {siid: 2, piid: 3},
+    DreameVacuumProperty.CARPET_BOOST: {siid: 6, piid: 6},
+    DreameVacuumProperty.CARPET_CLEANING: {siid: 2, piid: 20},
+    DreameVacuumProperty.CHILD_LOCK: {siid: 5, piid: 1},
+    DreameVacuumProperty.RESUME_CLEANING: {siid: 6, piid: 11},
+    DreameVacuumProperty.DND: {siid: 6, piid: 3},
+    DreameVacuumProperty.MAP_DATA: {siid: 7, piid: 1},
+    DreameVacuumProperty.OBJECT_NAME: {siid: 7, piid: 1},
+    DreameVacuumProperty.OLD_MAP_DATA: {siid: 7, piid: 2},
+    DreameVacuumProperty.MAP_LIST: {siid: 7, piid: 3},
+    DreameVacuumProperty.MULTI_FLOOR_MAP: {siid: 7, piid: 5},
+    DreameVacuumProperty.MAP_SAVING: {siid: 7, piid: 9},
+    DreameVacuumProperty.VOLUME: {siid: 4, piid: 2},
+    DreameVacuumProperty.MAIN_BRUSH_TIME_LEFT: {siid: 8, piid: 1},
+    DreameVacuumProperty.MAIN_BRUSH_LEFT: {siid: 8, piid: 2},
+    DreameVacuumProperty.SIDE_BRUSH_TIME_LEFT: {siid: 9, piid: 1},
+    DreameVacuumProperty.SIDE_BRUSH_LEFT: {siid: 9, piid: 2},
+    DreameVacuumProperty.FILTER_TIME_LEFT: {siid: 10, piid: 1},
+    DreameVacuumProperty.FILTER_LEFT: {siid: 10, piid: 2},
+    DreameVacuumProperty.MOP_PAD_LEFT: {siid: 11, piid: 2},
+    DreameVacuumProperty.MOP_PAD_TIME_LEFT: {siid: 11, piid: 1},
+    DreameVacuumProperty.SCHEDULE: {siid: 6, piid: 5},
+    DreameVacuumProperty.RELOCATION_STATUS: {siid: 6, piid: 9},
+    DreameVacuumProperty.CLEANING_PROPERTIES: {siid: 6, piid: 12},
+    DreameVacuumProperty.FAULTS: {siid: 6, piid: 13},
+}}
+
+XiaomiVacuumActionMapping_b108gl = {**DreameVacuumActionMapping, **{
+    DreameVacuumAction.STOP: {siid: 2, aiid: 2},
+    DreameVacuumAction.PAUSE: {siid: 2, aiid: 6},
+    DreameVacuumAction.START_CUSTOM: {siid: 6, aiid: 7},
+    DreameVacuumAction.LOCATE: {siid: 6, aiid: 6},
+    DreameVacuumAction.RESET_MAIN_BRUSH: {siid: 8, aiid: 1},
+    DreameVacuumAction.RESET_SIDE_BRUSH: {siid: 9, aiid: 1},
+    DreameVacuumAction.RESET_FILTER: {siid: 10, aiid: 1},
+    ## On Xiaomi MIoT, siid:6 aiid:1 = start-vacuum (NOT request map!)
+    ## and siid:6 aiid:2 = stop-vacuum (NOT update map data!)
+    ## Disable these map actions to prevent accidental cleaning commands.
+    DreameVacuumAction.REQUEST_MAP: {},
+    DreameVacuumAction.UPDATE_MAP_DATA: {},
+    DreameVacuumAction.WIFI_MAP: {},
+}}
+
+# Backward compatibility aliases
+XiaomiVacuumPropertyMapping = XiaomiVacuumPropertyMapping_b108gl
+XiaomiVacuumActionMapping = XiaomiVacuumActionMapping_b108gl
+
+# Based on: https://home.miot-spec.com/spec/xiaomi.vacuum.d109gl
+# d109gl (Xiaomi Robot Vacuum X20 Max) has different PIID layout than b108gl:
+# - SIID 2 P1 = firmware-version (string!), P2 = status, P3 = fault
+# - SIID 4 = alarm (P1=alarm, P2=volume)
+# - SIID 6 = identify service (A1 = locate/identify)
+# - SIID 10 = map, SIID 11 = DND, SIID 12-14 = consumables
+XiaomiVacuumPropertyMapping_d109gl = {**DreameVacuumPropertyMapping, **{
+    ## Core state: d109gl shifts status/fault by +1 PIID vs b108gl
+    DreameVacuumProperty.STATE: {siid: 2, piid: 2},       # status (uint8)
+    DreameVacuumProperty.ERROR: {siid: 2, piid: 3},       # fault (uint32)
+    ## Cleaning properties
+    DreameVacuumProperty.CLEANING_MODE: {siid: 2, piid: 4},   # sweep-mop-type
+    DreameVacuumProperty.TASK_STATUS: {siid: 2, piid: 5},     # sweep-type
+    DreameVacuumProperty.CLEANED_AREA: {siid: 2, piid: 6},    # cleaning-area
+    DreameVacuumProperty.CLEANING_TIME: {siid: 2, piid: 7},   # cleaning-time
+    DreameVacuumProperty.SUCTION_LEVEL: {siid: 2, piid: 9},   # mode
+    DreameVacuumProperty.WATER_VOLUME: {siid: 2, piid: 10},   # mop-water-output-level
+    DreameVacuumProperty.WATER_TANK: {siid: 2, piid: 11},     # mop-status (bool)
+    DreameVacuumProperty.CARPET_BOOST: {siid: 2, piid: 20},   # carpet-boost
+    DreameVacuumProperty.CARPET_CLEANING: {siid: 2, piid: 73}, # carpet-cleaning-method
+    DreameVacuumProperty.RESUME_CLEANING: {siid: 2, piid: 23}, # sweep-break-switch
+    ## Alarm/volume
+    DreameVacuumProperty.VOLUME: {siid: 4, piid: 2},          # volume
+    ## Child lock
+    DreameVacuumProperty.CHILD_LOCK: {siid: 5, piid: 1},
+    ## Map: d109gl uses SIID 10 for map data
+    DreameVacuumProperty.MAP_DATA: {siid: 10, piid: 1},       # map-obj-name
+    DreameVacuumProperty.OBJECT_NAME: {siid: 10, piid: 1},
+    DreameVacuumProperty.OLD_MAP_DATA: {siid: 10, piid: 2},   # trajectory-obj-name
+    DreameVacuumProperty.MAP_LIST: {siid: 10, piid: 5},       # map-management
+    DreameVacuumProperty.MULTI_FLOOR_MAP: {siid: 10, piid: 10}, # map-switch-method
+    DreameVacuumProperty.MAP_SAVING: {siid: 10, piid: 11},    # map-upload-stop
+    ## DND: d109gl uses SIID 11
+    DreameVacuumProperty.DND: {siid: 11, piid: 1},            # no-disturb
+    ## Schedule: d109gl uses SIID 2 P19
+    DreameVacuumProperty.SCHEDULE: {siid: 2, piid: 19},       # order-clean
+    ## Consumables: d109gl SIID 12=main-brush, 13=side-brush, 14=filter
+    ## d109gl: P1=life-level, P2=left-time (opposite order from b108gl!)
+    DreameVacuumProperty.MAIN_BRUSH_LEFT: {siid: 12, piid: 1},
+    DreameVacuumProperty.MAIN_BRUSH_TIME_LEFT: {siid: 12, piid: 2},
+    DreameVacuumProperty.SIDE_BRUSH_LEFT: {siid: 13, piid: 1},
+    DreameVacuumProperty.SIDE_BRUSH_TIME_LEFT: {siid: 13, piid: 2},
+    DreameVacuumProperty.FILTER_LEFT: {siid: 14, piid: 1},
+    DreameVacuumProperty.FILTER_TIME_LEFT: {siid: 14, piid: 2},
+    ## Mop pad: d109gl SIID 9
+    DreameVacuumProperty.MOP_PAD_LEFT: {siid: 9, piid: 1},
+    DreameVacuumProperty.MOP_PAD_TIME_LEFT: {siid: 9, piid: 2},
+    ## Relocation status: not directly available, use location-status (bool) at SIID 2 P26
+    DreameVacuumProperty.RELOCATION_STATUS: {siid: 2, piid: 26},
+    ## Faults: d109gl SIID 2 P66 (fault-ids)
+    DreameVacuumProperty.FAULTS: {siid: 2, piid: 66},
+    DreameVacuumProperty.CLEANING_PROPERTIES: {siid: 2, piid: 40}, # current-cleaning-config
+}}
+
+XiaomiVacuumActionMapping_d109gl = {**DreameVacuumActionMapping, **{
+    DreameVacuumAction.STOP: {siid: 2, aiid: 2},              # stop-sweeping
+    DreameVacuumAction.PAUSE: {siid: 2, aiid: 7},             # pause-sweeping
+    DreameVacuumAction.START_CUSTOM: {siid: 2, aiid: 9},      # start-custom-sweep
+    DreameVacuumAction.LOCATE: {siid: 6, aiid: 1},            # identify (locate)
+    DreameVacuumAction.RESET_MAIN_BRUSH: {siid: 12, aiid: 1},
+    DreameVacuumAction.RESET_SIDE_BRUSH: {siid: 13, aiid: 1},
+    DreameVacuumAction.RESET_FILTER: {siid: 14, aiid: 1},
+    DreameVacuumAction.RESET_MOP_PAD: {siid: 9, aiid: 1},
+    ## d109gl: SIID 10 A7 = update-properties-data (map update)
+    DreameVacuumAction.REQUEST_MAP: {siid: 10, aiid: 7},
+    ## Disable actions that don't have equivalents on d109gl
+    DreameVacuumAction.UPDATE_MAP_DATA: {},
+    DreameVacuumAction.WIFI_MAP: {},
+}}
+
+# Per-model mapping lookup
+XIAOMI_MODEL_MAPPINGS: Final = {
+    "xiaomi.vacuum.b108gl": (XiaomiVacuumPropertyMapping_b108gl, XiaomiVacuumActionMapping_b108gl),
+    "xiaomi.vacuum.d109gl": (XiaomiVacuumPropertyMapping_d109gl, XiaomiVacuumActionMapping_d109gl),
+}
+
+# b108gl status values -> Dreame internal state
+# Spec: https://home.miot-spec.com/spec/xiaomi.vacuum.b108gl (SIID 2 P1)
+XIAOMI_STATE_MAPPING: Final = {
+    1: 2,   # Idle -> IDLE
+    2: 6,   # Charging -> CHARGING
+    3: 6,   # BreakCharging -> CHARGING
+    4: 1,   # Sweeping -> SWEEPING
+    5: 3,   # Paused -> PAUSED
+    6: 5,   # Go Charging -> RETURNING
+    7: 23,  # Remote -> REMOTE_CONTROL
+    8: 13,  # Charged -> CHARGING_COMPLETED
+    9: 11,  # Mapping -> BUILDING
+    10: 14, # Updating -> UPGRADING
+}
+
+# d109gl status values -> Dreame internal state
+# Spec: https://home.miot-spec.com/spec/xiaomi.vacuum.d109gl (SIID 2 P2)
+D109GL_STATE_MAPPING: Final = {
+    1: 2,   # Idle -> IDLE
+    2: 6,   # Charging -> CHARGING
+    3: 6,   # BreakCharging -> CHARGING
+    4: 1,   # Sweeping -> SWEEPING
+    5: 3,   # Paused -> PAUSED
+    6: 5,   # Go Charging -> RETURNING
+    7: 10,  # GoWash -> RETURNING_TO_WASH
+    8: 23,  # Remote -> REMOTE_CONTROL
+    9: 13,  # Charged -> CHARGING_COMPLETED
+    10: 11, # BuildingMap -> BUILDING
+    11: 14, # Updating -> UPGRADING
+    12: 30, # MultiTaskStationWorking -> STATION_CLEANING
+    13: 6,  # MultiTaskRecharge -> CHARGING
+    14: 30, # StationWorking -> STATION_CLEANING
+    15: 4,  # Error -> ERROR
+    16: 12, # Sweeping and Mopping -> SWEEPING_AND_MOPPING
+    17: 7,  # Mopping -> MOPPING
+    18: 3,  # MappingPause -> PAUSED
+    19: 5,  # GoChargeBreak -> RETURNING
+    20: 10, # WashBreak -> RETURNING_TO_WASH
+    21: 11, # GoChargeBuildingMap -> BUILDING
+}
+
+# b108gl task status (sweep-type) -> Dreame internal task status
+# Spec: b108gl SIID 2 P4
+XIAOMI_TASK_STATUS_MAPPING: Final = {
+    1: 1,  # Global -> AUTO_CLEANING
+    4: 2,  # Area -> ZONE_CLEANING
+    5: 5,  # Mapping -> FAST_MAPPING
+    6: 0,  # GoCharging -> COMPLETED
+    7: 0,  # RemoteControl -> COMPLETED
+    8: 3,  # SelectRoom -> SEGMENT_CLEANING
+    9: 4,  # CustomClean -> SPOT_CLEANING
+}
+
+# d109gl task status (sweep-type) -> Dreame internal task status
+# Spec: d109gl SIID 2 P5
+D109GL_TASK_STATUS_MAPPING: Final = {
+    1: 1,  # Global -> AUTO_CLEANING
+    2: 2,  # Zone -> ZONE_CLEANING
+    3: 4,  # Area -> SPOT_CLEANING
+    4: 2,  # Edge -> ZONE_CLEANING
+    5: 3,  # Custom -> SEGMENT_CLEANING
+    6: 4,  # Point -> SPOT_CLEANING
+    7: 2,  # Custom Area -> ZONE_CLEANING
+}
+
 
 PROPERTY_AVAILABILITY: Final = {
     DreameVacuumProperty.CUSTOMIZED_CLEANING.name: lambda device: not device.status.started
@@ -2375,11 +2584,15 @@ def DIID(property: DreameVacuumProperty, mapping=DreameVacuumPropertyMapping) ->
         return f"{mapping[property][siid]}.{mapping[property][piid]}"
 
 
-def DID(siid, piid) -> DreameVacuumProperty | None:
+def DID(siid, piid, mapping=None) -> DreameVacuumProperty | None:
+    search_mapping = mapping if mapping is not None else DreameVacuumPropertyMapping
     for prop in [prop for prop in DreameVacuumProperty]:
-        mapping = DreameVacuumPropertyMapping.get(prop)
-        if mapping is not None and siid == mapping["siid"] and piid == mapping["piid"]:
+        m = search_mapping.get(prop)
+        if m is not None and siid == m.get("siid") and piid == m.get("piid"):
             return prop
+    # Fallback to standard mapping if custom mapping didn't find it
+    if mapping is not None:
+        return DID(siid, piid, None)
     return None
 
 

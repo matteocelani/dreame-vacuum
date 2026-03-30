@@ -7,6 +7,9 @@ import hmac
 import requests
 import zlib
 import ssl
+import socket
+import struct
+import threading
 import queue
 from threading import Thread, Timer
 from time import sleep
@@ -34,9 +37,169 @@ DREAME_STRINGS: Final = (
 _LOGGER = logging.getLogger(__name__)
 
 
+def _aes_cbc(mode: str, data: bytes, key: bytes, iv: bytes) -> bytes | None:
+    """AES-128-CBC encrypt/decrypt using pycryptodome (available in HA)."""
+    try:
+        from Crypto.Cipher import AES
+        cipher = AES.new(key, AES.MODE_CBC, iv)
+        return cipher.decrypt(data) if mode == "dec" else cipher.encrypt(data)
+    except Exception:
+        return None
+
+
+class MiIOLocalProtocol:
+    """Lightweight MIoT local protocol using raw UDP.
+
+    Drop-in replacement for python-miio's MiIOProtocol for devices where
+    the library fails to connect (e.g., container networking issues on HAOS).
+    """
+
+    def __init__(self, ip: str, token: str, timeout: int = 5) -> None:
+        self.ip = ip
+        self.port = 54321
+        self.token = bytes.fromhex(token) if isinstance(token, str) else token
+        self._timeout = timeout
+        self._discovered = False
+        self._device_id = 0
+        self._stamp = 0
+        self._key = hashlib.md5(self.token).digest()
+        self._iv = hashlib.md5(self._key + self.token).digest()
+        self._id = 0
+        self._lock = threading.Lock()
+        self._queue = queue.Queue()
+        self._thread = None
+
+    def set_credentials(self, ip: str, token: str):
+        if self.ip != ip or self.token != (bytes.fromhex(token) if isinstance(token, str) else token):
+            self.ip = ip
+            self.token = bytes.fromhex(token) if isinstance(token, str) else token
+            self._key = hashlib.md5(self.token).digest()
+            self._iv = hashlib.md5(self._key + self.token).digest()
+            self._discovered = False
+
+    @property
+    def connected(self) -> bool:
+        return self._discovered
+
+    def disconnect(self):
+        self._discovered = False
+        if self._thread:
+            self._queue.put([])
+
+    def _api_task(self):
+        while True:
+            item = self._queue.get()
+            if len(item) == 0:
+                self._queue.task_done()
+                return
+            response = self.send(item[1], item[2], item[3])
+            if item[0]:
+                item[0](response)
+            self._queue.task_done()
+
+    def send_async(self, callback, command, parameters=None, retry_count=2):
+        if self._thread is None:
+            self._thread = threading.Thread(target=self._api_task, daemon=True)
+            self._thread.start()
+        self._queue.put((callback, command, parameters, retry_count))
+
+    def send_handshake(self) -> bool:
+        hello = bytes.fromhex("21310020ffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.settimeout(self._timeout)
+        try:
+            s.sendto(hello, (self.ip, self.port))
+            data, _ = s.recvfrom(1024)
+            if len(data) >= 16:
+                self._device_id = struct.unpack(">I", data[8:12])[0]
+                self._stamp = struct.unpack(">I", data[12:16])[0]
+                self._discovered = True
+                return True
+        except socket.timeout:
+            _LOGGER.debug("MiIO handshake timeout: %s", self.ip)
+        except Exception as ex:
+            _LOGGER.debug("MiIO handshake failed: %s: %s", self.ip, ex)
+        finally:
+            s.close()
+        return False
+
+    def send(self, method: str, parameters: Any = None, retry_count: int = 3) -> Any:
+        if not self._discovered:
+            if not self.send_handshake():
+                if retry_count > 0:
+                    return self.send(method, parameters, retry_count - 1)
+                raise DeviceException("No response from the device")
+
+        with self._lock:
+            self._id += 1
+            if self._id >= 9999:
+                self._id = 1
+            req_id = self._id
+
+        request = {"id": req_id, "method": method}
+        request["params"] = parameters if parameters is not None else []
+        payload = json.dumps(request).encode()
+        pad_len = 16 - (len(payload) % 16)
+        encrypted = _aes_cbc("enc", payload + bytes([pad_len] * pad_len), self._key, self._iv)
+        if not encrypted:
+            return None
+
+        self._stamp += 1
+        length = 32 + len(encrypted)
+        header = struct.pack(">HH", 0x2131, length) + b"\x00\x00\x00\x00" + struct.pack(">II", self._device_id, self._stamp)
+        checksum = hashlib.md5(header + self.token + encrypted).digest()
+
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.settimeout(self._timeout)
+        try:
+            s.sendto(header + checksum + encrypted, (self.ip, self.port))
+            resp, _ = s.recvfrom(4096)
+        except socket.timeout:
+            s.close()
+            self._discovered = False
+            if retry_count > 0:
+                return self.send(method, parameters, retry_count - 1)
+            raise DeviceException("No response from the device")
+        except Exception as ex:
+            s.close()
+            if retry_count > 0:
+                return self.send(method, parameters, retry_count - 1)
+            raise DeviceException(f"Send failed: {ex}")
+        finally:
+            try:
+                s.close()
+            except Exception:
+                pass
+
+        if len(resp) <= 32:
+            return None
+
+        decrypted = _aes_cbc("dec", resp[32:], self._key, self._iv)
+        if not decrypted:
+            return None
+
+        pad = decrypted[-1]
+        if 0 < pad <= 16:
+            decrypted = decrypted[:-pad]
+
+        try:
+            result = json.loads(decrypted)
+        except json.JSONDecodeError:
+            return None
+
+        resp_stamp = struct.unpack(">I", resp[12:16])[0]
+        if resp_stamp > 0:
+            self._stamp = resp_stamp
+
+        if "error" in result:
+            raise DeviceException(str(result["error"]))
+
+        return result.get("result", result)
+
+
 class DreameVacuumDeviceProtocol(MiIOProtocol):
     def __init__(self, ip: str, token: str) -> None:
-        super().__init__(ip, token, 0, 0, True, 2)
+        super().__init__(ip, token, 0, 0, True, 5)
         self.ip = None
         self.token = None
         self._queue = queue.Queue()
@@ -279,7 +442,7 @@ class DreameVacuumDreameHomeCloudProtocol:
         self._model = info[self._strings[35]]
         self._host = info[self._strings[9]]
         prop = info[self._strings[10]]
-        if prop and prop != "":
+        if prop and isinstance(prop, str) and prop != "":
             prop = json.loads(prop)
             if self._strings[11] in prop:
                 self._stream_key = prop[self._strings[11]]
@@ -1534,12 +1697,16 @@ class DreameVacuumProtocol:
         self._connected = False
         self._mac = None
         self._account_type = account_type
+        self._local_for_properties = False  # Hybrid mode: local for property r/w, cloud for actions
 
         if ip and token:
             self.device = DreameVacuumDeviceProtocol(ip, token)
+            # Also create a raw MIoT client for xiaomi.vacuum.* hybrid mode
+            self._local_device = MiIOLocalProtocol(ip, token)
         else:
             self.prefer_cloud = True
             self.device = None
+            self._local_device = None
 
         if username and password and country:
             if account_type == "mi":
@@ -1568,14 +1735,37 @@ class DreameVacuumProtocol:
                 self.device.set_credentials(ip, token)
             else:
                 self.device = DreameVacuumDeviceProtocol(ip, token)
+            if self._local_device:
+                self._local_device.set_credentials(ip, token)
+            else:
+                self._local_device = MiIOLocalProtocol(ip, token)
         else:
             self.device = None
+            self._local_device = None
 
     def connect(self, message_callback=None, connected_callback=None, retry_count=1) -> Any:
         if self._account_type == "mi" or self.cloud is None:
             info = self.send("miIO.info", retry_count=retry_count)
             if info and (self.prefer_cloud or not self.device) and self.device_cloud:
                 self._connected = True
+            # Hybrid local+cloud mode for xiaomi.vacuum.* devices:
+            # Cloud RPC silently discards set_properties. Route property
+            # reads/writes through local MIoT (raw UDP) while keeping
+            # cloud for actions, maps, and push notifications.
+            if (
+                info
+                and isinstance(info, dict)
+                and "xiaomi.vacuum." in info.get("model", "")
+                and self._local_device
+            ):
+                try:
+                    if self._local_device.send_handshake():
+                        self._local_for_properties = True
+                        _LOGGER.info("Hybrid local+cloud mode enabled for %s", info.get("model"))
+                    else:
+                        _LOGGER.info("Local handshake failed for %s, using cloud-only", info.get("model"))
+                except Exception:
+                    _LOGGER.debug("Local probe failed for %s", info.get("model"))
         else:
             info = self.cloud.connect(message_callback, connected_callback)
             if info:
@@ -1641,6 +1831,20 @@ class DreameVacuumProtocol:
             self.device.send_async(callback, method, parameters=parameters, retry_count=retry_count)
 
     def send(self, method, parameters: Any = None, retry_count: int = 2, timeout=None) -> Any:
+        # Hybrid mode: route property reads/writes through local MIoT protocol
+        # for xiaomi.vacuum.* devices where cloud set_properties silently fails.
+        # Uses MiIOLocalProtocol (raw UDP) which works across all containers.
+        if (
+            self._local_for_properties
+            and self._local_device
+            and method in ("get_properties", "set_properties")
+        ):
+            try:
+                return self._local_device.send(method, parameters=parameters, retry_count=retry_count)
+            except DeviceException:
+                _LOGGER.debug("Local %s failed, falling back to cloud", method)
+                # Fall through to cloud
+
         if (self.prefer_cloud or not self.device) and self.device_cloud:
             if not self.device_cloud.logged_in:
                 # Use different session for device cloud
