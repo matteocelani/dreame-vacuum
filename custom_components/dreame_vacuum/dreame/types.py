@@ -1796,7 +1796,9 @@ DreameVacuumActionMapping = {
 # Override only properties/actions with different siid/piid values.
 # Based on: https://home.miot-spec.com/spec/xiaomi.vacuum.b108gl
 XiaomiVacuumPropertyMapping = {**DreameVacuumPropertyMapping, **{
-    DreameVacuumProperty.STATUS: {siid: 2, piid: 1},
+    # STATUS intentionally NOT remapped: b108gl has no separate task status property.
+    # STATE (siid:2, piid:1) is inherited from the standard mapping and handles device state.
+    # Remapping STATUS to the same siid:2 piid:1 would cause value conflicts.
     DreameVacuumProperty.TASK_STATUS: {siid: 2, piid: 4},
     DreameVacuumProperty.CLEANING_TIME: {siid: 2, piid: 6},
     DreameVacuumProperty.CLEANED_AREA: {siid: 2, piid: 5},
