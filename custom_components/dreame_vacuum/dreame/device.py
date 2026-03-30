@@ -616,6 +616,12 @@ class DreameVacuumDevice:
                                 DreameVacuumProperty(did).name,
                                 value,
                             )
+                    # Convert Xiaomi vacuum state/task values to Dreame equivalents
+                    if self.info and "xiaomi.vacuum." in self.info.model and isinstance(value, int):
+                        if did == DreameVacuumProperty.STATE.value and value in XIAOMI_STATE_MAPPING:
+                            value = XIAOMI_STATE_MAPPING[value]
+                        elif did == DreameVacuumProperty.TASK_STATUS.value and value in XIAOMI_TASK_STATUS_MAPPING:
+                            value = XIAOMI_TASK_STATUS_MAPPING[value]
                     self.data[did] = value
                     if did in self._property_update_callback:
                         for callback in self._property_update_callback[did]:
