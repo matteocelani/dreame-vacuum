@@ -173,6 +173,18 @@ def test_send_retries_then_returns_none_without_a_handshake():
     assert len(sockets) == 3
 
 
+def test_open_uses_the_five_second_property_timeout():
+    seen: list[float | None] = []
+
+    class _RecordingSocket:
+        def settimeout(self, timeout: float | None) -> None:
+            seen.append(timeout)
+
+    transport = MiioPropertyTransport(_HOST, _TOKEN, socket_factory=_RecordingSocket)
+    transport._open()
+    assert seen == [5.0]
+
+
 def test_default_socket_factory_opens_without_sending():
     transport = MiioPropertyTransport(_HOST, _TOKEN)
     datagram = transport._open()

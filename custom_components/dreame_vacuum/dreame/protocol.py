@@ -969,7 +969,7 @@ class DreameVacuumDreameHomeCloudProtocol:
         self._model = info[self._strings[30]]
         self._host = info[self._strings[8]]
         prop = info[self._strings[9]]
-        if prop and prop != "":
+        if prop and isinstance(prop, str) and prop != "":
             prop = json.loads(prop)
             if self._strings[10] in prop:
                 self._stream_key = prop[self._strings[10]]

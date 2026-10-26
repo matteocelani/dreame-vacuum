@@ -1705,7 +1705,7 @@ class DreameVacuumDevice:
     def _dnd_task_changed(self, previous_dnd_task: Any = None) -> None:
         dnd_tasks = self.get_property(DreameVacuumProperty.DND_TASK)
         dnd_list = []
-        if dnd_tasks and dnd_tasks != "":
+        if dnd_tasks and isinstance(dnd_tasks, str) and dnd_tasks != "":
             dnd_list = [
                 DNDTask(task.get("id"), task.get("en"), task.get("st"), task.get("et"), task.get("wk"), task.get("ss"))
                 for task in json.loads(dnd_tasks)
@@ -1723,7 +1723,7 @@ class DreameVacuumDevice:
         schedule = self.get_property(DreameVacuumProperty.SCHEDULE)
         schedule_list = []
 
-        if schedule and schedule != "":
+        if schedule and isinstance(schedule, str) and schedule != "":
             tasks = schedule.split(";")
             for task in tasks:
                 if "-" in task:
@@ -1756,7 +1756,12 @@ class DreameVacuumDevice:
 
     def _stream_status_changed(self, previous_stream_status: Any = None) -> None:
         stream_status = self.get_property(DreameVacuumProperty.STREAM_STATUS)
-        if stream_status and stream_status != "" and stream_status != "null":
+        if (
+            stream_status
+            and isinstance(stream_status, str)
+            and stream_status != ""
+            and stream_status != "null"
+        ):
             stream_status = json.loads(stream_status)
             if stream_status and stream_status.get("result") == 0:
                 self.status.stream_session = stream_status.get("session")
@@ -1821,7 +1826,11 @@ class DreameVacuumDevice:
 
     def _off_peak_charging_changed(self, previous_off_peak_charging: Any = None) -> None:
         off_peak_charging = self.get_property(DreameVacuumProperty.OFF_PEAK_CHARGING)
-        if off_peak_charging and off_peak_charging != "":
+        if (
+            off_peak_charging
+            and isinstance(off_peak_charging, str)
+            and off_peak_charging != ""
+        ):
             self.status.off_peak_charging_config = json.loads(off_peak_charging)
 
     def _suction_level_changed(self, previous_suction_level: Any = None) -> None:
@@ -1901,7 +1910,13 @@ class DreameVacuumDevice:
                 start = None
                 max = 30
                 total = self.get_property(DreameVacuumProperty.CLEANING_COUNT)
-                if total > 0:
+                # A missing count is None, and MIoT may send the count as a string.
+                if isinstance(total, str):
+                    try:
+                        total = int(total)
+                    except ValueError:
+                        total = None
+                if total is not None and int(total) > 0:
                     start = self.get_property(DreameVacuumProperty.FIRST_CLEANING_DATE)
 
                 if start is None:
@@ -9446,7 +9461,14 @@ class DreameVacuumDeviceStatus:
     @property
     def cleaning_paused(self) -> bool:
         """Returns true when device battery is too low for resuming its task and needs to be charged before continuing."""
-        return bool(self._get_property(DreameVacuumProperty.CLEANING_PAUSED))
+        value = self._get_property(DreameVacuumProperty.CLEANING_PAUSED)
+        # MIoT can report this flag as a numeric string. Only "1" means paused.
+        if isinstance(value, str):
+            try:
+                return int(value) == 1
+            except ValueError:
+                return False
+        return bool(value)
 
     @property
     def charging(self) -> bool:
@@ -10955,7 +10977,7 @@ class DreameVacuumDeviceStatus:
                 prop_name = property.name.lower()
 
                 if prop[1] == True:
-                    value = bool(value > 0)
+                    value = _is_positive_value(value)
                 elif property.name in _NAMED_ATTRIBUTES:
                     named = _NAMED_ATTRIBUTES[property.name]
                     if named.capability and not getattr(self._capability, named.capability):
@@ -10979,7 +11001,7 @@ class DreameVacuumDeviceStatus:
                         attributes[f"{ATTR_AUTO_EMPTY_MODE}_list"] = [
                             v.replace("_", " ").capitalize() for v in self.auto_empty_mode_list.keys()
                         ]
-                    value = bool(value > 0)
+                    value = _is_positive_value(value)
                 elif (
                     property is DreameVacuumProperty.DRYING_TIME
                     and not self._capability.mop_clean_frequency
@@ -11234,3 +11256,17 @@ class DreameVacuumDeviceInfo:
     def raw(self) -> dict[str, Any]:
         """Raw data as returned by the device."""
         return self.data
+
+
+def _is_positive_value(value: object) -> bool:
+    """Return whether a flag is enabled, including a numeric string from MIoT."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, int | float):
+        return value > 0
+    if isinstance(value, str):
+        try:
+            return int(value) > 0
+        except ValueError:
+            return bool(value)
+    return bool(value)
