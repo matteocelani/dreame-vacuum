@@ -2716,10 +2716,19 @@ def DIID(property: DreameVacuumProperty, mapping=DreameVacuumPropertyMapping) ->
         return f"{mapping[property][siid]}.{mapping[property][piid]}"
 
 
-def DID(siid, piid) -> DreameVacuumProperty | None:
-    for prop in [prop for prop in DreameVacuumProperty]:
-        mapping = DreameVacuumPropertyMapping.get(prop)
-        if mapping is not None and siid == mapping["siid"] and piid == mapping["piid"]:
+def DID(
+    siid: int,
+    piid: int,
+    mapping: dict[DreameVacuumProperty, dict[str, int]] | None = None,
+) -> DreameVacuumProperty | None:
+    search_mapping = DreameVacuumPropertyMapping if mapping is None else mapping
+    for prop in DreameVacuumProperty:
+        entry = search_mapping.get(prop)
+        if (
+            entry is not None
+            and siid == entry.get("siid")
+            and piid == entry.get("piid")
+        ):
             return prop
     return None
 

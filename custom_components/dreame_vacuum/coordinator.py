@@ -30,6 +30,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from . import frontend
 from .dreame import DeviceException, DreameVacuumDevice, DreameVacuumProperty, VERSION
+from .xiaomi import resolve_family
 from .const import (
     DOMAIN,
     LOGGER,
@@ -171,6 +172,7 @@ class DreameVacuumDataUpdateCoordinator(DataUpdateCoordinator[DreameVacuumDevice
             entry.data.get(CONF_ACCOUNT_TYPE, "mi"),
             entry.data.get(CONF_DID),
             self._auth_key,
+            family_resolver=resolve_family,
         )
 
         self._device.listen(self._dust_collection_changed, DreameVacuumProperty.DUST_COLLECTION)

@@ -163,6 +163,7 @@ from .const import (
     MOP_PRESSURE_TO_NAME,
     MOP_TEMPERATURE_TO_NAME,
 )
+from .catalog import load_model_catalog
 from .device import DreameVacuumDevice
 from .protocol import DreameVacuumProtocol
 from .exceptions import (

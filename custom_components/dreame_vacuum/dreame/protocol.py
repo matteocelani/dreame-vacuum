@@ -2535,6 +2535,7 @@ class DreameVacuumProtocol:
         device_id: str = None,
         auth_key: str = None,
     ) -> None:
+        self.property_transport = None
         self.prefer_cloud = prefer_cloud
         self._connected = False
         self._mac = None
@@ -2631,6 +2632,13 @@ class DreameVacuumProtocol:
             self.device.send_async(callback, method, parameters=parameters, retry_count=retry_count)
 
     def send(self, method, parameters: Any = None, retry_count: int = 2, timeout=None) -> Any:
+        transport = self.property_transport
+        if transport is not None and method in ("get_properties", "set_properties"):
+            # None means the local attempt failed and the cloud path below still runs.
+            response = transport.send(method, parameters, retry_count)
+            if response is not None:
+                return response
+
         if (self.prefer_cloud or not self.device) and self.device_cloud:
             if not self.device_cloud.logged_in:
                 # Use different session for device cloud

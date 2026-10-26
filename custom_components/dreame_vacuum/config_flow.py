@@ -3,9 +3,6 @@
 from __future__ import annotations
 from typing import Any
 import re
-import zlib
-import base64
-import json
 import voluptuous as vol
 from collections.abc import Mapping
 from homeassistant.const import (
@@ -26,7 +23,14 @@ from homeassistant.config_entries import (
 )
 
 from . import frontend
-from .dreame import DreameVacuumProtocol, MAP_COLOR_SCHEME_LIST, MAP_ICON_SET_LIST, DEVICE_INFO, VERSION
+from .dreame import (
+    DEVICE_INFO,
+    MAP_COLOR_SCHEME_LIST,
+    MAP_ICON_SET_LIST,
+    VERSION,
+    DreameVacuumProtocol,
+    load_model_catalog,
+)
 from .const import (
     DOMAIN,
     CONF_NOTIFY,
@@ -773,14 +777,7 @@ class DreameVacuumFlowHandler(ConfigFlow, domain=DOMAIN):
 
     def load_devices(self):
         if self.models is None:
-            self.models = {}
-            device_info = json.loads(zlib.decompress(base64.b64decode(DEVICE_INFO), zlib.MAX_WBITS | 32))
-            for k in device_info[3]:
-                info = device_info[0][device_info[3][k]]
-                if info:
-                    self.models[
-                        f"{"xiaomi" if info[0] == 1 else ACCOUNT_TYPE_MOVA if info[0] == 2 else ACCOUNT_TYPE_TROUVER if info[0] == 3 else ACCOUNT_TYPE_DREAME}.vacuum.{k}"
-                    ] = info[1]
+            self.models = load_model_catalog(DEVICE_INFO)
 
     @property
     def login_schema(self):

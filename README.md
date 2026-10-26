@@ -30,7 +30,7 @@ Images and the map card are from the upstream project by [@Tasshack](https://git
 [xiaomi-vacuum](https://github.com/matteocelani/xiaomi-vacuum) is both of these things:
 
 - The Dreame-family integration. It continues to track and support **all** of [Tasshack/dreame-vacuum](https://github.com/Tasshack/dreame-vacuum): Dreame, MOVA, Mijia, and TROUVER robot vacuums and mops, including the accounts and local control that project already documents.
-- The Xiaomi direction. Support for Xiaomi devices beyond that family is the work this fork adds on top. It is **in progress**. No second device family is in the tree yet.
+- The Xiaomi direction. Xiaomi Robot Vacuum S20+ and Xiaomi Robot Vacuum X20 Max are supported as a sibling family. Further Xiaomi models are added the same way, one concrete device at a time.
 
 ## Repository name and Home Assistant domain
 
@@ -74,9 +74,14 @@ What the integration does today, for the Dreame, MOVA, Mijia, and TROUVER vacuum
 - Backend translations for 40 languages
 - Complete interactive map editor via embedded [Dreame Vacuum Card](https://dreame-vacuum-card.tasshack.com/)
 
-### Xiaomi devices (in progress)
+### Xiaomi devices
 
-No models beyond the Dreame, MOVA, Mijia, and TROUVER family are supported yet. This README does not list any. A second device family is added as a sibling package under this integration only in the pull request that adds a concrete device.
+Two Xiaomi models are supported in addition to the Dreame, MOVA, Mijia, and TROUVER family:
+
+- Xiaomi Robot Vacuum S20+ (`xiaomi.vacuum.b108gl`)
+- Xiaomi Robot Vacuum X20 Max (`xiaomi.vacuum.d109gl`)
+
+Basic control works for these two, including state, cleaning mode, and suction conversion. Segment cleaning, zones, and map management are not mapped. Other Xiaomi models are not supported yet.
 
 ## Documentation
 
