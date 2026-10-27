@@ -2634,10 +2634,16 @@ class DreameVacuumProtocol:
     def send(self, method, parameters: Any = None, retry_count: int = 2, timeout=None) -> Any:
         transport = self.property_transport
         if transport is not None and method in ("get_properties", "set_properties"):
-            # None means the local attempt failed and the cloud path below still runs.
             response = transport.send(method, parameters, retry_count)
             if response is not None:
                 return response
+            # Cloud set_properties is ignored by these robots, so a failed local write stops here.
+            auth_failed = bool(getattr(transport, "local_auth_failed", False))
+            if method == "set_properties" or auth_failed:
+                if method == "set_properties":
+                    _LOGGER.warning("Local miIO property write failed")
+                raise DeviceException(key="device_unavailable") from None
+            _LOGGER.debug("Local miIO property read failed")
 
         if (self.prefer_cloud or not self.device) and self.device_cloud:
             if not self.device_cloud.logged_in:

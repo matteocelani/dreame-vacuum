@@ -92,6 +92,14 @@ def _transport(
     return MiioPropertyTransport(_HOST, _TOKEN, socket_factory=build), sockets
 
 
+def _session(*after_probe: bytes | BaseException) -> list[bytes | BaseException]:
+    return [
+        _handshake(),
+        _response({"id": 1, "result": {"model": "xiaomi.vacuum.d109gl"}}),
+        *after_probe,
+    ]
+
+
 def test_invalid_token_is_rejected_without_echoing_it():
     for token in ("00", "zz" * 16, "0" * 31):
         try:
@@ -104,10 +112,12 @@ def test_invalid_token_is_rejected_without_echoing_it():
 
 def test_probe_records_device_id_and_omits_secrets_from_the_failure_log(caplog):
     caplog.set_level(logging.DEBUG)
-    transport, sockets = _transport([_handshake(9, 40)])
+    transport, sockets = _transport(
+        [_handshake(9, 40), _response({"id": 1, "result": {"model": "x"}})]
+    )
     assert transport.probe() is True
     assert transport._device_id == 9
-    assert transport._stamp == 40
+    assert transport._stamp == 120
     assert sockets[0].sent[0][0].startswith(bytes.fromhex("21310020"))
     assert sockets[0].sent[0][1] == (_HOST, _PORT)
     failed, _sockets = _transport([TimeoutError("timed out")])
@@ -120,12 +130,12 @@ def test_probe_records_device_id_and_omits_secrets_from_the_failure_log(caplog):
 
 def test_send_round_trips_a_property_request():
     transport, sockets = _transport(
-        [_handshake(), _response({"id": 1, "result": [{"code": 0}]})]
+        _session(_response({"id": 2, "result": [{"code": 0}]}))
     )
     result = transport.send("get_properties", [{"siid": 2, "piid": 1}], retry_count=0)
     assert result == [{"code": 0}]
     _token, key, iv = _keys()
-    packet = sockets[1].sent[0][0]
+    packet = sockets[2].sent[0][0]
     decrypted = AES.new(key, AES.MODE_CBC, iv).decrypt(packet[32:])
     decrypted = decrypted[: -decrypted[-1]]
     request = json.loads(decrypted)
@@ -136,41 +146,33 @@ def test_send_round_trips_a_property_request():
 
 def test_send_returns_none_when_the_robot_rejects_or_the_packet_is_unusable():
     rejected, _sockets = _transport(
-        [_handshake(), _response({"id": 1, "error": {"code": -1}})]
+        _session(_response({"id": 2, "error": {"code": -1}}))
     )
     assert rejected.send("set_properties", [], retry_count=0) is None
-    plain, _plain_sockets = _transport([_handshake(), _response({"id": 1, "value": 4})])
-    assert plain.send("get_properties", retry_count=0) == {"id": 1, "value": 4}
-    broken, _broken = _transport([_handshake(), b"\x00" * 16])
+    plain, _plain_sockets = _transport(_session(_response({"id": 2, "value": 4})))
+    assert plain.send("get_properties", retry_count=0) == {"id": 2, "value": 4}
+    broken, _broken = _transport(_session(b"\x00" * 16))
     assert broken.send("get_properties", retry_count=0) is None
-    bad_json, _bad_json = _transport(
-        [_handshake(), _cipher(b"not-json" + bytes([8] * 8))]
-    )
+    bad_json, _bad_json = _transport(_session(_cipher(b"not-json" + bytes([8] * 8))))
     assert bad_json.send("get_properties", retry_count=0) is None
-    odd_length, _odd = _transport([_handshake(), b"\x00" * 40])
+    odd_length, _odd = _transport(_session(b"\x00" * 40))
     assert odd_length.send("get_properties", retry_count=0) is None
-    not_object, _not_object = _transport([_handshake(), _response([])])
+    not_object, _not_object = _transport(_session(_response([])))
     assert not_object.send("get_properties", retry_count=0) is None
-    bad_pad, _bad_pad = _transport([_handshake(), _cipher(b"\x11" * 16)])
+    bad_pad, _bad_pad = _transport(_session(_cipher(b"\x11" * 16)))
     assert bad_pad.send("get_properties", retry_count=0) is None
-    mismatch, _mismatch = _transport(
-        [_handshake(), _cipher(b"\x00" * 14 + bytes((1, 2)))]
-    )
+    mismatch, _mismatch = _transport(_session(_cipher(b"\x00" * 14 + bytes((1, 2)))))
     assert mismatch.send("get_properties", retry_count=0) is None
-    timed_out, _timed = _transport([_handshake(), TimeoutError("timed out")])
+    timed_out, _timed = _transport(_session(TimeoutError("timed out")))
     assert timed_out.send("get_properties", retry_count=0) is None
 
 
-def test_send_retries_then_returns_none_without_a_handshake():
-    transport, sockets = _transport(
-        [
-            TimeoutError("timed out"),
-            TimeoutError("timed out"),
-            TimeoutError("timed out"),
-        ]
-    )
+def test_send_does_not_multiply_the_timeout_when_the_host_is_down():
+    transport, sockets = _transport([TimeoutError("timed out")])
     assert transport.send("get_properties", retry_count=2) is None
-    assert len(sockets) == 3
+    assert len(sockets) == 1
+    assert transport.send("get_properties", retry_count=2) is None
+    assert len(sockets) == 1
 
 
 def test_open_uses_the_five_second_property_timeout():
@@ -185,15 +187,61 @@ def test_open_uses_the_five_second_property_timeout():
     assert seen == [5.0]
 
 
-def test_default_socket_factory_opens_without_sending():
+def test_default_socket_factory_opens_without_sending(socket_enabled: None) -> None:
     transport = MiioPropertyTransport(_HOST, _TOKEN)
     datagram = transport._open()
     datagram.close()
 
 
 def test_request_id_wraps_after_the_protocol_maximum():
-    transport, _sockets = _transport([_response({"result": 1})])
+    transport, _sockets = _transport([_response({"id": 1, "result": 1})])
     transport._discovered = True
     transport._request_id = 9999
     assert transport.send("get_properties", retry_count=0) == 1
     assert transport._request_id == 1
+
+
+def _nul_response(payload: object) -> bytes:
+    token, key, iv = _keys()
+    raw = json.dumps(payload).encode() + b"\x00"
+    pad_length = 16 - (len(raw) % 16)
+    encrypted = AES.new(key, AES.MODE_CBC, iv).encrypt(
+        raw + bytes([pad_length] * pad_length)
+    )
+    header = struct.pack(">HH", 0x2131, 32 + len(encrypted)) + b"\x00\x00\x00\x00"
+    header += struct.pack(">II", 7, 120)
+    checksum = hashlib.md5(header + token + encrypted).digest()
+    return header + checksum + encrypted
+
+
+def test_send_strips_the_trailing_nul_python_miio_appends():
+    transport, _sockets = _transport(
+        _session(_nul_response({"id": 2, "result": [{"code": 0, "value": 4}]}))
+    )
+    assert transport.send("get_properties", retry_count=0) == [{"code": 0, "value": 4}]
+
+
+def test_send_rejects_a_response_whose_id_does_not_match():
+    transport, _sockets = _transport(_session(_response({"id": 99, "result": 1})))
+    assert transport.send("get_properties", retry_count=0) is None
+    assert transport.local_auth_failed is False
+
+
+def test_wrong_token_fails_the_probe_without_another_timeout():
+    token = bytes.fromhex("ff" * 16)
+    key = hashlib.md5(token).digest()
+    iv = hashlib.md5(key + token).digest()
+    raw = json.dumps({"id": 1, "result": {"model": "x"}}).encode()
+    pad_length = 16 - (len(raw) % 16)
+    encrypted = AES.new(key, AES.MODE_CBC, iv).encrypt(
+        raw + bytes([pad_length] * pad_length)
+    )
+    header = struct.pack(">HH", 0x2131, 32 + len(encrypted)) + b"\x00\x00\x00\x00"
+    header += struct.pack(">II", 7, 120)
+    checksum = hashlib.md5(header + token + encrypted).digest()
+    foreign = header + checksum + encrypted
+    transport, sockets = _transport([_handshake(), foreign])
+    assert transport.probe() is False
+    assert transport.local_auth_failed is True
+    assert transport.send("get_properties", retry_count=2) is None
+    assert len(sockets) == 2
