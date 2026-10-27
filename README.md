@@ -83,6 +83,8 @@ Two Xiaomi models are supported in addition to the Dreame, MOVA, Mijia, and TROU
 
 Basic control works for these two, including state, cleaning mode, and suction conversion. Segment cleaning, zones, and map management are not mapped. Other Xiaomi models are not supported yet.
 
+The manual check for a real S20+ or X20 Max is [hardware-test-s20-plus-x20-max.md](hardware-test-s20-plus-x20-max.md). Read-only checks come first. Map commands are out of that procedure.
+
 ## Documentation
 
 These pages are the upstream documentation for the support this fork tracks. They describe the current Dreame-family integration.
