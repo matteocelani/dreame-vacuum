@@ -14,6 +14,9 @@ MODEL_X20_MAX: Final = "xiaomi.vacuum.d109gl"
 _ONE_INDEXED_PROPERTIES: Final[frozenset[str]] = frozenset(
     {"CLEANING_MODE", "SUCTION_LEVEL"}
 )
+_CHARGING: Final = 1
+_NOT_CHARGING: Final = 2
+_NOT_CHARGEABLE: Final = 3
 
 
 class _StoredState(IntEnum):
@@ -48,13 +51,6 @@ class _StoredTask(IntEnum):
     SPOT_CLEANING = 4
     FAST_MAPPING = 5
     AUTO_CLEANING_PAUSED = 6
-
-
-class _StoredCharging(IntEnum):
-    """Dreame charging-status codes that mean the robot is docked."""
-
-    CHARGING = 1
-    CHARGING_COMPLETED = 3
 
 
 class _S20PlusState(IntEnum):
@@ -123,51 +119,48 @@ class _X20MaxTask(IntEnum):
 
 
 _S20_PLUS_PROPERTIES: Final[dict[str, dict[str, int]]] = {
+    "STATE": {"siid": 2, "piid": 1},
+    "ERROR": {"siid": 2, "piid": 2},
+    "CLEANING_MODE": {"siid": 2, "piid": 3},
     "TASK_STATUS": {"siid": 2, "piid": 4},
-    "CLEANING_TIME": {"siid": 2, "piid": 6},
     "CLEANED_AREA": {"siid": 2, "piid": 5},
+    "CLEANING_TIME": {"siid": 2, "piid": 6},
     "SUCTION_LEVEL": {"siid": 2, "piid": 8},
     "WATER_VOLUME": {"siid": 2, "piid": 9},
-    "WATER_TANK": {"siid": 6, "piid": 1},
-    "CLEANING_MODE": {"siid": 2, "piid": 3},
-    "CARPET_BOOST": {"siid": 6, "piid": 6},
     "CARPET_CLEANING": {"siid": 2, "piid": 20},
-    "CHILD_LOCK": {"siid": 5, "piid": 1},
-    "RESUME_CLEANING": {"siid": 6, "piid": 11},
-    "DND": {"siid": 6, "piid": 3},
-    "MAP_DATA": {"siid": 7, "piid": 1},
-    "OBJECT_NAME": {"siid": 7, "piid": 1},
-    "OLD_MAP_DATA": {"siid": 7, "piid": 2},
-    "MAP_LIST": {"siid": 7, "piid": 3},
-    "MULTI_FLOOR_MAP": {"siid": 7, "piid": 5},
-    "MAP_SAVING": {"siid": 7, "piid": 9},
+    "BATTERY_LEVEL": {"siid": 3, "piid": 1},
+    "CHARGING_STATUS": {"siid": 3, "piid": 2},
     "VOLUME": {"siid": 4, "piid": 2},
+    "CHILD_LOCK": {"siid": 5, "piid": 1},
+    "WATER_TANK": {"siid": 6, "piid": 1},
+    "DND": {"siid": 6, "piid": 3},
+    "SCHEDULE": {"siid": 6, "piid": 5},
+    "CARPET_BOOST": {"siid": 6, "piid": 6},
+    "RELOCATION_STATUS": {"siid": 6, "piid": 9},
+    "RESUME_CLEANING": {"siid": 6, "piid": 11},
+    "FAULTS": {"siid": 6, "piid": 13},
     "MAIN_BRUSH_TIME_LEFT": {"siid": 8, "piid": 1},
     "MAIN_BRUSH_LEFT": {"siid": 8, "piid": 2},
     "SIDE_BRUSH_TIME_LEFT": {"siid": 9, "piid": 1},
     "SIDE_BRUSH_LEFT": {"siid": 9, "piid": 2},
     "FILTER_TIME_LEFT": {"siid": 10, "piid": 1},
     "FILTER_LEFT": {"siid": 10, "piid": 2},
-    "MOP_PAD_LEFT": {"siid": 11, "piid": 2},
     "MOP_PAD_TIME_LEFT": {"siid": 11, "piid": 1},
-    "SCHEDULE": {"siid": 6, "piid": 5},
-    "RELOCATION_STATUS": {"siid": 6, "piid": 9},
-    "CLEANING_PROPERTIES": {"siid": 6, "piid": 12},
-    "FAULTS": {"siid": 6, "piid": 13},
+    "MOP_PAD_LEFT": {"siid": 11, "piid": 2},
 }
 
 _S20_PLUS_ACTIONS: Final[dict[str, dict[str, int]]] = {
+    "START": {"siid": 2, "aiid": 1},
     "STOP": {"siid": 2, "aiid": 2},
     "PAUSE": {"siid": 2, "aiid": 6},
-    "START_CUSTOM": {"siid": 6, "aiid": 7},
+    "RESUME": {"siid": 6, "aiid": 1},
+    "CHARGE": {"siid": 3, "aiid": 1},
     "LOCATE": {"siid": 6, "aiid": 6},
+    "START_CUSTOM": {"siid": 6, "aiid": 7},
     "RESET_MAIN_BRUSH": {"siid": 8, "aiid": 1},
     "RESET_SIDE_BRUSH": {"siid": 9, "aiid": 1},
     "RESET_FILTER": {"siid": 10, "aiid": 1},
-    # siid 6 aiid 1 is start-vacuum on this model, not a map request.
-    "REQUEST_MAP": {},
-    "UPDATE_MAP_DATA": {},
-    "WIFI_MAP": {},
+    "RESET_MOP_PAD": {"siid": 11, "aiid": 1},
 }
 
 _X20_MAX_PROPERTIES: Final[dict[str, dict[str, int]]] = {
@@ -180,44 +173,45 @@ _X20_MAX_PROPERTIES: Final[dict[str, dict[str, int]]] = {
     "SUCTION_LEVEL": {"siid": 2, "piid": 9},
     "WATER_VOLUME": {"siid": 2, "piid": 10},
     "WATER_TANK": {"siid": 2, "piid": 11},
+    "SCHEDULE": {"siid": 2, "piid": 19},
     "CARPET_BOOST": {"siid": 2, "piid": 20},
-    "CARPET_CLEANING": {"siid": 2, "piid": 73},
     "RESUME_CLEANING": {"siid": 2, "piid": 23},
+    "RELOCATION_STATUS": {"siid": 2, "piid": 26},
+    "AUTO_DUST_COLLECTING": {"siid": 2, "piid": 32},
+    "AUTO_EMPTY_FREQUENCY": {"siid": 2, "piid": 33},
+    "CLEANING_PROPERTIES": {"siid": 2, "piid": 40},
+    "FAULTS": {"siid": 2, "piid": 66},
+    "CARPET_CLEANING": {"siid": 2, "piid": 73},
+    "BATTERY_LEVEL": {"siid": 3, "piid": 1},
+    "CHARGING_STATUS": {"siid": 3, "piid": 2},
     "VOLUME": {"siid": 4, "piid": 2},
     "CHILD_LOCK": {"siid": 5, "piid": 1},
-    "MAP_DATA": {"siid": 10, "piid": 1},
-    "OBJECT_NAME": {"siid": 10, "piid": 1},
-    "OLD_MAP_DATA": {"siid": 10, "piid": 2},
-    "MAP_LIST": {"siid": 10, "piid": 5},
-    "MULTI_FLOOR_MAP": {"siid": 10, "piid": 10},
-    "MAP_SAVING": {"siid": 10, "piid": 11},
+    "MOP_PAD_LEFT": {"siid": 9, "piid": 1},
+    "MOP_PAD_TIME_LEFT": {"siid": 9, "piid": 2},
     "DND": {"siid": 11, "piid": 1},
-    "SCHEDULE": {"siid": 2, "piid": 19},
     "MAIN_BRUSH_LEFT": {"siid": 12, "piid": 1},
     "MAIN_BRUSH_TIME_LEFT": {"siid": 12, "piid": 2},
     "SIDE_BRUSH_LEFT": {"siid": 13, "piid": 1},
     "SIDE_BRUSH_TIME_LEFT": {"siid": 13, "piid": 2},
     "FILTER_LEFT": {"siid": 14, "piid": 1},
     "FILTER_TIME_LEFT": {"siid": 14, "piid": 2},
-    "MOP_PAD_LEFT": {"siid": 9, "piid": 1},
-    "MOP_PAD_TIME_LEFT": {"siid": 9, "piid": 2},
-    "RELOCATION_STATUS": {"siid": 2, "piid": 26},
-    "FAULTS": {"siid": 2, "piid": 66},
-    "CLEANING_PROPERTIES": {"siid": 2, "piid": 40},
+    "DETERGENT_LEFT": {"siid": 18, "piid": 1},
 }
 
 _X20_MAX_ACTIONS: Final[dict[str, dict[str, int]]] = {
+    "START": {"siid": 2, "aiid": 1},
     "STOP": {"siid": 2, "aiid": 2},
     "PAUSE": {"siid": 2, "aiid": 7},
+    "RESUME": {"siid": 2, "aiid": 8},
     "START_CUSTOM": {"siid": 2, "aiid": 9},
+    "START_AUTO_EMPTY": {"siid": 2, "aiid": 18},
+    "CHARGE": {"siid": 3, "aiid": 1},
     "LOCATE": {"siid": 6, "aiid": 1},
+    "RESET_MOP_PAD": {"siid": 9, "aiid": 1},
     "RESET_MAIN_BRUSH": {"siid": 12, "aiid": 1},
     "RESET_SIDE_BRUSH": {"siid": 13, "aiid": 1},
     "RESET_FILTER": {"siid": 14, "aiid": 1},
-    "RESET_MOP_PAD": {"siid": 9, "aiid": 1},
-    "REQUEST_MAP": {"siid": 10, "aiid": 7},
-    "UPDATE_MAP_DATA": {},
-    "WIFI_MAP": {},
+    "RESET_DETERGENT": {"siid": 18, "aiid": 1},
 }
 
 _DOCKED_TASK_STATES: Final[frozenset[int]] = frozenset(
@@ -268,6 +262,8 @@ class XiaomiModel:
         if property_name == "TASK_STATUS":
             mapped = self.task_by_wire.get(number)
             return number if mapped is None else mapped
+        if property_name == "CHARGING_STATUS" and number == _NOT_CHARGEABLE:
+            return _NOT_CHARGING
         if property_name in _ONE_INDEXED_PROPERTIES and number > 0:
             return number - 1
         return number
@@ -283,10 +279,7 @@ class XiaomiModel:
     def task_status_code(self, state: object, charging: object) -> int:
         """Derive task status from state, because sweep-type stays set while docked."""
         charging_code = _as_int(charging)
-        if charging_code in (
-            int(_StoredCharging.CHARGING),
-            int(_StoredCharging.CHARGING_COMPLETED),
-        ):
+        if charging_code == _CHARGING:
             return int(_StoredTask.COMPLETED)
         state_code = _as_int(state)
         if state_code in _DOCKED_TASK_STATES:

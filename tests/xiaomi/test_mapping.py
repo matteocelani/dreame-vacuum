@@ -44,9 +44,12 @@ def test_s20_plus_state_and_task_values_convert_to_dreame_codes():
         == DreameVacuumTaskStatus.SEGMENT_CLEANING
     )
     assert "STATUS" not in family.property_overrides
-    assert "STATE" not in family.property_overrides
-    assert family.action_overrides["REQUEST_MAP"] == {}
+    assert family.property_overrides["STATE"] == {"siid": 2, "piid": 1}
+    assert family.action_overrides["RESUME"] == {"siid": 6, "aiid": 1}
+    assert "REQUEST_MAP" not in family.action_overrides
     assert family.property_overrides["CLEANING_MODE"] == {"siid": 2, "piid": 3}
+    assert family.convert_incoming("CHARGING_STATUS", 3) == 2
+    assert family.convert_incoming("CHARGING_STATUS", 1) == 1
 
 
 def test_x20_max_state_and_actions_follow_its_spec():
@@ -63,8 +66,11 @@ def test_x20_max_state_and_actions_follow_its_spec():
     )
     assert family.property_overrides["STATE"] == {"siid": 2, "piid": 2}
     assert family.property_overrides["ERROR"] == {"siid": 2, "piid": 3}
-    assert family.action_overrides["REQUEST_MAP"] == {"siid": 10, "aiid": 7}
-    assert family.action_overrides["WIFI_MAP"] == {}
+    assert family.action_overrides["RESUME"] == {"siid": 2, "aiid": 8}
+    assert family.action_overrides["START_AUTO_EMPTY"] == {"siid": 2, "aiid": 18}
+    assert family.action_overrides["RESET_DETERGENT"] == {"siid": 18, "aiid": 1}
+    assert "REQUEST_MAP" not in family.action_overrides
+    assert "RESET_SILVER_ION" not in family.action_overrides
     assert "STATUS" not in family.property_overrides
 
 
@@ -90,7 +96,9 @@ def test_task_status_comes_from_state_when_sweep_type_would_stay_set():
     assert family is not None
     sweeping = int(DreameVacuumState.SWEEPING)
     assert family.task_status_code(sweeping, 1) == int(DreameVacuumTaskStatus.COMPLETED)
-    assert family.task_status_code(sweeping, 3) == int(DreameVacuumTaskStatus.COMPLETED)
+    assert family.task_status_code(sweeping, 3) == int(
+        DreameVacuumTaskStatus.AUTO_CLEANING
+    )
     assert family.task_status_code(sweeping, None) == int(
         DreameVacuumTaskStatus.AUTO_CLEANING
     )

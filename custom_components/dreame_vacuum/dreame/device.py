@@ -4070,8 +4070,10 @@ class DreameVacuumDevice:
     def set_volume(self, volume: int) -> bool:
         """Set volume."""
         result = self.set_property(DreameVacuumProperty.VOLUME, volume)
-        if result:
-            self.call_action(DreameVacuumAction.PLAY_SOUND)
+        if result and DreameVacuumAction.PLAY_SOUND in self.action_mapping:
+            sound = self.action_mapping[DreameVacuumAction.PLAY_SOUND]
+            if "siid" in sound and "aiid" in sound:
+                self.call_action(DreameVacuumAction.PLAY_SOUND)
         return result
 
     def set_suction_level(self, suction_level: int) -> bool:
@@ -4516,6 +4518,7 @@ class DreameVacuumDevice:
         if current_map and not self.status.started:
             self._map_manager.editor.clear_path()
 
+        resume_paused = bool(self.status.paused)
         if not self.status.started:
             self._update_status(DreameVacuumTaskStatus.AUTO_CLEANING, DreameVacuumStatus.CLEANING)
             self._update_property(DreameVacuumProperty.CLEANING_TIME, 0)
@@ -4580,7 +4583,12 @@ class DreameVacuumDevice:
             if task_type in status_map:
                 self._update_property(DreameVacuumProperty.TASK_TYPE, status_map[task_type])
 
-        response = self.call_action(DreameVacuumAction.START)
+        action = DreameVacuumAction.START
+        if resume_paused:
+            resume = self.action_mapping.get(DreameVacuumAction.RESUME)
+            if resume is not None and "siid" in resume and "aiid" in resume:
+                action = DreameVacuumAction.RESUME
+        response = self.call_action(action)
         if not response or response.get("code") != 0:
             if current_map:
                 self._map_manager.editor.set_map(current_map)
@@ -6441,6 +6449,11 @@ class DreameVacuumDevice:
 
     def update_map_data_async(self, parameters: dict[str, Any] | list[dict[str, Any]], cb=None):
         """Send update map action to the device."""
+        mapping = self.action_mapping.get(DreameVacuumAction.UPDATE_MAP_DATA)
+        if not mapping or "siid" not in mapping or "aiid" not in mapping:
+            raise InvalidActionException(
+                key="unknown_action", action=DreameVacuumAction.UPDATE_MAP_DATA
+            )
         if self._map_manager:
             self._map_manager.schedule_update(10)
             self._property_changed(False)

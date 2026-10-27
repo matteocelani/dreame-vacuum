@@ -284,7 +284,9 @@ class DreameMapVacuumMapManager:
         if action_mapping is None:
             mapping = DreameVacuumActionMapping[action]
         else:
-            mapping = action_mapping.get(action, DreameVacuumActionMapping[action])
+            mapping = action_mapping.get(action)
+            if mapping is None:
+                return None
         if "siid" not in mapping or "aiid" not in mapping:
             return None
         return mapping

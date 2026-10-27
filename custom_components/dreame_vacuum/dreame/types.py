@@ -1589,6 +1589,7 @@ class DreameVacuumAction(IntEnum):
     STREAM_PROPERTY = 43
     STREAM_CODE = 44
     VIDEO_VENDOR = 45
+    RESUME = 46
 
 
 # Dreame Vacuum property mapping

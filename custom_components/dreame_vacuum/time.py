@@ -15,12 +15,27 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from .dreame import EntityUnavailableException, InvalidActionException, UnavailableException
+from .dreame import (
+    DreameVacuumProperty,
+    EntityUnavailableException,
+    InvalidActionException,
+    UnavailableException,
+)
 
 from .const import DOMAIN
 
 from .coordinator import DreameVacuumDataUpdateCoordinator
 from .entity import DreameVacuumEntity, DreameVacuumEntityDescription, remove_entities
+
+
+def _clock_value(value: object) -> time | None:
+    """Return a clock time only when the device sent an hour:minute string."""
+    if not isinstance(value, str):
+        return None
+    values = value.split(":")
+    if len(values) < 2:
+        return None
+    return time(int(values[0]), int(values[1]), 0)
 
 
 @dataclass
@@ -36,28 +51,46 @@ TIMES: tuple[DreameVacuumTimeEntityDescription, ...] = (
         name="DnD Start",
         icon="mdi:clock-start",
         entity_category=EntityCategory.CONFIG,
-        exists_fn=lambda description, device: device.capability.dnd,
+        exists_fn=lambda _description, device: bool(
+            device.capability.dnd
+            and (
+                DreameVacuumProperty.DND_START in device.property_mapping
+                or DreameVacuumProperty.DND_TASK in device.property_mapping
+            )
+        ),
     ),
     DreameVacuumTimeEntityDescription(
         key="dnd_end",
         name="DnD End",
         icon="mdi:clock-end",
         entity_category=EntityCategory.CONFIG,
-        exists_fn=lambda description, device: device.capability.dnd,
+        exists_fn=lambda _description, device: bool(
+            device.capability.dnd
+            and (
+                DreameVacuumProperty.DND_END in device.property_mapping
+                or DreameVacuumProperty.DND_TASK in device.property_mapping
+            )
+        ),
     ),
     DreameVacuumTimeEntityDescription(
         key="off_peak_charging_start",
         name="Off-Peak Charging Start",
         icon="mdi:battery-lock-open",
         entity_category=EntityCategory.CONFIG,
-        exists_fn=lambda description, device: device.capability.off_peak_charging,
+        exists_fn=lambda _description, device: bool(
+            device.capability.off_peak_charging
+            and DreameVacuumProperty.OFF_PEAK_CHARGING in device.property_mapping
+        ),
     ),
     DreameVacuumTimeEntityDescription(
         key="off_peak_charging_end",
         name="Off-Peak Charging End",
         icon="mdi:battery-lock",
         entity_category=EntityCategory.CONFIG,
-        exists_fn=lambda description, device: device.capability.off_peak_charging,
+        exists_fn=lambda _description, device: bool(
+            device.capability.off_peak_charging
+            and DreameVacuumProperty.OFF_PEAK_CHARGING in device.property_mapping
+        ),
     ),
 )
 
@@ -98,20 +131,11 @@ class DreameVacuumTimeEntity(DreameVacuumEntity, TimeEntity):
         super().__init__(coordinator, description)
         self._generate_entity_id(ENTITY_ID_FORMAT)
         value = super().native_value
-        if value:
-            values = value.split(":")
-            self._attr_native_value = time(int(values[0]), int(values[1]), 0)
-        else:
-            self._attr_native_value = None
+        self._attr_native_value = _clock_value(value)
 
     @callback
     def _handle_coordinator_update(self) -> None:
-        value = super().native_value
-        if value:
-            values = value.split(":")
-            self._attr_native_value = time(int(values[0]), int(values[1]), 0)
-        else:
-            self._attr_native_value = None
+        self._attr_native_value = _clock_value(super().native_value)
         super()._handle_coordinator_update()
 
     async def async_set_value(self, value: time) -> None:
