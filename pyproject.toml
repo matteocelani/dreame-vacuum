@@ -73,5 +73,7 @@ testpaths = ["tests"]
 addopts = "-q --strict-markers --strict-config"
 markers = [
     "ha: tests that import homeassistant and need the custom-component harness",
+    "enable_socket: allow a test to open a loopback socket",
+    "allow_hosts: hosts a loopback test may contact",
 ]
 asyncio_mode = "auto"
