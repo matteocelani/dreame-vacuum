@@ -1,0 +1,35 @@
+name: Xiaomi tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  xiaomi:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install \
+            ruff \
+            pytest \
+            pytest-asyncio \
+            pycryptodome \
+            python-miio \
+            numpy \
+            pillow \
+            py-mini-racer \
+            paho-mqtt \
+            "pytest-homeassistant-custom-component==0.13.205"
+      - name: Ruff on files this change owns
+        run: |
+          ruff check tests custom_components/dreame_vacuum/xiaomi custom_components/dreame_vacuum/dreame/family_codec.py
+          ruff format --check tests custom_components/dreame_vacuum/xiaomi custom_components/dreame_vacuum/dreame/family_codec.py
+      - name: Pytest
+        run: python -m pytest
