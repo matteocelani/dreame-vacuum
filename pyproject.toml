@@ -1,0 +1,79 @@
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+src = ["custom_components", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "A",
+    "ANN",
+    "ARG",
+    "ASYNC",
+    "B",
+    "BLE",
+    "C4",
+    "E",
+    "F",
+    "I",
+    "N",
+    "PIE",
+    "PTH",
+    "RET",
+    "RUF",
+    "SIM",
+    "T20",
+    "TID",
+    "UP",
+]
+ignore = [
+    "E501",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["ANN", "ARG"]
+
+[tool.ruff.lint.flake8-annotations]
+mypy-init-return = true
+suppress-dummy-args = true
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "parents"
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"typing.Any".msg = "Any is forbidden. Parse untyped data at the boundary into a real type."
+"typing.Dict".msg = "Use dict[]."
+"typing.List".msg = "Use list[]."
+"typing.Optional".msg = "Use X | None."
+"typing.Tuple".msg = "Use tuple[]."
+"typing.Union".msg = "Use X | Y."
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+force-sort-within-sections = true
+section-order = [
+    "future",
+    "standard-library",
+    "third-party",
+    "homeassistant",
+    "first-party",
+    "local-folder",
+]
+
+[tool.ruff.lint.isort.sections]
+homeassistant = ["homeassistant"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+docstring-code-format = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers --strict-config"
+markers = [
+    "ha: tests that import homeassistant and need the custom-component harness",
+    "enable_socket: allow a test to open a loopback socket",
+    "allow_hosts: hosts a loopback test may contact",
+]
+asyncio_mode = "auto"

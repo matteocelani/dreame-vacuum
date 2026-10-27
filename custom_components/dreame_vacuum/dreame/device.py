@@ -6,6 +6,7 @@ import re
 import copy
 import zlib
 import base64
+from collections.abc import Callable
 from datetime import datetime
 from random import randrange
 from typing import Any, Optional
@@ -310,6 +311,7 @@ from .exceptions import (
     NotSupportedException,
     UnavailableException,
 )
+from .family_codec import apply_family
 from .protocol import DreameVacuumProtocol
 from .map import DreameMapVacuumMapManager, DreameVacuumMapDecoder
 
@@ -327,17 +329,20 @@ class DreameVacuumDevice:
         name: str,
         host: str,
         token: str,
-        mac: str = None,
-        username: str = None,
-        password: str = None,
-        country: str = None,
+        mac: str | None = None,
+        username: str | None = None,
+        password: str | None = None,
+        country: str | None = None,
         prefer_cloud: bool = False,
         account_type: str = "mi",
-        device_id: str = None,
-        auth_key: str = None,
+        device_id: str | None = None,
+        auth_key: str | None = None,
+        family_resolver: Callable[[str], object | None] | None = None,
     ) -> None:
         # Used for easy filtering the device from cloud device list and generating unique ids
         self.info = None
+        self._family_resolver = family_resolver
+        self._property_codec = None
         self.mac: str = None
         self.token: str = None  # Local api token
         self.host: str = None  # IP address or host name of the device
@@ -554,7 +559,7 @@ class DreameVacuumDevice:
                 properties = []
                 map_properties = []
                 for param in params:
-                    prop = DID(param["siid"], param["piid"])
+                    prop = DID(param["siid"], param["piid"], self.property_mapping)
                     if prop is not None:
                         if prop in self._default_properties:
                             param["did"] = str(prop.value)
@@ -578,6 +583,7 @@ class DreameVacuumDevice:
                 info = DreameVacuumDeviceInfo(params)
                 if info != self.info:
                     self.info = info
+                    self._apply_reported_family()
                     self._last_change = time.time()
                     if self._ready:
                         self._property_changed()
@@ -590,7 +596,7 @@ class DreameVacuumDevice:
                 continue
             did = int(prop["did"])
             if did not in DreameVacuumProperty._value2member_map_:
-                did = DID(prop["siid"], prop["piid"])
+                did = DID(prop["siid"], prop["piid"], self.property_mapping)
                 if did is None:
                     continue
                 did = int(did.value)
@@ -598,6 +604,10 @@ class DreameVacuumDevice:
                 continue
             if prop["code"] == 0 and "value" in prop:
                 value = prop["value"]
+                if self._property_codec is not None:
+                    value = self._property_codec.convert_incoming(
+                        DreameVacuumProperty(did).name, value
+                    )
                 if did in self._dirty_data:
                     if (
                         self._dirty_data[did].value != value
@@ -1029,7 +1039,20 @@ class DreameVacuumDevice:
     def _cleaning_mode_changed(self, previous_cleaning_mode: Any = None) -> None:
         value = self.get_property(DreameVacuumProperty.CLEANING_MODE)
         new_cleaning_mode = None
-        if self.capability.self_wash_base or self.capability.wetness or self.capability.custom_mopping_route:
+        codec = self._property_codec
+        if codec is not None and codec.is_simple_cleaning_mode:
+            if (
+                value is not None
+                and value in DreameVacuumCleaningMode._value2member_map_
+            ):
+                new_cleaning_mode = DreameVacuumCleaningMode(value)
+            else:
+                new_cleaning_mode = DreameVacuumCleaningMode.UNKNOWN
+        elif (
+            self.capability.self_wash_base
+            or self.capability.wetness
+            or self.capability.custom_mopping_route
+        ):
             values = DreameVacuumDevice.split_group_value(value, self.capability.mop_pad_lifting)
             if values and len(values) == 3:
                 if (
@@ -1682,7 +1705,7 @@ class DreameVacuumDevice:
     def _dnd_task_changed(self, previous_dnd_task: Any = None) -> None:
         dnd_tasks = self.get_property(DreameVacuumProperty.DND_TASK)
         dnd_list = []
-        if dnd_tasks and dnd_tasks != "":
+        if dnd_tasks and isinstance(dnd_tasks, str) and dnd_tasks != "":
             dnd_list = [
                 DNDTask(task.get("id"), task.get("en"), task.get("st"), task.get("et"), task.get("wk"), task.get("ss"))
                 for task in json.loads(dnd_tasks)
@@ -1700,7 +1723,7 @@ class DreameVacuumDevice:
         schedule = self.get_property(DreameVacuumProperty.SCHEDULE)
         schedule_list = []
 
-        if schedule and schedule != "":
+        if schedule and isinstance(schedule, str) and schedule != "":
             tasks = schedule.split(";")
             for task in tasks:
                 if "-" in task:
@@ -1733,7 +1756,12 @@ class DreameVacuumDevice:
 
     def _stream_status_changed(self, previous_stream_status: Any = None) -> None:
         stream_status = self.get_property(DreameVacuumProperty.STREAM_STATUS)
-        if stream_status and stream_status != "" and stream_status != "null":
+        if (
+            stream_status
+            and isinstance(stream_status, str)
+            and stream_status != ""
+            and stream_status != "null"
+        ):
             stream_status = json.loads(stream_status)
             if stream_status and stream_status.get("result") == 0:
                 self.status.stream_session = stream_status.get("session")
@@ -1798,7 +1826,11 @@ class DreameVacuumDevice:
 
     def _off_peak_charging_changed(self, previous_off_peak_charging: Any = None) -> None:
         off_peak_charging = self.get_property(DreameVacuumProperty.OFF_PEAK_CHARGING)
-        if off_peak_charging and off_peak_charging != "":
+        if (
+            off_peak_charging
+            and isinstance(off_peak_charging, str)
+            and off_peak_charging != ""
+        ):
             self.status.off_peak_charging_config = json.loads(off_peak_charging)
 
     def _suction_level_changed(self, previous_suction_level: Any = None) -> None:
@@ -1878,7 +1910,13 @@ class DreameVacuumDevice:
                 start = None
                 max = 30
                 total = self.get_property(DreameVacuumProperty.CLEANING_COUNT)
-                if total > 0:
+                # A missing count is None, and MIoT may send the count as a string.
+                if isinstance(total, str):
+                    try:
+                        total = int(total)
+                    except ValueError:
+                        total = None
+                if total is not None and int(total) > 0:
                     start = self.get_property(DreameVacuumProperty.FIRST_CLEANING_DATE)
 
                 if start is None:
@@ -2125,6 +2163,9 @@ class DreameVacuumDevice:
             self._keep_alive_timer.start(25, self._keep_alive_task)
 
     def _update_cleaning_mode(self, cleaning_mode) -> int:
+        codec = self._property_codec
+        if codec is not None and codec.is_simple_cleaning_mode:
+            return self.set_property(DreameVacuumProperty.CLEANING_MODE, cleaning_mode)
         if self.capability.self_wash_base:
             values = DreameVacuumDevice.split_group_value(
                 self.get_property(DreameVacuumProperty.CLEANING_MODE),
@@ -2469,6 +2510,17 @@ class DreameVacuumDevice:
         if values and len(values) == 3:
             return ((((0 ^ values[2]) << 8) ^ values[1]) << 8) ^ values[0]
 
+    def _apply_reported_family(self) -> None:
+        if self._family_resolver is None or self.info is None or not self.info.model:
+            return
+        codec = self._property_codec
+        if codec is not None and codec.model == self.info.model:
+            return
+        family = self._family_resolver(self.info.model)
+        if family is None:
+            return
+        apply_family(self, family)
+
     def connect_device(self) -> None:
         """Connect to the device api."""
         _LOGGER.info("Connecting to device")
@@ -2477,6 +2529,7 @@ class DreameVacuumDevice:
             self.info = DreameVacuumDeviceInfo(info)
             if self.mac is None:
                 self.mac = self.info.mac_address
+            self._apply_reported_family()
             _LOGGER.info(
                 "Connected to device: %s %s",
                 self.info.model,
@@ -2985,7 +3038,12 @@ class DreameVacuumDevice:
 
             try:
                 mapping = self.property_mapping[prop]
-                result = self._protocol.set_property(mapping["siid"], mapping["piid"], value)
+                wire_value = value
+                if self._property_codec is not None:
+                    wire_value = self._property_codec.convert_outgoing(prop.name, value)
+                result = self._protocol.set_property(
+                    mapping["siid"], mapping["piid"], wire_value
+                )
                 if result is None or result[0]["code"] != 0:
                     _LOGGER.error(
                         "Property not updated: %s: %s -> %s",
@@ -4012,8 +4070,10 @@ class DreameVacuumDevice:
     def set_volume(self, volume: int) -> bool:
         """Set volume."""
         result = self.set_property(DreameVacuumProperty.VOLUME, volume)
-        if result:
-            self.call_action(DreameVacuumAction.PLAY_SOUND)
+        if result and DreameVacuumAction.PLAY_SOUND in self.action_mapping:
+            sound = self.action_mapping[DreameVacuumAction.PLAY_SOUND]
+            if "siid" in sound and "aiid" in sound:
+                self.call_action(DreameVacuumAction.PLAY_SOUND)
         return result
 
     def set_suction_level(self, suction_level: int) -> bool:
@@ -4458,6 +4518,7 @@ class DreameVacuumDevice:
         if current_map and not self.status.started:
             self._map_manager.editor.clear_path()
 
+        resume_paused = bool(self.status.paused)
         if not self.status.started:
             self._update_status(DreameVacuumTaskStatus.AUTO_CLEANING, DreameVacuumStatus.CLEANING)
             self._update_property(DreameVacuumProperty.CLEANING_TIME, 0)
@@ -4522,7 +4583,12 @@ class DreameVacuumDevice:
             if task_type in status_map:
                 self._update_property(DreameVacuumProperty.TASK_TYPE, status_map[task_type])
 
-        response = self.call_action(DreameVacuumAction.START)
+        action = DreameVacuumAction.START
+        if resume_paused:
+            resume = self.action_mapping.get(DreameVacuumAction.RESUME)
+            if resume is not None and "siid" in resume and "aiid" in resume:
+                action = DreameVacuumAction.RESUME
+        response = self.call_action(action)
         if not response or response.get("code") != 0:
             if current_map:
                 self._map_manager.editor.set_map(current_map)
@@ -6383,6 +6449,11 @@ class DreameVacuumDevice:
 
     def update_map_data_async(self, parameters: dict[str, Any] | list[dict[str, Any]], cb=None):
         """Send update map action to the device."""
+        mapping = self.action_mapping.get(DreameVacuumAction.UPDATE_MAP_DATA)
+        if not mapping or "siid" not in mapping or "aiid" not in mapping:
+            raise InvalidActionException(
+                key="unknown_action", action=DreameVacuumAction.UPDATE_MAP_DATA
+            )
         if self._map_manager:
             self._map_manager.schedule_update(10)
             self._property_changed(False)
@@ -8131,6 +8202,14 @@ class DreameVacuumDeviceStatus:
     @property
     def task_status(self) -> DreameVacuumTaskStatus:
         """Return task status of the device."""
+        codec = self._device._property_codec
+        if codec is not None:
+            code = codec.task_status_code(
+                self._get_property(DreameVacuumProperty.STATE),
+                self._get_property(DreameVacuumProperty.CHARGING_STATUS),
+            )
+            if code is not None and code in DreameVacuumTaskStatus._value2member_map_:
+                return DreameVacuumTaskStatus(code)
         value = self._get_property(DreameVacuumProperty.TASK_STATUS)
         if value is not None and value in DreameVacuumTaskStatus._value2member_map_:
             if self.go_to_zone:
@@ -8341,6 +8420,21 @@ class DreameVacuumDeviceStatus:
                     ## Device will report idle when charging is completed and vacuum card will display return to dock icon even when robot is docked
                     if self.charging_status is DreameVacuumChargingStatus.CHARGING_COMPLETED:
                         return DreameVacuumState.CHARGING_COMPLETED
+            elif (
+                self._device._property_codec is not None
+                and self._device._property_codec.should_correct_docked_activity
+                and not self.started
+                and self.docked
+                and not self.returning
+            ):
+                if self.charging:
+                    return DreameVacuumState.CHARGING
+                if (
+                    self.charging_status
+                    is DreameVacuumChargingStatus.CHARGING_COMPLETED
+                ):
+                    return DreameVacuumState.CHARGING_COMPLETED
+                return DreameVacuumState.IDLE
             return vacuum_state
 
         if value is not None:
@@ -9380,7 +9474,14 @@ class DreameVacuumDeviceStatus:
     @property
     def cleaning_paused(self) -> bool:
         """Returns true when device battery is too low for resuming its task and needs to be charged before continuing."""
-        return bool(self._get_property(DreameVacuumProperty.CLEANING_PAUSED))
+        value = self._get_property(DreameVacuumProperty.CLEANING_PAUSED)
+        # MIoT can report this flag as a numeric string. Only "1" means paused.
+        if isinstance(value, str):
+            try:
+                return int(value) == 1
+            except ValueError:
+                return False
+        return bool(value)
 
     @property
     def charging(self) -> bool:
@@ -10889,7 +10990,7 @@ class DreameVacuumDeviceStatus:
                 prop_name = property.name.lower()
 
                 if prop[1] == True:
-                    value = bool(value > 0)
+                    value = _is_positive_value(value)
                 elif property.name in _NAMED_ATTRIBUTES:
                     named = _NAMED_ATTRIBUTES[property.name]
                     if named.capability and not getattr(self._capability, named.capability):
@@ -10913,7 +11014,7 @@ class DreameVacuumDeviceStatus:
                         attributes[f"{ATTR_AUTO_EMPTY_MODE}_list"] = [
                             v.replace("_", " ").capitalize() for v in self.auto_empty_mode_list.keys()
                         ]
-                    value = bool(value > 0)
+                    value = _is_positive_value(value)
                 elif (
                     property is DreameVacuumProperty.DRYING_TIME
                     and not self._capability.mop_clean_frequency
@@ -11168,3 +11269,17 @@ class DreameVacuumDeviceInfo:
     def raw(self) -> dict[str, Any]:
         """Raw data as returned by the device."""
         return self.data
+
+
+def _is_positive_value(value: object) -> bool:
+    """Return whether a flag is enabled, including a numeric string from MIoT."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, int | float):
+        return value > 0
+    if isinstance(value, str):
+        try:
+            return int(value) > 0
+        except ValueError:
+            return bool(value)
+    return bool(value)

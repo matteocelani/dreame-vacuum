@@ -168,6 +168,7 @@ class DreameMapVacuumMapManager:
         self._connected: bool = True
         self._aes_iv: str = None
         self._capability: DreameVacuumDeviceCapability = None
+        self.action_mapping = None
 
         self._init_data()
 
@@ -278,6 +279,18 @@ class DreameMapVacuumMapManager:
         self._add_cloud_map_data(partial_map_data, object_name, object_name_timestamp)
         return len(map_data_result) or object_name is not None
 
+    def _mapped_action(self, action: DreameVacuumAction) -> dict[str, int] | None:
+        action_mapping = self.action_mapping
+        if action_mapping is None:
+            mapping = DreameVacuumActionMapping[action]
+        else:
+            mapping = action_mapping.get(action)
+            if mapping is None:
+                return None
+        if "siid" not in mapping or "aiid" not in mapping:
+            return None
+        return mapping
+
     def _request_map(self, parameters: dict[str, Any] = None) -> dict[str, Any] | None:
         if parameters is None:
             parameters = {
@@ -293,7 +306,9 @@ class DreameMapVacuumMapManager:
 
         try:
             _LOGGER.info("Request map from device %s", payload)
-            mapping = DreameVacuumActionMapping[DreameVacuumAction.REQUEST_MAP]
+            mapping = self._mapped_action(DreameVacuumAction.REQUEST_MAP)
+            if mapping is None:
+                return None
             return self._protocol.action(mapping["siid"], mapping["aiid"], payload, 0)
         except Exception as ex:
             _LOGGER.warning("Send request map failed: %s", ex)
@@ -443,7 +458,9 @@ class DreameMapVacuumMapManager:
     def _request_w_map(self) -> None:
         try:
             _LOGGER.info("Request wifi map from device")
-            mapping = DreameVacuumActionMapping[DreameVacuumAction.WIFI_MAP]
+            mapping = self._mapped_action(DreameVacuumAction.WIFI_MAP)
+            if mapping is None:
+                return None
             return self._protocol.action(mapping["siid"], mapping["aiid"], None, 0)
         except Exception as ex:
             _LOGGER.warning("Send request map failed: %s", ex)

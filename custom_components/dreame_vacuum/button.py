@@ -23,7 +23,7 @@ from .const import DOMAIN
 
 from .coordinator import DreameVacuumDataUpdateCoordinator
 from .entity import DreameVacuumEntity, DreameVacuumEntityDescription, remove_entities
-from .dreame import DreameVacuumAction, EntityUnavailableException
+from .dreame import DreameVacuumAction, DreameVacuumProperty, EntityUnavailableException
 
 
 @dataclass
@@ -189,13 +189,16 @@ BUTTONS: tuple[ButtonEntityDescription, ...] = (
             if not device.status.dust_collection_available
             else "mdi:delete-restore" if device.status.auto_emptying else "mdi:delete-empty"
         ),
-        exists_fn=lambda description, device: device.capability.auto_empty_base,
+        exists_fn=lambda description, device: bool(
+            description.action_key in device.action_mapping and device.capability.auto_empty_base
+        ),
     ),
     DreameVacuumButtonEntityDescription(
         action_key=DreameVacuumAction.CLEAR_WARNING,
         icon="mdi:clipboard-check-outline",
         entity_category=EntityCategory.DIAGNOSTIC,
         action_fn=lambda device: device.clear_warning(),
+        exists_fn=lambda description, device: description.action_key in device.action_mapping,
         available_fn=lambda device: device.status.has_warning
         or device.status.low_water
         or device.status.draining_complete,
@@ -205,7 +208,11 @@ BUTTONS: tuple[ButtonEntityDescription, ...] = (
         icon="mdi:map-plus",
         entity_category=EntityCategory.CONFIG,
         action_fn=lambda device: device.start_fast_mapping(),
-        exists_fn=lambda description, device: device.capability.lidar_navigation,
+        exists_fn=lambda description, device: bool(
+            device.capability.lidar_navigation
+            and DreameVacuumProperty.STATUS in device.property_mapping
+            and DreameVacuumAction.START_CUSTOM in device.action_mapping
+        ),
     ),
     DreameVacuumButtonEntityDescription(
         key="start_mapping",
@@ -213,7 +220,11 @@ BUTTONS: tuple[ButtonEntityDescription, ...] = (
         entity_category=EntityCategory.CONFIG,
         action_fn=lambda device: device.start_mapping(),
         entity_registry_enabled_default=False,
-        exists_fn=lambda description, device: device.capability.lidar_navigation,
+        exists_fn=lambda description, device: bool(
+            device.capability.lidar_navigation
+            and DreameVacuumProperty.STATUS in device.property_mapping
+            and DreameVacuumAction.START_CUSTOM in device.action_mapping
+        ),
     ),
     DreameVacuumButtonEntityDescription(
         key="self_clean",
@@ -297,7 +308,11 @@ BUTTONS: tuple[ButtonEntityDescription, ...] = (
         and not device.status.map_backup_status
         and device.status.has_saved_map,
         action_fn=lambda device: device.backup_map(),
-        exists_fn=lambda description, device: device.capability.backup_map and device.capability.map,
+        exists_fn=lambda description, device: bool(
+            device.capability.backup_map
+            and device.capability.map
+            and DreameVacuumAction.BACKUP_MAP in device.action_mapping
+        ),
     ),
 )
 

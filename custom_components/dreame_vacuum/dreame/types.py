@@ -1589,6 +1589,7 @@ class DreameVacuumAction(IntEnum):
     STREAM_PROPERTY = 43
     STREAM_CODE = 44
     VIDEO_VENDOR = 45
+    RESUME = 46
 
 
 # Dreame Vacuum property mapping
@@ -2716,10 +2717,19 @@ def DIID(property: DreameVacuumProperty, mapping=DreameVacuumPropertyMapping) ->
         return f"{mapping[property][siid]}.{mapping[property][piid]}"
 
 
-def DID(siid, piid) -> DreameVacuumProperty | None:
-    for prop in [prop for prop in DreameVacuumProperty]:
-        mapping = DreameVacuumPropertyMapping.get(prop)
-        if mapping is not None and siid == mapping["siid"] and piid == mapping["piid"]:
+def DID(
+    siid: int,
+    piid: int,
+    mapping: dict[DreameVacuumProperty, dict[str, int]] | None = None,
+) -> DreameVacuumProperty | None:
+    search_mapping = DreameVacuumPropertyMapping if mapping is None else mapping
+    for prop in DreameVacuumProperty:
+        entry = search_mapping.get(prop)
+        if (
+            entry is not None
+            and siid == entry.get("siid")
+            and piid == entry.get("piid")
+        ):
             return prop
     return None
 
@@ -3495,6 +3505,11 @@ class DreameVacuumDeviceCapability:
             self.list.append("map")
         if self.walls:
             self.list.append("walls")
+
+        # The catalog row is a Dreame list. A codec installs its own flags.
+        codec = self._device._property_codec
+        if codec is not None:
+            codec.apply_capabilities(self)
 
         self._loaded = True
 
