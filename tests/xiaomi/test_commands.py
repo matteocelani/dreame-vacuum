@@ -78,10 +78,14 @@ def test_paused_start_uses_continue_sweep_and_skips_unmapped_actions():
     for model, addresses in expected.items():
         device, sent = _device(model)
         try:
-            device.data[DreameVacuumProperty.STATE.value] = int(DreameVacuumState.PAUSED)
+            device.data[DreameVacuumProperty.STATE.value] = int(
+                DreameVacuumState.PAUSED
+            )
             device.start()
             assert sent[-1] == addresses["resume"]
-            device.data[DreameVacuumProperty.STATE.value] = int(DreameVacuumState.SWEEPING)
+            device.data[DreameVacuumProperty.STATE.value] = int(
+                DreameVacuumState.SWEEPING
+            )
             device.pause()
             assert sent[-1] == addresses["pause"]
             device.data[DreameVacuumProperty.STATE.value] = int(DreameVacuumState.IDLE)
