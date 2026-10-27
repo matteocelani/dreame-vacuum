@@ -13,6 +13,19 @@ from Crypto.Cipher import AES
 from custom_components.dreame_vacuum.xiaomi import resolve_family
 
 
+def traffic_outside_map(
+    writes: list[tuple[int, int, object]],
+    actions: list[tuple[int, int]],
+    action_inputs: list[object],
+    properties: set[tuple[int, int]],
+    action_addresses: set[tuple[int, int]],
+) -> tuple[set[tuple[int, int]], set[tuple[int, int]], list[object]]:
+    """Return writes, actions, and payloads that leave the model map."""
+    write_pairs = {(siid, piid) for siid, piid, _value in writes}
+    unexpected = [payload for payload in action_inputs if payload not in ([], None)]
+    return (write_pairs - properties, set(actions) - action_addresses, unexpected)
+
+
 def release_device(device: object) -> None:
     """Stop device timers and wait until their threads have exited."""
     disconnect = getattr(device, "disconnect", None)

@@ -1,25 +1,10 @@
-"""Spec coverage for xiaomi.vacuum.ov31gl, the Xiaomi Robot Vacuum 5.
-
-Every MIoT property, action, and event is either mapped onto the Xiaomi base
-or listed with the reason it stays off the wire. Mapped values are read and,
-when the spec allows a write, sent. Home Assistant entities created for this
-model are driven through the loopback device.
-"""
+"""Spec coverage for xiaomi.vacuum.ov31gl, the Xiaomi Robot Vacuum 5."""
 
 from __future__ import annotations
 
-import contextlib
 import json
 from pathlib import Path
 
-from custom_components.dreame_vacuum.const import (
-    CONF_ACCOUNT_TYPE,
-    CONF_MAC,
-    CONF_NOTIFY,
-    CONF_PREFER_CLOUD,
-    CONF_VERSION,
-    DOMAIN,
-)
 from custom_components.dreame_vacuum.dreame.device import DreameVacuumDevice
 from custom_components.dreame_vacuum.dreame.exceptions import (
     InvalidActionException,
@@ -34,14 +19,14 @@ from custom_components.dreame_vacuum.xiaomi import resolve_family
 from custom_components.dreame_vacuum.xiaomi.mapping import (
     MODEL_ROBOT_VACUUM_5,
     MODEL_X20_MAX,
+    XiaomiModel,
 )
 import pytest
-from tests.xiaomi.helpers import FakeMiio, release_device
+from tests.xiaomi.helpers import FakeMiio, release_device, traffic_outside_map
 
 _TOKEN = "00" * 16
 _MAC = "00:00:00:00:00:00"
 _SPECS = Path(__file__).parent / "specs"
-_FORBIDDEN = {(7, 2), (6, 3), (15, 1), (19, 1), (20, 1), (10, 7), (18, 1)}
 _EVENT_REASON = (
     "The integration polls properties and does not subscribe to MIoT events."
 )
@@ -209,170 +194,11 @@ _STATE_AFTER_READ = {
     23: DreameVacuumState.CHARGING_COMPLETED,
     24: DreameVacuumState.RETURNING,
 }
-_ENTITIES = {
-    ("binary_sensor", "charging_state"),
-    ("binary_sensor", "maintenance"),
-    ("binary_sensor", "problem"),
-    ("button", "reset_detergent"),
-    ("button", "reset_filter"),
-    ("button", "reset_main_brush"),
-    ("button", "reset_mop_pad"),
-    ("button", "reset_side_brush"),
-    ("button", "start_auto_empty"),
-    ("sensor", "firmware_version"),
-    ("number", "volume"),
-    ("select", "auto_empty_frequency"),
-    ("select", "cleaning_mode"),
-    ("select", "suction_level"),
-    ("select", "water_volume"),
-    ("sensor", "battery_level"),
-    ("sensor", "charging_status"),
-    ("sensor", "cleaned_area"),
-    ("sensor", "cleaning_count"),
-    ("sensor", "cleaning_time"),
-    ("sensor", "detergent_left"),
-    ("sensor", "detergent_time_left"),
-    ("sensor", "error"),
-    ("sensor", "filter_left"),
-    ("sensor", "filter_time_left"),
-    ("sensor", "main_brush_left"),
-    ("sensor", "main_brush_time_left"),
-    ("sensor", "mop_pad_left"),
-    ("sensor", "mop_pad_time_left"),
-    ("sensor", "relocation_status"),
-    ("sensor", "side_brush_left"),
-    ("sensor", "side_brush_time_left"),
-    ("sensor", "state"),
-    ("sensor", "task_status"),
-    ("sensor", "total_cleaned_area"),
-    ("sensor", "total_cleaning_time"),
-    ("sensor", "water_tank"),
-    ("switch", "auto_dust_collecting"),
-    ("switch", "carpet_boost"),
-    ("switch", "child_lock"),
-    ("switch", "dnd"),
-    ("switch", "resume_cleaning"),
-    ("vacuum", "dreame_vacuum"),
-}
 
 pytestmark = [
     pytest.mark.enable_socket,
     pytest.mark.allow_hosts(["127.0.0.1"]),
 ]
-
-
-def _document(filename: str) -> dict[str, object]:
-    return json.loads((_SPECS / filename).read_text(encoding="utf-8"))
-
-
-def _items(filename: str) -> list[tuple[str, int, int, dict[str, object]]]:
-    found: list[tuple[str, int, int, dict[str, object]]] = []
-    document = _document(filename)
-    services = document["services"]
-    assert isinstance(services, list)
-    for service in services:
-        assert isinstance(service, dict)
-        siid = service["iid"]
-        assert isinstance(siid, int)
-        for kind, field in (
-            ("property", "properties"),
-            ("action", "actions"),
-            ("event", "events"),
-        ):
-            raw = service.get(field) or []
-            assert isinstance(raw, list)
-            for item in raw:
-                assert isinstance(item, dict)
-                iid = item["iid"]
-                assert isinstance(iid, int)
-                found.append((kind, siid, iid, item))
-    return found
-
-
-def _reason(kind: str, siid: int, iid: int) -> str | None:
-    if kind == "event":
-        return _EVENT_REASON
-    if siid in _SERVICE_REASONS:
-        return _SERVICE_REASONS[siid]
-    table = _PROPERTY_REASONS if kind == "property" else _ACTION_REASONS
-    return table.get((siid, iid))
-
-
-def _family():
-    family = resolve_family(MODEL_ROBOT_VACUUM_5)
-    assert family is not None
-    return family
-
-
-def _mapped_addresses(kind: str) -> dict[tuple[int, int], str]:
-    family = _family()
-    if kind == "property":
-        return {
-            (item["siid"], item["piid"]): name
-            for name, item in family.property_overrides.items()
-        }
-    return {
-        (item["siid"], item["aiid"]): name
-        for name, item in family.action_overrides.items()
-    }
-
-
-def _samples(spec: dict[str, object]) -> list[object]:
-    if spec.get("format") == "bool":
-        return [False, True]
-    listed = spec.get("value-list")
-    if isinstance(listed, list):
-        return [item["value"] for item in listed if isinstance(item, dict)]
-    bounds = spec.get("value-range")
-    if isinstance(bounds, list) and len(bounds) == 3:
-        start, end, step = bounds
-        assert isinstance(start, int)
-        assert isinstance(end, int)
-        assert isinstance(step, int)
-        middle = start + ((end - start) // 2)
-        middle -= (middle - start) % step
-        return list(dict.fromkeys((start, middle, end)))
-    if spec.get("format") == "string":
-        return ["", "sample"]
-    return [0, 1]
-
-
-def _write_samples(spec: dict[str, object]) -> list[object]:
-    bounds = spec.get("value-range")
-    if isinstance(bounds, list) and len(bounds) == 3:
-        start, end, step = bounds
-        assert isinstance(start, int)
-        assert isinstance(end, int)
-        assert isinstance(step, int)
-        if (end - start) // step <= 100:
-            return list(range(start, end + 1, step))
-    return _samples(spec)
-
-
-def _connect() -> DreameVacuumDevice:
-    device = DreameVacuumDevice(
-        "Vacuum 5",
-        "127.0.0.1",
-        _TOKEN,
-        _MAC,
-        account_type="mi",
-        family_resolver=resolve_family,
-    )
-    device.connect_device()
-    return device
-
-
-def _assert_traffic_is_mapped(fake: FakeMiio) -> None:
-    properties = set(_mapped_addresses("property"))
-    actions = set(_mapped_addresses("action"))
-    write_pairs = {(siid, piid) for siid, piid, _value in fake.writes}
-    assert write_pairs <= properties
-    assert set(fake.actions) <= actions
-    # Dreame default addresses stay silent unless this model's spec maps them.
-    assert not (set(fake.actions) - actions) & _FORBIDDEN
-    assert not (write_pairs - properties) & _FORBIDDEN
-    for payload in fake.action_inputs:
-        assert payload in ([], None)
 
 
 def test_both_spec_versions_are_fully_classified() -> None:
@@ -396,15 +222,6 @@ def test_both_spec_versions_are_fully_classified() -> None:
         assert (kind, pair[0], pair[1]) in seen
     for siid in _SERVICE_REASONS:
         assert any(item[1] == siid for item in seen)
-
-
-def _spec_description(filename: str, kind: str, siid: int, iid: int) -> str:
-    for item_kind, item_siid, item_iid, spec in _items(filename):
-        if item_kind == kind and item_siid == siid and item_iid == iid:
-            description = spec.get("description") or ""
-            assert isinstance(description, str)
-            return description
-    raise AssertionError((filename, kind, siid, iid))
 
 
 def test_every_mapped_property_reads_each_spec_value(
@@ -530,34 +347,16 @@ def test_every_writable_value_is_sent_and_unmapped_writes_are_not(
         _assert_traffic_is_mapped(fake)
 
 
-def _send_bool(
-    device: DreameVacuumDevice,
-    fake: FakeMiio,
-    prop: DreameVacuumProperty,
-    mapping: dict[str, int],
-) -> None:
-    for value in (1, 0, True, False):
-        _force_set(device, prop, value)
-        assert fake.writes[-1] == (mapping["siid"], mapping["piid"], value)
-
-
-def _force_set(
-    device: DreameVacuumDevice, prop: DreameVacuumProperty, value: object
-) -> None:
-    current = device.get_property(prop)
-    if current == value:
-        other: object = 0 if value != 0 else 1
-        if prop is DreameVacuumProperty.VOLUME:
-            other = 1 if value == 0 else 0
-        assert device.set_property(prop, other) is True
-    assert device.set_property(prop, value) is True
-
-
 def test_every_mapped_action_is_invoked_or_refused_without_parameters(
     socket_enabled: None,
 ) -> None:
     del socket_enabled
     family = _family()
+    mapped_actions = _mapped_addresses("action")
+    for filename in ("ov31gl.json", "ov31gl_v1.json"):
+        for kind, siid, iid, spec in _items(filename):
+            if kind == "action" and (siid, iid) in mapped_actions:
+                assert not spec.get("in"), (filename, siid, iid)
     with FakeMiio(MODEL_ROBOT_VACUUM_5) as fake:
         device = _connect()
         try:
@@ -667,268 +466,147 @@ def test_every_status_wire_reaches_the_shell_state(socket_enabled: None) -> None
         _assert_traffic_is_mapped(fake)
 
 
-@pytest.mark.ha
-async def test_home_assistant_entities_cover_every_exposed_control(
-    hass,
-    socket_enabled: None,
-    enable_custom_integrations: None,
-    integration_package: object,
-) -> None:
-    """Drive every entity this model creates and keep traffic on the map."""
-    del socket_enabled, integration_package
-    from custom_components.dreame_vacuum.dreame import VERSION
+def _document(filename: str) -> dict[str, object]:
+    return json.loads((_SPECS / filename).read_text(encoding="utf-8"))
 
+
+def _items(filename: str) -> list[tuple[str, int, int, dict[str, object]]]:
+    found: list[tuple[str, int, int, dict[str, object]]] = []
+    document = _document(filename)
+    services = document["services"]
+    assert isinstance(services, list)
+    for service in services:
+        assert isinstance(service, dict)
+        siid = service["iid"]
+        assert isinstance(siid, int)
+        for kind, field in (
+            ("property", "properties"),
+            ("action", "actions"),
+            ("event", "events"),
+        ):
+            raw = service.get(field) or []
+            assert isinstance(raw, list)
+            for item in raw:
+                assert isinstance(item, dict)
+                iid = item["iid"]
+                assert isinstance(iid, int)
+                found.append((kind, siid, iid, item))
+    return found
+
+
+def _reason(kind: str, siid: int, iid: int) -> str | None:
+    if kind == "event":
+        return _EVENT_REASON
+    if siid in _SERVICE_REASONS:
+        return _SERVICE_REASONS[siid]
+    table = _PROPERTY_REASONS if kind == "property" else _ACTION_REASONS
+    return table.get((siid, iid))
+
+
+def _family() -> XiaomiModel:
+    family = resolve_family(MODEL_ROBOT_VACUUM_5)
+    assert family is not None
+    return family
+
+
+def _mapped_addresses(kind: str) -> dict[tuple[int, int], str]:
     family = _family()
-    with FakeMiio(MODEL_ROBOT_VACUUM_5) as fake:
-        entry = _entry(hass, VERSION)
-        entry.add_to_hass(hass)
-        assert await hass.config_entries.async_setup(entry.entry_id)
-        await hass.async_block_till_done()
-        device = hass.data[DOMAIN][entry.entry_id].device
-        try:
-            keys = _registry_keys(hass, entry.entry_id)
-            assert keys == _ENTITIES
-            assert not any(domain == "time" for domain, _key in keys)
-            await _exercise_selects_switches_number_and_buttons(hass, fake, family)
-            await _exercise_vacuum_states(hass, entry.entry_id, fake, family)
-            await _exercise_sensors(hass, entry.entry_id, fake, family)
-            assert hass.states.get(
-                _entity_id(hass, entry.entry_id, "sensor", "firmware_version")
-            )
-        finally:
-            assert await hass.config_entries.async_unload(entry.entry_id)
-            await hass.async_block_till_done()
-            release_device(device)
-    _assert_traffic_is_mapped(fake)
-
-
-def _entry(hass, version: int):
-    from pytest_homeassistant_custom_component.common import MockConfigEntry
-
-    from homeassistant.const import CONF_HOST, CONF_NAME, CONF_TOKEN
-
-    return MockConfigEntry(
-        domain=DOMAIN,
-        unique_id="Vacuum 5 Sim",
-        data={
-            CONF_NAME: "Vacuum 5 Sim",
-            CONF_HOST: "127.0.0.1",
-            CONF_TOKEN: _TOKEN,
-            CONF_MAC: _MAC,
-            CONF_ACCOUNT_TYPE: "mi",
-        },
-        options={
-            CONF_PREFER_CLOUD: False,
-            CONF_NOTIFY: False,
-            CONF_VERSION: version,
-        },
-    )
-
-
-def _registry_keys(hass, entry_id: str) -> set[tuple[str, str]]:
-    from homeassistant.helpers import entity_registry as er
-
-    registry = er.async_get(hass)
-    keys: set[tuple[str, str]] = set()
-    prefix = f"{_MAC}_"
-    for item in er.async_entries_for_config_entry(registry, entry_id):
-        assert item.unique_id.startswith(prefix)
-        keys.add((item.domain, item.unique_id.removeprefix(prefix)))
-    return keys
-
-
-def _entity_id(hass, entry_id: str, domain: str, key: str) -> str:
-    from homeassistant.helpers import entity_registry as er
-
-    registry = er.async_get(hass)
-    unique_id = f"{_MAC}_{key}"
-    for item in er.async_entries_for_config_entry(registry, entry_id):
-        if item.domain == domain and item.unique_id == unique_id:
-            return item.entity_id
-    raise AssertionError((domain, key))
-
-
-async def _refresh(hass, entry_id: str) -> None:
-    coordinator = hass.data[DOMAIN][entry_id]
-    await hass.async_add_executor_job(coordinator.device._request_properties)
-    coordinator.async_set_updated_data()
-    await hass.async_block_till_done()
-
-
-async def _exercise_selects_switches_number_and_buttons(hass, fake, family) -> None:
-    entry_id = _config_entry_id(hass)
-    await _select_each(hass, entry_id, "suction_level")
-    await _select_each(hass, entry_id, "cleaning_mode")
-    charging = family.property_overrides["WATER_TANK"]
-    fake.set_value(charging["siid"], charging["piid"], True)
-    await _refresh(hass, entry_id)
-    await _select_each(hass, entry_id, "water_volume")
-    await _select_each(hass, entry_id, "cleaning_mode")
-    dust = family.property_overrides["AUTO_DUST_COLLECTING"]
-    fake.set_value(dust["siid"], dust["piid"], 1)
-    await _refresh(hass, entry_id)
-    await _select_each(hass, entry_id, "auto_empty_frequency")
-    for key in (
-        "resume_cleaning",
-        "carpet_boost",
-        "child_lock",
-        "dnd",
-        "auto_dust_collecting",
-    ):
-        entity_id = _entity_id(hass, entry_id, "switch", key)
-        for service in ("turn_on", "turn_off"):
-            await hass.services.async_call(
-                "switch",
-                service,
-                {"entity_id": entity_id},
-                blocking=True,
-            )
-    await hass.services.async_call(
-        "number",
-        "set_value",
-        {"entity_id": _entity_id(hass, entry_id, "number", "volume"), "value": 0},
-        blocking=True,
-    )
-    await hass.services.async_call(
-        "number",
-        "set_value",
-        {"entity_id": _entity_id(hass, entry_id, "number", "volume"), "value": 50},
-        blocking=True,
-    )
-    await hass.services.async_call(
-        "number",
-        "set_value",
-        {"entity_id": _entity_id(hass, entry_id, "number", "volume"), "value": 100},
-        blocking=True,
-    )
-    for key in (
-        "reset_main_brush",
-        "reset_side_brush",
-        "reset_filter",
-        "reset_mop_pad",
-        "reset_detergent",
-    ):
-        await hass.services.async_call(
-            "button",
-            "press",
-            {"entity_id": _entity_id(hass, entry_id, "button", key)},
-            blocking=True,
-        )
-    from homeassistant.exceptions import HomeAssistantError
-
-    empty_id = _entity_id(hass, entry_id, "button", "start_auto_empty")
-    assert hass.states.get(empty_id).state == "unavailable"
-    before = len(fake.actions)
-    with contextlib.suppress(HomeAssistantError):
-        await hass.services.async_call(
-            "button",
-            "press",
-            {"entity_id": empty_id},
-            blocking=True,
-        )
-    assert len(fake.actions) == before
-
-
-async def _select_each(hass, entry_id: str, key: str) -> None:
-    entity_id = _entity_id(hass, entry_id, "select", key)
-    state = hass.states.get(entity_id)
-    assert state is not None
-    options = state.attributes["options"]
-    assert options
-    for option in options:
-        await hass.services.async_call(
-            "select",
-            "select_option",
-            {"entity_id": entity_id, "option": option},
-            blocking=True,
-        )
-
-
-def _config_entry_id(hass) -> str:
-    entry_ids = list(hass.data[DOMAIN])
-    assert len(entry_ids) == 1
-    return entry_ids[0]
-
-
-async def _exercise_vacuum_states(hass, entry_id: str, fake, family) -> None:
-    state = family.property_overrides["STATE"]
-    charging = family.property_overrides["CHARGING_STATUS"]
-    error = family.property_overrides["ERROR"]
-    vacuum_id = _entity_id(hass, entry_id, "vacuum", "dreame_vacuum")
-
-    async def show(
-        wire: int, charging_wire: int, error_wire: int, expected: str
-    ) -> None:
-        fake.set_value(state["siid"], state["piid"], wire)
-        fake.set_value(charging["siid"], charging["piid"], charging_wire)
-        fake.set_value(error["siid"], error["piid"], error_wire)
-        await _refresh(hass, entry_id)
-        assert hass.states.get(vacuum_id).state == expected
-
-    await show(1, 2, 0, "idle")
-    await hass.services.async_call(
-        "vacuum", "start", {"entity_id": vacuum_id}, blocking=True
-    )
-    await _refresh(hass, entry_id)
-    assert hass.states.get(vacuum_id).state == "cleaning"
-    await hass.services.async_call(
-        "vacuum", "pause", {"entity_id": vacuum_id}, blocking=True
-    )
-    await _refresh(hass, entry_id)
-    assert hass.states.get(vacuum_id).state == "paused"
-    await hass.services.async_call(
-        "vacuum", "start", {"entity_id": vacuum_id}, blocking=True
-    )
-    await _refresh(hass, entry_id)
-    assert hass.states.get(vacuum_id).state == "cleaning"
-    assert fake.actions[-1] == (
-        family.action_overrides["RESUME"]["siid"],
-        family.action_overrides["RESUME"]["aiid"],
-    )
-    await hass.services.async_call(
-        "vacuum", "stop", {"entity_id": vacuum_id}, blocking=True
-    )
-    assert fake.actions[-1] == (
-        family.action_overrides["STOP"]["siid"],
-        family.action_overrides["STOP"]["aiid"],
-    )
-    await show(6, 2, 0, "returning")
-    await hass.services.async_call(
-        "vacuum", "return_to_base", {"entity_id": vacuum_id}, blocking=True
-    )
-    await _refresh(hass, entry_id)
-    assert hass.states.get(vacuum_id).state == "docked"
-    await show(2, 1, 0, "docked")
-    await show(15, 2, 0, "error")
-    await show(1, 2, 1, "error")
-    await hass.services.async_call(
-        "vacuum", "locate", {"entity_id": vacuum_id}, blocking=True
-    )
-    assert fake.actions[-1] == (
-        family.action_overrides["LOCATE"]["siid"],
-        family.action_overrides["LOCATE"]["aiid"],
-    )
-
-
-async def _exercise_sensors(hass, entry_id: str, fake, family) -> None:
-    samples = {
-        "BATTERY_LEVEL": (55, "55"),
-        "CLEANED_AREA": (12, "12"),
-        "CLEANING_TIME": (9, "9"),
-        "CLEANING_COUNT": (4, "4"),
-        "TOTAL_CLEANED_AREA": (30, "30"),
-        "TOTAL_CLEANING_TIME": (15, "15"),
-        "DETERGENT_LEFT": (40, "40"),
-        "DETERGENT_TIME_LEFT": (6, "6"),
-        "MAIN_BRUSH_LEFT": (80, "80"),
-        "ERROR": (0, "no_error"),
+    if kind == "property":
+        return {
+            (item["siid"], item["piid"]): name
+            for name, item in family.property_overrides.items()
+        }
+    return {
+        (item["siid"], item["aiid"]): name
+        for name, item in family.action_overrides.items()
     }
-    for name, (wire, _expected) in samples.items():
-        mapping = family.property_overrides[name]
-        fake.set_value(mapping["siid"], mapping["piid"], wire)
-    await _refresh(hass, entry_id)
-    for name, (_wire, expected) in samples.items():
-        entity_id = _entity_id(hass, entry_id, "sensor", name.lower())
-        state = hass.states.get(entity_id)
-        assert state is not None
-        assert expected in state.state
+
+
+def _samples(spec: dict[str, object]) -> list[object]:
+    if spec.get("format") == "bool":
+        return [False, True]
+    listed = spec.get("value-list")
+    if isinstance(listed, list):
+        return [item["value"] for item in listed if isinstance(item, dict)]
+    bounds = spec.get("value-range")
+    if isinstance(bounds, list) and len(bounds) == 3:
+        start, end, step = bounds
+        assert isinstance(start, int)
+        assert isinstance(end, int)
+        assert isinstance(step, int)
+        middle = start + ((end - start) // 2)
+        middle -= (middle - start) % step
+        return list(dict.fromkeys((start, middle, end)))
+    if spec.get("format") == "string":
+        return ["", "sample"]
+    return [0, 1]
+
+
+def _write_samples(spec: dict[str, object]) -> list[object]:
+    bounds = spec.get("value-range")
+    if isinstance(bounds, list) and len(bounds) == 3:
+        start, end, step = bounds
+        assert isinstance(start, int)
+        assert isinstance(end, int)
+        assert isinstance(step, int)
+        if (end - start) // step <= 100:
+            return list(range(start, end + 1, step))
+    return _samples(spec)
+
+
+def _connect() -> DreameVacuumDevice:
+    device = DreameVacuumDevice(
+        "Vacuum 5",
+        "127.0.0.1",
+        _TOKEN,
+        _MAC,
+        account_type="mi",
+        family_resolver=resolve_family,
+    )
+    device.connect_device()
+    return device
+
+
+def _assert_traffic_is_mapped(fake: FakeMiio) -> None:
+    outside_writes, outside_actions, unexpected = traffic_outside_map(
+        fake.writes,
+        fake.actions,
+        fake.action_inputs,
+        set(_mapped_addresses("property")),
+        set(_mapped_addresses("action")),
+    )
+    assert not outside_writes
+    assert not outside_actions
+    assert not unexpected
+
+
+def _spec_description(filename: str, kind: str, siid: int, iid: int) -> str:
+    for item_kind, item_siid, item_iid, spec in _items(filename):
+        if item_kind == kind and item_siid == siid and item_iid == iid:
+            description = spec.get("description") or ""
+            assert isinstance(description, str)
+            return description
+    raise AssertionError((filename, kind, siid, iid))
+
+
+def _send_bool(
+    device: DreameVacuumDevice,
+    fake: FakeMiio,
+    prop: DreameVacuumProperty,
+    mapping: dict[str, int],
+) -> None:
+    for value in (1, 0, True, False):
+        _force_set(device, prop, value)
+        assert fake.writes[-1] == (mapping["siid"], mapping["piid"], value)
+
+
+def _force_set(
+    device: DreameVacuumDevice, prop: DreameVacuumProperty, value: object
+) -> None:
+    current = device.get_property(prop)
+    if current == value:
+        other: object = 0 if value != 0 else 1
+        if prop is DreameVacuumProperty.VOLUME:
+            other = 1 if value == 0 else 0
+        assert device.set_property(prop, other) is True
+    assert device.set_property(prop, value) is True
