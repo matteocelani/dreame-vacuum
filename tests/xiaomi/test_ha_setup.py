@@ -148,6 +148,11 @@ def _unsafe_entities(hass: HomeAssistant) -> list[str]:
         "play_sound",
         "start_fast_mapping",
         "start_mapping",
+        "self_clean",
+        "manual_drying",
+        "base_station",
+        "water_tank_draining",
+        "empty_water_tank",
     )
     return [
         state.entity_id

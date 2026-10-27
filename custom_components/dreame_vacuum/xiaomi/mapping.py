@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import IntEnum
 from typing import Final
@@ -302,6 +303,19 @@ class XiaomiModel:
         except XiaomiTransportException:
             return None
 
+    def apply_capabilities(self, capability: object) -> None:
+        """Replace catalog flags with the flags this model's map can justify."""
+        names = _flag_names(self.property_overrides, self.action_overrides)
+        state = vars(capability)
+        for name, value in list(state.items()):
+            if name.startswith("_") or not isinstance(value, bool):
+                continue
+            state[name] = name in names
+        state["_custom_cleaning_mode"] = False
+        state["_walls"] = False
+        _assign_robot_type(capability, names)
+        _rebuild_capability_list(capability)
+
 
 def resolve_family(model: str) -> XiaomiModel | None:
     """Return the Xiaomi codec for S20+ or X20 Max, otherwise None."""
@@ -405,3 +419,76 @@ _FAMILIES: Final[dict[str, XiaomiModel]] = {
         task_by_wire=_X20_MAX_TASKS,
     ),
 }
+
+
+def _flag_names(
+    properties: Mapping[str, Mapping[str, int]],
+    actions: Mapping[str, Mapping[str, int]],
+) -> frozenset[str]:
+    """Return feature flags whose property or action is actually mapped."""
+    props = frozenset(properties)
+    acts = frozenset(actions)
+    names = {"mijia"}
+    if "SENSOR_DIRTY_LEFT" not in props:
+        names.add("disable_sensor_cleaning")
+    if "DND" in props or "DND_TASK" in props:
+        names.add("dnd")
+    if "DND_TASK" in props:
+        names.add("dnd_task")
+    if "CARPET_RECOGNITION" in props:
+        names.add("carpet_recognition")
+    if "SELF_WASH_BASE_STATUS" in props or "START_WASHING" in acts:
+        names.add("self_wash_base")
+    if "WASHBOARD_CLEANING_STATUS" in props:
+        names.add("station_cleaning")
+    if "START_AUTO_EMPTY" in acts:
+        names.add("auto_empty_base")
+        names.add("auto_emptying")
+    if "DETERGENT_LEFT" in props and "RESET_DETERGENT" in acts:
+        names.add("detergent")
+    if "DRAINAGE_STATUS" in props:
+        names.add("drainage")
+    if "OFF_PEAK_CHARGING" in props:
+        names.add("off_peak_charging")
+    if "WIFI_MAP" in props:
+        names.add("wifi_map")
+    if "MAP_BACKUP_STATUS" in props or "BACKUP_MAP" in acts:
+        names.add("backup_map")
+    if "MAP_DATA" in props or "MAP_SAVING" in props:
+        names.add("lidar_navigation")
+    if "MULTI_FLOOR_MAP" in props:
+        names.add("multi_floor_map")
+    return frozenset(names)
+
+
+def _assign_robot_type(capability: object, names: frozenset[str]) -> None:
+    current = vars(capability).get("robot_type")
+    if not isinstance(current, IntEnum):
+        return
+    kind = type(current)
+    if "self_wash_base" in names and "mop_pad_lifting" in names:
+        chosen = kind["SWEEPING_AND_MOPPING"]
+    elif "self_wash_base" in names:
+        chosen = kind["MOPPING"]
+    else:
+        # Lidar hardware. Map features stay off until a map property is mapped.
+        chosen = kind["LIDAR"]
+    vars(capability)["robot_type"] = chosen
+
+
+def _rebuild_capability_list(capability: object) -> None:
+    state = vars(capability)
+    names = [
+        key
+        for key, value in state.items()
+        if not callable(value) and not key.startswith("_") and value is True
+    ]
+    if capability.custom_cleaning_mode:
+        names.append("custom_cleaning_mode")
+    if capability.cruising:
+        names.append("cruising")
+    if capability.map:
+        names.append("map")
+    if capability.walls:
+        names.append("walls")
+    state["list"] = names

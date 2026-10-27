@@ -142,6 +142,10 @@ _ABSENT_ACTIONS = (
 )
 
 
+class _Capability:
+    loaded = False
+
+
 class _Device:
     def __init__(self) -> None:
         self.property_mapping = None
@@ -151,6 +155,7 @@ class _Device:
         self._protocol = type("Protocol", (), {"property_transport": None})()
         self.host = ""
         self.token = ""
+        self.capability = _Capability()
 
 
 def _load(name: str) -> tuple[dict[tuple[int, int], str], dict[tuple[int, int], str]]:

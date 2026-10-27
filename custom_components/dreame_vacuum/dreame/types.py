@@ -3506,6 +3506,11 @@ class DreameVacuumDeviceCapability:
         if self.walls:
             self.list.append("walls")
 
+        # The catalog row is a Dreame list. A codec installs its own flags.
+        codec = self._device._property_codec
+        if codec is not None:
+            codec.apply_capabilities(self)
+
         self._loaded = True
 
     @property

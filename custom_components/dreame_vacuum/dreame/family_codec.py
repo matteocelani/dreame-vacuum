@@ -29,6 +29,10 @@ def apply_family(device: object, family: object) -> None:
                 family.model,
             )
         device._protocol.property_transport = transport
+    # Load already copied a Dreame catalog row. Replace it when the row is stale.
+    capability = device.capability
+    if capability.loaded:
+        family.apply_capabilities(capability)
     _LOGGER.info("Applied family codec for model %s", family.model)
 
 

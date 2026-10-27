@@ -22,6 +22,10 @@ class _Protocol:
         self.property_transport = "unset"
 
 
+class _Capability:
+    loaded = False
+
+
 class _Device:
     def __init__(self, host: str = "", token: str = "") -> None:
         self.property_mapping = None
@@ -31,6 +35,7 @@ class _Device:
         self._protocol = _Protocol()
         self.host = host
         self.token = token
+        self.capability = _Capability()
 
 
 class _Transport:
