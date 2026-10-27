@@ -175,7 +175,11 @@ def test_dreame_and_mijia_capability_lists_are_unchanged():
 
 
 def test_catalog_row_stays_until_the_xiaomi_codec_is_installed():
-    for model in ("xiaomi.vacuum.b108gl", "xiaomi.vacuum.d109gl"):
+    for model in (
+        "xiaomi.vacuum.b108gl",
+        "xiaomi.vacuum.d109gl",
+        "xiaomi.vacuum.ov31gl",
+    ):
         copied = _load(model, None)
         assert tuple(copied.list) == _COPIED_XIAOMI_ROW
         assert copied.self_wash_base is False
@@ -185,9 +189,11 @@ def test_catalog_row_stays_until_the_xiaomi_codec_is_installed():
 def test_s20_plus_and_x20_max_use_the_xiaomi_base():
     s20 = _load("xiaomi.vacuum.b108gl", resolve_family("xiaomi.vacuum.b108gl"))
     x20 = _load("xiaomi.vacuum.d109gl", resolve_family("xiaomi.vacuum.d109gl"))
+    vacuum_5 = _load("xiaomi.vacuum.ov31gl", resolve_family("xiaomi.vacuum.ov31gl"))
     assert tuple(s20.list) == _S20_PLUS
     assert tuple(x20.list) == _X20_MAX
-    for capability in (s20, x20):
+    assert tuple(vacuum_5.list) == _X20_MAX
+    for capability in (s20, x20, vacuum_5):
         assert capability.self_wash_base is False
         assert capability.station_cleaning is False
         assert capability.lidar_navigation is False
@@ -208,6 +214,11 @@ def test_s20_plus_and_x20_max_use_the_xiaomi_base():
     assert x20.auto_emptying is True
     assert x20.auto_empty_mode is False
     assert x20.detergent is True
+    assert vacuum_5.auto_empty_base is True
+    assert vacuum_5.auto_emptying is True
+    assert vacuum_5.detergent is True
+    assert vacuum_5.self_wash_base is False
+    assert vacuum_5.lidar_navigation is False
 
 
 def test_a_mapped_wash_base_or_map_turns_only_that_flag_on():

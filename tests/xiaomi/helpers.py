@@ -47,6 +47,8 @@ class FakeMiio:
         self.model = model
         self.token = bytes.fromhex(token)
         self.actions: list[tuple[int, int]] = []
+        self.action_inputs: list[object] = []
+        self.writes: list[tuple[int, int, object]] = []
         self._family = resolve_family(model)
         if self._family is None:
             raise RuntimeError(model)
@@ -114,6 +116,10 @@ class FakeMiio:
 
     def _set_charging(self, wire: int) -> None:
         self._values[self._charging_pair()] = wire
+
+    def set_value(self, siid: int, piid: int, value: object) -> None:
+        """Store one property the next read will return."""
+        self._values[(siid, piid)] = value
 
     def _serve(self) -> None:
         datagram = self._socket
@@ -200,6 +206,7 @@ class FakeMiio:
         siid = item.get("siid")
         piid = item.get("piid")
         if isinstance(siid, int) and isinstance(piid, int):
+            self.writes.append((siid, piid, item.get("value")))
             self._values[(siid, piid)] = item.get("value")
         return {"did": item.get("did", ""), "siid": siid, "piid": piid, "code": 0}
 
@@ -209,6 +216,7 @@ class FakeMiio:
         if not isinstance(siid, int) or not isinstance(aiid, int):
             return {"code": -1}
         self.actions.append((siid, aiid))
+        self.action_inputs.append(params.get("in"))
         address = (siid, aiid)
         actions = self._family.action_overrides
         if address == (

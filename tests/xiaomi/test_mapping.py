@@ -10,6 +10,7 @@ from custom_components.dreame_vacuum.dreame.types import (
 )
 from custom_components.dreame_vacuum.xiaomi import resolve_family
 from custom_components.dreame_vacuum.xiaomi.mapping import (
+    MODEL_ROBOT_VACUUM_5,
     MODEL_S20_PLUS,
     MODEL_X20_MAX,
 )
@@ -111,8 +112,42 @@ def test_task_status_comes_from_state_when_sweep_type_would_stay_set():
     assert family.task_status_code(None, None) == int(DreameVacuumTaskStatus.COMPLETED)
 
 
+def test_robot_vacuum_5_reuses_x20_max_addresses_and_extends_status():
+    vacuum_5 = resolve_family(MODEL_ROBOT_VACUUM_5)
+    x20 = resolve_family(MODEL_X20_MAX)
+    assert vacuum_5 is not None
+    assert x20 is not None
+    shared = set(x20.property_overrides)
+    assert shared <= set(vacuum_5.property_overrides)
+    for name in shared:
+        assert vacuum_5.property_overrides[name] == x20.property_overrides[name]
+    assert vacuum_5.action_overrides == x20.action_overrides
+    assert (
+        vacuum_5.convert_incoming("STATE", 16) == DreameVacuumState.SWEEPING_AND_MOPPING
+    )
+    assert vacuum_5.convert_incoming("STATE", 22) == DreameVacuumState.WASHING
+    assert (
+        vacuum_5.convert_incoming("STATE", 23) == DreameVacuumState.CHARGING_COMPLETED
+    )
+    assert vacuum_5.convert_incoming("STATE", 24) == DreameVacuumState.RETURNING
+    assert vacuum_5.convert_incoming("STATE", 25) == 25
+    assert (
+        vacuum_5.convert_incoming("TASK_STATUS", 10)
+        == DreameVacuumTaskStatus.FAST_MAPPING
+    )
+    assert (
+        vacuum_5.convert_incoming("TASK_STATUS", 11)
+        == DreameVacuumTaskStatus.AUTO_CLEANING
+    )
+    assert vacuum_5.property_overrides["TOTAL_CLEANED_AREA"] == {"siid": 2, "piid": 85}
+    assert vacuum_5.property_overrides["DETERGENT_TIME_LEFT"] == {"siid": 18, "piid": 4}
+    assert "TOTAL_CLEANED_AREA" not in x20.property_overrides
+    assert "REQUEST_MAP" not in vacuum_5.action_overrides
+    assert "STATUS" not in vacuum_5.property_overrides
+
+
 def test_property_and_action_names_exist_on_the_dreame_enums():
-    for model in (MODEL_S20_PLUS, MODEL_X20_MAX):
+    for model in (MODEL_S20_PLUS, MODEL_X20_MAX, MODEL_ROBOT_VACUUM_5):
         family = resolve_family(model)
         assert family is not None
         for name in family.property_overrides:

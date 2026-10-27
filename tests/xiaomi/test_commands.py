@@ -14,7 +14,11 @@ from custom_components.dreame_vacuum.dreame.types import (
     DreameVacuumState,
 )
 from custom_components.dreame_vacuum.xiaomi import resolve_family
-from custom_components.dreame_vacuum.xiaomi.mapping import MODEL_S20_PLUS, MODEL_X20_MAX
+from custom_components.dreame_vacuum.xiaomi.mapping import (
+    MODEL_ROBOT_VACUUM_5,
+    MODEL_S20_PLUS,
+    MODEL_X20_MAX,
+)
 import pytest
 from tests.xiaomi.helpers import release_device
 
@@ -74,6 +78,12 @@ def test_paused_start_uses_continue_sweep_and_skips_unmapped_actions():
             "pause": (2, 7),
             "charge": (3, 1),
         },
+        MODEL_ROBOT_VACUUM_5: {
+            "resume": (2, 8),
+            "start": (2, 1),
+            "pause": (2, 7),
+            "charge": (3, 1),
+        },
     }
     for model, addresses in expected.items():
         device, sent = _device(model)
@@ -123,7 +133,7 @@ def test_paused_start_uses_continue_sweep_and_skips_unmapped_actions():
 
 
 def test_property_reads_stay_inside_the_explicit_map():
-    for model in (MODEL_S20_PLUS, MODEL_X20_MAX):
+    for model in (MODEL_S20_PLUS, MODEL_X20_MAX, MODEL_ROBOT_VACUUM_5):
         device, _sent = _device(model)
         requested: list[tuple[int, int]] = []
 

@@ -1,4 +1,4 @@
-"""MIoT maps and value conversion for Xiaomi S20+ and X20 Max."""
+"""MIoT maps and value conversion for Xiaomi vacuum models."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from .transport import MiioPropertyTransport
 
 MODEL_S20_PLUS: Final = "xiaomi.vacuum.b108gl"
 MODEL_X20_MAX: Final = "xiaomi.vacuum.d109gl"
+MODEL_ROBOT_VACUUM_5: Final = "xiaomi.vacuum.ov31gl"
 _ONE_INDEXED_PROPERTIES: Final[frozenset[str]] = frozenset(
     {"CLEANING_MODE", "SUCTION_LEVEL"}
 )
@@ -119,6 +120,23 @@ class _X20MaxTask(IntEnum):
     CUSTOM_AREA = 7
 
 
+class _RobotVacuum5State(IntEnum):
+    """Status codes xiaomi.vacuum.ov31gl adds after the X20 Max list."""
+
+    STATION_ASSISTING = 22
+    STATION_ASSISTED = 23
+    RETURNING_DURING_ASSIST = 24
+
+
+class _RobotVacuum5Task(IntEnum):
+    """Sweep-type codes xiaomi.vacuum.ov31gl adds after the X20 Max list."""
+
+    APPOINTMENT = 8
+    LINKAGE = 9
+    FAST_MAPPING = 10
+    AI_HOSTING = 11
+
+
 _S20_PLUS_PROPERTIES: Final[dict[str, dict[str, int]]] = {
     "STATE": {"siid": 2, "piid": 1},
     "ERROR": {"siid": 2, "piid": 2},
@@ -213,6 +231,18 @@ _X20_MAX_ACTIONS: Final[dict[str, dict[str, int]]] = {
     "RESET_SIDE_BRUSH": {"siid": 13, "aiid": 1},
     "RESET_FILTER": {"siid": 14, "aiid": 1},
     "RESET_DETERGENT": {"siid": 18, "aiid": 1},
+}
+
+# ov31gl uses the X20 Max siid/piid table. Copies are isolated so one model cannot mutate the other.
+_ROBOT_VACUUM_5_PROPERTIES: Final[dict[str, dict[str, int]]] = {
+    **{name: dict(address) for name, address in _X20_MAX_PROPERTIES.items()},
+    "TOTAL_CLEANED_AREA": {"siid": 2, "piid": 85},
+    "CLEANING_COUNT": {"siid": 2, "piid": 86},
+    "TOTAL_CLEANING_TIME": {"siid": 2, "piid": 87},
+    "DETERGENT_TIME_LEFT": {"siid": 18, "piid": 4},
+}
+_ROBOT_VACUUM_5_ACTIONS: Final[dict[str, dict[str, int]]] = {
+    name: dict(address) for name, address in _X20_MAX_ACTIONS.items()
 }
 
 _DOCKED_TASK_STATES: Final[frozenset[int]] = frozenset(
@@ -318,7 +348,7 @@ class XiaomiModel:
 
 
 def resolve_family(model: str) -> XiaomiModel | None:
-    """Return the Xiaomi codec for S20+ or X20 Max, otherwise None."""
+    """Return the Xiaomi codec for a supported model, otherwise None."""
     return _FAMILIES.get(model)
 
 
@@ -402,6 +432,23 @@ _X20_MAX_TASKS: Final[dict[int, int]] = _wire_map(
         (_X20MaxTask.CUSTOM_AREA, _StoredTask.ZONE_CLEANING),
     )
 )
+# Old remote code. The shell rewrites it to the current remote state; 23 would become washing-paused.
+_LEGACY_REMOTE_CONTROL: Final = 19
+# 22-24 stay on Dreame states below 19 so the legacy state remap does not rewrite them.
+_ROBOT_VACUUM_5_STATES: Final[dict[int, int]] = {
+    **_X20_MAX_STATES,
+    int(_X20MaxState.REMOTE): _LEGACY_REMOTE_CONTROL,
+    int(_RobotVacuum5State.STATION_ASSISTING): int(_StoredState.WASHING),
+    int(_RobotVacuum5State.STATION_ASSISTED): int(_StoredState.CHARGING_COMPLETED),
+    int(_RobotVacuum5State.RETURNING_DURING_ASSIST): int(_StoredState.RETURNING),
+}
+_ROBOT_VACUUM_5_TASKS: Final[dict[int, int]] = {
+    **_X20_MAX_TASKS,
+    int(_RobotVacuum5Task.APPOINTMENT): int(_StoredTask.AUTO_CLEANING),
+    int(_RobotVacuum5Task.LINKAGE): int(_StoredTask.AUTO_CLEANING),
+    int(_RobotVacuum5Task.FAST_MAPPING): int(_StoredTask.FAST_MAPPING),
+    int(_RobotVacuum5Task.AI_HOSTING): int(_StoredTask.AUTO_CLEANING),
+}
 
 _FAMILIES: Final[dict[str, XiaomiModel]] = {
     MODEL_S20_PLUS: XiaomiModel(
@@ -417,6 +464,13 @@ _FAMILIES: Final[dict[str, XiaomiModel]] = {
         action_overrides=_X20_MAX_ACTIONS,
         state_by_wire=_X20_MAX_STATES,
         task_by_wire=_X20_MAX_TASKS,
+    ),
+    MODEL_ROBOT_VACUUM_5: XiaomiModel(
+        model=MODEL_ROBOT_VACUUM_5,
+        property_overrides=_ROBOT_VACUUM_5_PROPERTIES,
+        action_overrides=_ROBOT_VACUUM_5_ACTIONS,
+        state_by_wire=_ROBOT_VACUUM_5_STATES,
+        task_by_wire=_ROBOT_VACUUM_5_TASKS,
     ),
 }
 
