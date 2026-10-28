@@ -9,15 +9,18 @@ from .d109gl import X20_MAX
 from .model import (
     MODEL_ROBOT_VACUUM_5,
     MODEL_S20_PLUS,
+    MODEL_S40_PRO,
     MODEL_X20_MAX,
     XiaomiModel,
 )
 from .ov31gl import ROBOT_VACUUM_5
+from .ov71gl import S40_PRO
 
 _FAMILIES: Final[dict[str, XiaomiModel]] = {
     MODEL_S20_PLUS: S20_PLUS,
     MODEL_X20_MAX: X20_MAX,
     MODEL_ROBOT_VACUUM_5: ROBOT_VACUUM_5,
+    MODEL_S40_PRO: S40_PRO,
 }
 
 

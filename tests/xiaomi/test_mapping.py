@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-import re
 from types import SimpleNamespace
 
 from custom_components.dreame_vacuum.dreame.types import (
@@ -20,12 +19,21 @@ from custom_components.dreame_vacuum.xiaomi import (
 from custom_components.dreame_vacuum.xiaomi.mapping import (
     MODEL_ROBOT_VACUUM_5,
     MODEL_S20_PLUS,
+    MODEL_S40_PRO,
     MODEL_X20_MAX,
 )
 from custom_components.dreame_vacuum.xiaomi.profile import (
+    DETERGENT_TIME_PROPERTIES,
+    EXTENDED_STATION_CONTROLS,
+    EXTENDED_STATION_STATES,
+    EXTENDED_STATION_TASKS,
     STATION_ACTIONS,
     STATION_PROPERTIES,
+    STATION_STATISTICS_PROPERTIES,
+    compose_addresses,
+    compose_controls,
 )
+import pytest
 
 _TOKEN = "00" * 16
 
@@ -158,38 +166,91 @@ def test_robot_vacuum_5_composes_the_station_profile_and_extends_status():
     assert "STATUS" not in vacuum_5.property_overrides
     assert x20.controls == ()
     assert resolve_family(MODEL_S20_PLUS).controls == ()
-    assert vacuum_5.controls
+    assert vacuum_5.controls is EXTENDED_STATION_CONTROLS
     assert x20.property_overrides is not STATION_PROPERTIES
     assert x20.property_overrides["STATE"] is not STATION_PROPERTIES["STATE"]
     assert vacuum_5.property_overrides["STATE"] is not x20.property_overrides["STATE"]
+    assert vacuum_5.state_by_wire == EXTENDED_STATION_STATES
+    assert vacuum_5.state_by_wire is not EXTENDED_STATION_STATES
+    assert vacuum_5.task_by_wire == EXTENDED_STATION_TASKS
+    assert vacuum_5.task_by_wire is not EXTENDED_STATION_TASKS
+
+
+def test_s40_pro_reuses_the_station_profile_and_omits_missing_services():
+    s40 = resolve_family(MODEL_S40_PRO)
+    vacuum_5 = resolve_family(MODEL_ROBOT_VACUUM_5)
+    x20 = resolve_family(MODEL_X20_MAX)
+    assert s40 is not None
+    assert vacuum_5 is not None
+    assert x20 is not None
+    assert set(s40.property_overrides) == (
+        set(x20.property_overrides) - {"DETERGENT_LEFT"}
+    ) | set(STATION_STATISTICS_PROPERTIES)
+    for name in set(s40.property_overrides) & set(x20.property_overrides):
+        assert s40.property_overrides[name] == x20.property_overrides[name]
+        assert s40.property_overrides[name] is not x20.property_overrides[name]
+    assert set(s40.action_overrides) == set(x20.action_overrides) - {"RESET_DETERGENT"}
+    for name in s40.action_overrides:
+        assert s40.action_overrides[name] == x20.action_overrides[name]
+    assert s40.state_by_wire == vacuum_5.state_by_wire
+    assert s40.state_by_wire is not vacuum_5.state_by_wire
+    assert s40.task_by_wire == vacuum_5.task_by_wire
+    assert s40.convert_incoming("STATE", 8) == 19
+    assert s40.convert_incoming("STATE", 22) == DreameVacuumState.WASHING
+    shared = {control.key: control for control in EXTENDED_STATION_CONTROLS}
+    for control in s40.controls:
+        if control.key in shared:
+            assert control is shared[control.key]
+    omitted = set(shared) - {control.key for control in s40.controls}
+    added = {control.key for control in s40.controls} - set(shared)
+    assert omitted == {
+        "xiaomi_detergent_delivery",
+        "xiaomi_detergent_level",
+        "xiaomi_dust_arrest_power",
+        "xiaomi_dust_bag_life",
+        "xiaomi_dust_bag_time_left",
+        "xiaomi_enable_mop_wash",
+        "xiaomi_laser_position",
+        "xiaomi_obstacle_crossing",
+        "xiaomi_repeat_wash_mop",
+        "xiaomi_reset_dust_bag",
+        "xiaomi_start_cut_hair",
+        "xiaomi_start_dry",
+        "xiaomi_wash_water_temperature",
+    }
+    assert added == {"xiaomi_cut_hair", "xiaomi_cut_hair_frequency"}
+    assert "DETERGENT_LEFT" not in s40.property_overrides
+    assert "DETERGENT_TIME_LEFT" not in s40.property_overrides
+    assert "RESET_DETERGENT" not in s40.action_overrides
+
+
+def test_compose_rejects_an_omission_the_profile_does_not_define():
+    with pytest.raises(KeyError):
+        compose_addresses(STATION_PROPERTIES, omitted=frozenset({"NO_SUCH"}))
+    with pytest.raises(KeyError):
+        compose_controls(EXTENDED_STATION_CONTROLS, omitted=frozenset({"missing"}))
 
 
 def test_station_address_literals_are_declared_once():
-    """X20 Max declares no addresses of its own. Robot Vacuum 5 adds four."""
+    """Station address dicts are written only in the shared profile."""
     root = Path("custom_components/dreame_vacuum/xiaomi")
-    d109 = (root / "d109gl.py").read_text(encoding="utf-8")
-    ov31 = (root / "ov31gl.py").read_text(encoding="utf-8")
     profile = (root / "profile.py").read_text(encoding="utf-8")
-    assert "siid" not in d109
-    assert "aiid" not in d109
-    additions = re.findall(r"\{\"siid\": \d+, \"piid\": \d+\}", ov31)
-    assert additions == [
-        '{"siid": 2, "piid": 85}',
-        '{"siid": 2, "piid": 86}',
-        '{"siid": 2, "piid": 87}',
-        '{"siid": 18, "piid": 4}',
-    ]
-    assert "aiid" not in ov31
+    for name in ("d109gl.py", "ov31gl.py", "ov71gl.py"):
+        text = (root / name).read_text(encoding="utf-8")
+        assert "siid" not in text, name
+        assert "aiid" not in text, name
     for mapping in STATION_PROPERTIES.values():
         needle = f'{{"siid": {mapping["siid"]}, "piid": {mapping["piid"]}}}'
-        assert needle in profile
-        assert needle not in ov31
-        assert needle not in d109
+        assert profile.count(needle) == 1
     for mapping in STATION_ACTIONS.values():
         needle = f'{{"siid": {mapping["siid"]}, "aiid": {mapping["aiid"]}}}'
-        assert needle in profile
-        assert needle not in ov31
-        assert needle not in d109
+        assert profile.count(needle) == 1
+    for mapping in {
+        **STATION_STATISTICS_PROPERTIES,
+        **DETERGENT_TIME_PROPERTIES,
+    }.values():
+        needle = f'{{"siid": {mapping["siid"]}, "piid": {mapping["piid"]}}}'
+        assert profile.count(needle) == 1
 
 
 def test_controls_of_ignores_devices_without_a_xiaomi_codec():
@@ -205,7 +266,7 @@ def test_controls_of_ignores_devices_without_a_xiaomi_codec():
 
 
 def test_property_and_action_names_exist_on_the_dreame_enums():
-    for model in (MODEL_S20_PLUS, MODEL_X20_MAX, MODEL_ROBOT_VACUUM_5):
+    for model in (MODEL_S20_PLUS, MODEL_X20_MAX, MODEL_ROBOT_VACUUM_5, MODEL_S40_PRO):
         family = resolve_family(model)
         assert family is not None
         for name in family.property_overrides:

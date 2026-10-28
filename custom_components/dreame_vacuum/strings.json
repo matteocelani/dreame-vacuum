@@ -774,6 +774,15 @@
           "three_time": "Three times"
         }
       },
+      "xiaomi_cut_hair_frequency": {
+        "name": "Hair cutting frequency",
+        "state": {
+          "every_clean": "Every clean",
+          "every_two_cleans": "Every 2 cleans",
+          "every_three_cleans": "Every 3 cleans",
+          "during_task": "During the task"
+        }
+      },
       "xiaomi_mop_wash_frequency": {
         "name": "Mop wash frequency",
         "state": {
@@ -2221,6 +2230,9 @@
       },
       "xiaomi_carpet_discriminate": {
         "name": "Carpet recognition"
+      },
+      "xiaomi_cut_hair": {
+        "name": "Hair cutting"
       },
       "xiaomi_sweep_carpet_first": {
         "name": "Sweep carpet first"
