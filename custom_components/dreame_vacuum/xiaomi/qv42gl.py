@@ -11,19 +11,15 @@ from .profile import (
     H50_ROLLER_ACTIONS,
     H50_ROLLER_CONTROLS,
     H50_ROLLER_PROPERTIES,
-    H50_ROLLER_STATES,
     S40_CLASS_CONTROLS,
-    SUMMON_STATES,
-    SWEEP_SUMMON_STATES,
-    ExtendedStationWireState,
-    StoredState,
+    S60_CLASS_STATES,
     compose_addresses,
     compose_codes,
     compose_controls,
     select_controls,
 )
 
-# The auto-water and hot-wash station block is absent. Pad swings stay absent.
+# Cleaning mode is the Dreame property. The water station is not published.
 _OMITTED_CONTROLS: Final = frozenset(
     {
         "xiaomi_auto_water_change",
@@ -64,17 +60,7 @@ H50_ROLLER: Final = XiaomiModel(
     model=MODEL_H50_ROLLER,
     property_overrides=compose_addresses(H50_ROLLER_PROPERTIES),
     action_overrides=compose_addresses(H50_ROLLER_ACTIONS),
-    state_by_wire=compose_codes(
-        H50_ROLLER_STATES,
-        {
-            int(ExtendedStationWireState.STATION_ASSISTING): int(StoredState.WASHING),
-            int(ExtendedStationWireState.STATION_ASSISTED): int(
-                StoredState.CHARGING_COMPLETED
-            ),
-            **SUMMON_STATES,
-            **SWEEP_SUMMON_STATES,
-        },
-    ),
+    state_by_wire=compose_codes(S60_CLASS_STATES),
     task_by_wire=compose_codes(EXTENDED_STATION_TASKS),
     controls=compose_controls(
         H50_ROLLER_CONTROLS,

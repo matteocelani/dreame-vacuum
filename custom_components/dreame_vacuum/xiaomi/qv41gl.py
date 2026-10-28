@@ -21,7 +21,7 @@ from .profile import (
 
 # Mop-only is not published, so the Dreame cleaning-mode select must stay off.
 _OMITTED_PROPERTIES: Final = frozenset({"CLEANING_MODE"})
-# Carpet deep cleaning and sweep-carpet-first stay on the shared station list.
+# Start eject and sweep AI detection are published only on this spec.
 _ADDED_CONTROLS: Final = (
     *select_controls(EXTENDED_STATION_CONTROLS, ("xiaomi_start_eject",)),
     *select_controls(AI_CAMERA_CONTROLS, ("xiaomi_sweep_ai_detection",)),

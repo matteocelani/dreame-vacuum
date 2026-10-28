@@ -1037,7 +1037,7 @@ _H50_ROLLER_OMITTED_PROPERTIES: Final[frozenset[str]] = frozenset(
 _H50_ROLLER_OMITTED_ACTIONS: Final[frozenset[str]] = frozenset(
     {"RESET_DETERGENT", "RESET_MOP_PAD"}
 )
-# Pad swings and the empty detergent service are absent from both roller specs.
+# Dropped from the shared list when either roller spec leaves the address out.
 _H50_ROLLER_OMITTED_CONTROLS: Final[frozenset[str]] = frozenset(
     {
         "xiaomi_brush_outswing",
