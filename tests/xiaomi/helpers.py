@@ -49,7 +49,7 @@ def _action_payload(payload: object) -> tuple[tuple[int, int], ...]:
     return tuple(pairs)
 
 
-def _wire_for_state(family: XiaomiModel, stored: StoredState) -> int:
+def wire_for_state(family: XiaomiModel, stored: StoredState) -> int:
     """Return the lowest wire that this family's state map stores as stored."""
     matches = [
         wire for wire, value in family.state_by_wire.items() if value == int(stored)
@@ -143,7 +143,7 @@ class FakeMiio:
             values[(mapping["siid"], mapping["piid"])] = 0
         state = self._family.property_overrides["STATE"]
         battery = self._family.property_overrides["BATTERY_LEVEL"]
-        values[(state["siid"], state["piid"])] = _wire_for_state(
+        values[(state["siid"], state["piid"])] = wire_for_state(
             self._family, StoredState.CHARGING
         )
         charging = self._family.property_overrides.get("CHARGING_STATUS")
@@ -279,13 +279,13 @@ class FakeMiio:
         resume_address = None if resume is None else (resume["siid"], resume["aiid"])
         pause = actions.get("PAUSE")
         if address in (start, resume_address):
-            self._set_state(_wire_for_state(self._family, StoredState.SWEEPING))
+            self._set_state(wire_for_state(self._family, StoredState.SWEEPING))
             self._set_charging(2)
         elif pause is not None and address == (pause["siid"], pause["aiid"]):
-            self._set_state(_wire_for_state(self._family, StoredState.PAUSED))
+            self._set_state(wire_for_state(self._family, StoredState.PAUSED))
             self._set_charging(2)
         elif address == (actions["CHARGE"]["siid"], actions["CHARGE"]["aiid"]):
-            self._set_state(_wire_for_state(self._family, StoredState.CHARGING))
+            self._set_state(wire_for_state(self._family, StoredState.CHARGING))
             self._set_charging(1)
         return {"code": 0}
 

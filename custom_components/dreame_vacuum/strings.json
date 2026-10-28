@@ -989,6 +989,14 @@
           "forth": "Four"
         }
       },
+      "xiaomi_basic_suction": {
+        "name": "Suction",
+        "state": {
+          "silent": "Silent",
+          "basic": "Standard",
+          "strong": "Strong"
+        }
+      },
       "xiaomi_water_level": {
         "name": "Water level",
         "state": {
@@ -2102,6 +2110,52 @@
       },
       "xiaomi_dnd_end_minute": {
         "name": "Do not disturb end minute"
+      },
+      "xiaomi_cleaning_area": {
+        "name": "Cleaning area"
+      },
+      "xiaomi_cleaning_time": {
+        "name": "Cleaning time"
+      },
+      "xiaomi_last_clean_time": {
+        "name": "Last clean time"
+      },
+      "xiaomi_charging_state": {
+        "name": "Charging state",
+        "state": {
+          "not_charging": "Not charging",
+          "charging": "Charging",
+          "charging_finished": "Charging finished"
+        }
+      },
+      "xiaomi_filter_minutes": {
+        "name": "Filter time left"
+      },
+      "xiaomi_side_brush_minutes": {
+        "name": "Side brush time left"
+      },
+      "xiaomi_total_clean_area": {
+        "name": "Total cleaning area"
+      },
+      "xiaomi_robot_notice": {
+        "name": "Robot notice",
+        "state": {
+          "none": "None",
+          "schedule_cleaning": "Scheduled cleaning",
+          "keep_cleaning": "Resume cleaning",
+          "start_recharging": "Start recharging",
+          "stop_recharging": "Stop recharging",
+          "battery_20": "Battery at 20 percent",
+          "cleaning_complete": "Cleaning complete",
+          "upgrade_failed": "Upgrade failed",
+          "update_succeeded": "Update succeeded",
+          "dnd_blocks_resume": "Do not disturb blocked resume",
+          "dnd_blocks_schedule": "Do not disturb blocked the schedule",
+          "busy_blocks_schedule": "Busy, schedule not started",
+          "shutdown": "Shutting down",
+          "filter_life": "Filter life",
+          "side_brush_life": "Side brush life"
+        }
       }
     },
     "switch": {
@@ -2461,6 +2515,15 @@
       },
       "xiaomi_ai_wake_up": {
         "name": "AI wake-up"
+      },
+      "xiaomi_sweep_break": {
+        "name": "Resume after interruption"
+      },
+      "xiaomi_no_disturb": {
+        "name": "Do not disturb"
+      },
+      "xiaomi_light": {
+        "name": "Light"
       }
     },
     "button": {
@@ -2679,6 +2742,12 @@
       },
       "xiaomi_reset_mop": {
         "name": "Reset mop"
+      },
+      "xiaomi_start_charging": {
+        "name": "Start charging"
+      },
+      "xiaomi_stop_charging": {
+        "name": "Stop charging"
       }
     },
     "camera": {

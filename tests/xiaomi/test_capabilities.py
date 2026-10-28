@@ -204,6 +204,7 @@ def test_catalog_row_stays_until_the_xiaomi_codec_is_installed():
         "xiaomi.vacuum.b112",
         "xiaomi.vacuum.b112gl",
         "xiaomi.vacuum.b112bk",
+        "xiaomi.vacuum.c108",
     ):
         copied = _load(model, None)
         assert tuple(copied.list) == _COPIED_XIAOMI_ROW
@@ -235,10 +236,16 @@ def test_s20_plus_and_x20_max_use_the_xiaomi_base():
     e10 = _load("xiaomi.vacuum.b112", resolve_family("xiaomi.vacuum.b112"))
     e12 = _load("xiaomi.vacuum.b112gl", resolve_family("xiaomi.vacuum.b112gl"))
     e10c = _load("xiaomi.vacuum.b112bk", resolve_family("xiaomi.vacuum.b112bk"))
+    e5 = _load("xiaomi.vacuum.c108", resolve_family("xiaomi.vacuum.c108"))
     assert tuple(s20.list) == _S20_PLUS
     assert tuple(e10.list) == ("disable_sensor_cleaning", "mijia")
     assert tuple(e12.list) == tuple(e10.list)
     assert tuple(e10c.list) == tuple(e10.list)
+    assert tuple(e5.list) == tuple(e10.list)
+    assert e5.dnd is False
+    assert e5.self_wash_base is False
+    assert e5.lidar_navigation is False
+    assert e5.auto_empty_base is False
     assert e10.dnd is False
     assert e10.auto_empty_base is False
     assert tuple(x20.list) == _X20_MAX

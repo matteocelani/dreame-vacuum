@@ -9,6 +9,7 @@ from custom_components.dreame_vacuum.dreame.types import (
     DreameVacuumState,
 )
 from custom_components.dreame_vacuum.xiaomi import (
+    MODEL_E5,
     MODEL_E10,
     MODEL_E10C,
     MODEL_E12,
@@ -69,6 +70,7 @@ def test_loopback_device_start_pause_resume_and_dock_send_only_mapped_actions(
         MODEL_H50_PRO_ROLLER,
         MODEL_H50_ROLLER,
         MODEL_X20_PRO,
+        MODEL_E5,
     ):
         family = resolve_family(model)
         assert family is not None
