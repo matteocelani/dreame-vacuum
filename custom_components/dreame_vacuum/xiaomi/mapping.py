@@ -14,6 +14,7 @@ from .model import (
     MODEL_ROBOT_VACUUM_5,
     MODEL_ROBOT_VACUUM_5_PRO,
     MODEL_ROBOT_VACUUM_6,
+    MODEL_ROBOT_VACUUM_6_MAX,
     MODEL_S20_PLUS,
     MODEL_S40,
     MODEL_S40_PRO,
@@ -28,6 +29,7 @@ from .ov43gb import H50
 from .ov51gl import H40
 from .ov71gl import S40_PRO
 from .ov81gl import S40
+from .pv11gl import ROBOT_VACUUM_6_MAX
 from .pv32gl import ROBOT_VACUUM_6
 
 _FAMILIES: Final[dict[str, XiaomiModel]] = {
@@ -36,6 +38,7 @@ _FAMILIES: Final[dict[str, XiaomiModel]] = {
     MODEL_ROBOT_VACUUM_5: ROBOT_VACUUM_5,
     MODEL_ROBOT_VACUUM_5_PRO: ROBOT_VACUUM_5_PRO,
     MODEL_ROBOT_VACUUM_6: ROBOT_VACUUM_6,
+    MODEL_ROBOT_VACUUM_6_MAX: ROBOT_VACUUM_6_MAX,
     MODEL_S40: S40,
     MODEL_S40_PRO: S40_PRO,
     MODEL_S40C: S40C,

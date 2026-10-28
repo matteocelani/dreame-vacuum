@@ -823,6 +823,15 @@
           "hours_12": "12 hours"
         }
       },
+      "xiaomi_mop_temperature": {
+        "name": "Mop temperature",
+        "state": {
+          "normal": "Normal",
+          "warm": "Warm",
+          "hot": "Hot",
+          "smart": "Smart"
+        }
+      },
       "xiaomi_mop_water_no_tank": {
         "name": "Mop water",
         "state": {
@@ -2512,6 +2521,9 @@
       },
       "xiaomi_stop_cut_hair": {
         "name": "Stop hair cutting"
+      },
+      "xiaomi_enter_check_mode": {
+        "name": "Enter check mode"
       },
       "xiaomi_start_water_check": {
         "name": "Start water check"
