@@ -765,6 +765,130 @@
           "high_frequency": "High frequency",
           "low_frequency": "Low frequency"
         }
+      },
+      "xiaomi_clean_times": {
+        "name": "Clean times",
+        "state": {
+          "one_time": "One time",
+          "two_time": "Two times",
+          "three_time": "Three times"
+        }
+      },
+      "xiaomi_mop_wash_frequency": {
+        "name": "Mop wash frequency",
+        "state": {
+          "by_room": "By room",
+          "by_area": "By area",
+          "by_time": "By time"
+        }
+      },
+      "xiaomi_wash_water_output": {
+        "name": "Mop wash water",
+        "state": {
+          "deep": "Deep",
+          "daily": "Daily",
+          "save_water": "Save water"
+        }
+      },
+      "xiaomi_drying_time": {
+        "name": "Drying time",
+        "state": {
+          "hours_2": "2 hours",
+          "hours_3": "3 hours",
+          "hours_4": "4 hours"
+        }
+      },
+      "xiaomi_mop_water_no_tank": {
+        "name": "Mop water",
+        "state": {
+          "daily": "Daily",
+          "deep": "Deep"
+        }
+      },
+      "xiaomi_mop_wash_area": {
+        "name": "Mop wash area",
+        "state": {
+          "five_square_meters": "5 m²",
+          "ten_square_meters": "10 m²",
+          "eight_square_meters": "8 m²",
+          "fifteen_square_meters": "15 m²",
+          "twenty_square_meters": "20 m²",
+          "twenty_five_square_meters": "25 m²"
+        }
+      },
+      "xiaomi_sweep_route": {
+        "name": "Sweep route",
+        "state": {
+          "quick": "Quick",
+          "daily": "Daily",
+          "careful": "Careful"
+        }
+      },
+      "xiaomi_obstacle_strategy": {
+        "name": "Obstacle avoidance",
+        "state": {
+          "less_collisions": "Fewer collisions",
+          "high_coverage": "High coverage"
+        }
+      },
+      "xiaomi_mop_swing_frequency": {
+        "name": "Mop swing frequency",
+        "state": {
+          "seven_sweeps": "Every 7 sweeps",
+          "every_time": "Every time"
+        }
+      },
+      "xiaomi_dust_arrest_power": {
+        "name": "Dust collection power",
+        "state": {
+          "silent": "Silent",
+          "normal": "Normal",
+          "strong": "Strong"
+        }
+      },
+      "xiaomi_worry_free_mode": {
+        "name": "Worry-free mode",
+        "state": {
+          "silent_clean": "Silent clean",
+          "deep_clean": "Deep clean",
+          "general": "General",
+          "butler": "Butler",
+          "pet": "Pet"
+        }
+      },
+      "xiaomi_wash_water_temperature": {
+        "name": "Wash water temperature",
+        "state": {
+          "ordinary": "Room temperature",
+          "warm": "Warm",
+          "hot": "Hot",
+          "smart": "Smart"
+        }
+      },
+      "xiaomi_detergent_level": {
+        "name": "Detergent level",
+        "state": {
+          "few": "Low",
+          "standard": "Standard",
+          "many": "High",
+          "lots": "Maximum"
+        }
+      },
+      "xiaomi_obstacle_crossing": {
+        "name": "Obstacle crossing",
+        "state": {
+          "safe_mode": "Safe",
+          "extreme_mode": "Extreme"
+        }
+      },
+      "xiaomi_carpet_cleaning_method": {
+        "name": "Carpet cleaning",
+        "state": {
+          "self_adaption": "Adaptive",
+          "avoid": "Avoid",
+          "ignore": "Ignore",
+          "span": "Cross"
+        }
       }
     },
     "sensor": {
@@ -1717,6 +1841,108 @@
       },
       "wheel_dirty_time_left": {
         "name": "Wheel Dirty Time Left"
+      },
+      "xiaomi_last_clean_time": {
+        "name": "Last clean time"
+      },
+      "xiaomi_drying_progress": {
+        "name": "Drying progress"
+      },
+      "xiaomi_cleaning_progress": {
+        "name": "Cleaning progress"
+      },
+      "xiaomi_dry_left_time": {
+        "name": "Drying time left"
+      },
+      "xiaomi_voltage": {
+        "name": "Battery voltage"
+      },
+      "xiaomi_download_progress": {
+        "name": "Voice download progress"
+      },
+      "xiaomi_dust_bag_life": {
+        "name": "Dust bag life"
+      },
+      "xiaomi_dust_bag_time_left": {
+        "name": "Dust bag time left"
+      },
+      "xiaomi_water_check_status": {
+        "name": "Water check",
+        "state": {
+          "uncheck": "Not checked",
+          "checking": "Checking",
+          "check_success": "Succeeded",
+          "check_fail": "Failed"
+        }
+      },
+      "xiaomi_sweep_mop_status": {
+        "name": "Sweep and mop status",
+        "state": {
+          "idle": "Idle",
+          "sweeping": "Sweeping",
+          "mopping": "Mopping"
+        }
+      },
+      "xiaomi_sewage_tank": {
+        "name": "Sewage tank",
+        "state": {
+          "not_full": "Not full",
+          "full": "Full"
+        }
+      },
+      "xiaomi_station_water_level": {
+        "name": "Water tank",
+        "state": {
+          "not_empty": "Not empty",
+          "empty": "Empty"
+        }
+      },
+      "xiaomi_base_station_tank": {
+        "name": "Station tank",
+        "state": {
+          "idle": "Idle",
+          "emptying": "Emptying",
+          "emptying_completed": "Emptying completed",
+          "emptying_failed": "Emptying failed"
+        }
+      },
+      "xiaomi_host_tank": {
+        "name": "Robot tank",
+        "state": {
+          "idle": "Idle",
+          "emptying": "Emptying",
+          "emptying_completed": "Emptying completed",
+          "emptying_failed": "Emptying failed"
+        }
+      },
+      "xiaomi_download_status": {
+        "name": "Voice download",
+        "state": {
+          "not_downloaded": "Not downloaded",
+          "downloading": "Downloading",
+          "downloaded": "Downloaded",
+          "download_fail": "Download failed",
+          "apply_success": "Applied",
+          "apply_fail": "Apply failed"
+        }
+      },
+      "xiaomi_laser_position": {
+        "name": "Laser position",
+        "state": {
+          "bottom": "Bottom",
+          "top": "Top",
+          "lifting": "Raising",
+          "lowering": "Lowering"
+        }
+      },
+      "xiaomi_base_station_status": {
+        "name": "Base station status"
+      },
+      "xiaomi_notice": {
+        "name": "Notice"
+      },
+      "xiaomi_current_voice": {
+        "name": "Current voice"
       }
     },
     "switch": {
@@ -1959,6 +2185,57 @@
       },
       "wider_corner_coverage": {
         "name": "Wider Corner Coverage"
+      },
+      "xiaomi_alarm": {
+        "name": "Alarm"
+      },
+      "xiaomi_carpet_avoidance": {
+        "name": "Carpet avoidance"
+      },
+      "xiaomi_enable_mop_wash": {
+        "name": "Mop wash"
+      },
+      "xiaomi_auto_mop_dry": {
+        "name": "Auto mop drying"
+      },
+      "xiaomi_auto_water_change": {
+        "name": "Auto water change"
+      },
+      "xiaomi_use_detergent": {
+        "name": "Use detergent"
+      },
+      "xiaomi_exit_remote_dialog": {
+        "name": "Exit remote dialog"
+      },
+      "xiaomi_hot_water_wash": {
+        "name": "Hot water mop wash"
+      },
+      "xiaomi_detergent_self_delivery": {
+        "name": "Detergent self-delivery"
+      },
+      "xiaomi_detergent_reminder": {
+        "name": "Detergent reminder"
+      },
+      "xiaomi_carpet_deep_cleaning": {
+        "name": "Carpet deep cleaning"
+      },
+      "xiaomi_carpet_discriminate": {
+        "name": "Carpet recognition"
+      },
+      "xiaomi_sweep_carpet_first": {
+        "name": "Sweep carpet first"
+      },
+      "xiaomi_mop_outer_swing": {
+        "name": "Mop swing"
+      },
+      "xiaomi_brush_outswing": {
+        "name": "Brush swing"
+      },
+      "xiaomi_repeat_wash_mop": {
+        "name": "Repeat mop wash"
+      },
+      "xiaomi_detergent_delivery": {
+        "name": "Detergent delivery"
       }
     },
     "button": {
@@ -2057,6 +2334,90 @@
       },
       "water_tank_draining": {
         "name": "Water Tank Draining"
+      },
+      "xiaomi_stop_and_charge": {
+        "name": "Stop and charge"
+      },
+      "xiaomi_start_sweep": {
+        "name": "Start sweep"
+      },
+      "xiaomi_start_mop": {
+        "name": "Start mop"
+      },
+      "xiaomi_start_sweep_mop": {
+        "name": "Start sweep and mop"
+      },
+      "xiaomi_start_mop_wash": {
+        "name": "Start mop wash"
+      },
+      "xiaomi_start_dry": {
+        "name": "Start drying"
+      },
+      "xiaomi_start_eject": {
+        "name": "Eject"
+      },
+      "xiaomi_call_clean": {
+        "name": "Call to clean"
+      },
+      "xiaomi_try_listen": {
+        "name": "Play voice preview"
+      },
+      "xiaomi_enter_remote": {
+        "name": "Enter remote control"
+      },
+      "xiaomi_exit_remote": {
+        "name": "Exit remote control"
+      },
+      "xiaomi_stop_mop_wash": {
+        "name": "Stop mop wash"
+      },
+      "xiaomi_stop_dry": {
+        "name": "Stop drying"
+      },
+      "xiaomi_back_to_wash": {
+        "name": "Return to wash"
+      },
+      "xiaomi_start_cut_hair": {
+        "name": "Start hair cutting"
+      },
+      "xiaomi_stop_cut_hair": {
+        "name": "Stop hair cutting"
+      },
+      "xiaomi_start_water_check": {
+        "name": "Start water check"
+      },
+      "xiaomi_cancel_water_check": {
+        "name": "Cancel water check"
+      },
+      "xiaomi_start_station_cleaning": {
+        "name": "Clean base station"
+      },
+      "xiaomi_sweep_before_mop": {
+        "name": "Sweep before mopping"
+      },
+      "xiaomi_stop_working": {
+        "name": "Stop working"
+      },
+      "xiaomi_empty_station_tank": {
+        "name": "Empty station tank"
+      },
+      "xiaomi_empty_host_tank": {
+        "name": "Empty robot tank"
+      },
+      "xiaomi_spot_clean": {
+        "name": "Spot clean"
+      },
+      "xiaomi_start_station_self_clean": {
+        "name": "Start station self-clean"
+      },
+      "xiaomi_stop_station_self_clean": {
+        "name": "Stop station self-clean"
+      },
+      "xiaomi_calibrate_imu": {
+        "name": "Calibrate sensors"
+      },
+      "xiaomi_reset_dust_bag": {
+        "name": "Reset dust bag"
       }
     },
     "camera": {
@@ -2111,6 +2472,18 @@
             "name": "Items"
           }
         }
+      },
+      "xiaomi_sleep_status": {
+        "name": "Sleep"
+      },
+      "xiaomi_auto_water_change_installed": {
+        "name": "Auto water change installed"
+      },
+      "xiaomi_current_child_lock": {
+        "name": "Child lock state"
+      },
+      "xiaomi_current_dnd": {
+        "name": "Do not disturb state"
       }
     },
     "number": {
@@ -2137,6 +2510,9 @@
       },
       "wetness_level": {
         "name": "Wetness"
+      },
+      "xiaomi_mop_wash_interval": {
+        "name": "Mop wash interval"
       }
     },
     "time": {
@@ -3121,6 +3497,9 @@
     },
     "zone_too_small": {
       "message": "Zone {zone} is smaller than the minimum zone size ({width}, {height})"
+    },
+    "xiaomi_control_failed": {
+      "message": "The vacuum rejected {control}."
     }
   }
 }

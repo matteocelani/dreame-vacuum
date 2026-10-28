@@ -20,6 +20,7 @@ from .const import DOMAIN
 
 from .coordinator import DreameVacuumDataUpdateCoordinator
 from .entity import DreameVacuumEntity, DreameVacuumEntityDescription, remove_entities
+from .xiaomi_controls import add_xiaomi_controls
 from .dreame import (
     EntityUnavailableException,
     DreameVacuumProperty,
@@ -560,6 +561,7 @@ async def async_setup_entry(
         for description in SWITCHES
         if description.exists_fn(description, coordinator.device)
     )
+    add_xiaomi_controls(coordinator, async_add_entities, "switch")
 
 
 class DreameVacuumSwitchEntity(DreameVacuumEntity, SwitchEntity):

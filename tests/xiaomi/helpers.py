@@ -13,6 +13,19 @@ from Crypto.Cipher import AES
 from custom_components.dreame_vacuum.xiaomi import resolve_family
 
 
+def traffic_outside_map(
+    writes: list[tuple[int, int, object]],
+    actions: list[tuple[int, int]],
+    action_inputs: list[object],
+    properties: set[tuple[int, int]],
+    action_addresses: set[tuple[int, int]],
+) -> tuple[set[tuple[int, int]], set[tuple[int, int]], list[object]]:
+    """Return writes, actions, and payloads that leave the model map."""
+    write_pairs = {(siid, piid) for siid, piid, _value in writes}
+    unexpected = [payload for payload in action_inputs if payload not in ([], None)]
+    return (write_pairs - properties, set(actions) - action_addresses, unexpected)
+
+
 def release_device(device: object) -> None:
     """Stop device timers and wait until their threads have exited."""
     disconnect = getattr(device, "disconnect", None)
@@ -47,6 +60,8 @@ class FakeMiio:
         self.model = model
         self.token = bytes.fromhex(token)
         self.actions: list[tuple[int, int]] = []
+        self.action_inputs: list[object] = []
+        self.writes: list[tuple[int, int, object]] = []
         self._family = resolve_family(model)
         if self._family is None:
             raise RuntimeError(model)
@@ -99,6 +114,13 @@ class FakeMiio:
         values[(state["siid"], state["piid"])] = 2
         values[(charging["siid"], charging["piid"])] = 1
         values[(battery["siid"], battery["piid"])] = 90
+        for control in self._family.controls:
+            if control.siid is None or control.piid is None:
+                continue
+            if control.value_kind == "string":
+                values[(control.siid, control.piid)] = ""
+            else:
+                values.setdefault((control.siid, control.piid), 0)
         return values
 
     def _state_pair(self) -> tuple[int, int]:
@@ -114,6 +136,10 @@ class FakeMiio:
 
     def _set_charging(self, wire: int) -> None:
         self._values[self._charging_pair()] = wire
+
+    def set_value(self, siid: int, piid: int, value: object) -> None:
+        """Store one property the next read will return."""
+        self._values[(siid, piid)] = value
 
     def _serve(self) -> None:
         datagram = self._socket
@@ -200,6 +226,7 @@ class FakeMiio:
         siid = item.get("siid")
         piid = item.get("piid")
         if isinstance(siid, int) and isinstance(piid, int):
+            self.writes.append((siid, piid, item.get("value")))
             self._values[(siid, piid)] = item.get("value")
         return {"did": item.get("did", ""), "siid": siid, "piid": piid, "code": 0}
 
@@ -209,6 +236,7 @@ class FakeMiio:
         if not isinstance(siid, int) or not isinstance(aiid, int):
             return {"code": -1}
         self.actions.append((siid, aiid))
+        self.action_inputs.append(params.get("in"))
         address = (siid, aiid)
         actions = self._family.action_overrides
         if address == (

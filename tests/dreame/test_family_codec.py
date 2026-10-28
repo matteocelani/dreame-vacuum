@@ -9,7 +9,11 @@ from custom_components.dreame_vacuum.dreame.types import (
     DreameVacuumProperty,
 )
 from custom_components.dreame_vacuum.xiaomi import resolve_family
-from custom_components.dreame_vacuum.xiaomi.mapping import MODEL_S20_PLUS, MODEL_X20_MAX
+from custom_components.dreame_vacuum.xiaomi.mapping import (
+    MODEL_ROBOT_VACUUM_5,
+    MODEL_S20_PLUS,
+    MODEL_X20_MAX,
+)
 
 
 class _MapManager:
@@ -67,7 +71,15 @@ def test_apply_family_installs_only_explicit_x20_max_addresses():
     family = resolve_family(MODEL_X20_MAX)
     assert family is not None
     device = _Device()
+
+    def original(properties: object = None) -> bool:
+        del properties
+        return False
+
+    device._request_properties = original
     apply_family(device, family)
+    assert device._request_properties is original
+    assert not hasattr(device, "_xiaomi_values")
     assert device._property_codec is family
     assert device._map_manager.action_mapping is device.action_mapping
     assert device.property_mapping[DreameVacuumProperty.STATE] == {"siid": 2, "piid": 2}
@@ -87,7 +99,15 @@ def test_apply_family_disables_s20_plus_map_requests():
     family = resolve_family(MODEL_S20_PLUS)
     assert family is not None
     device = _Device()
+
+    def original(properties: object = None) -> bool:
+        del properties
+        return False
+
+    device._request_properties = original
     apply_family(device, family)
+    assert device._request_properties is original
+    assert not hasattr(device, "_xiaomi_values")
     assert DreameVacuumAction.REQUEST_MAP not in device.action_mapping
     assert DreameVacuumAction.PLAY_SOUND not in device.action_mapping
     assert DreameVacuumAction.BACKUP_MAP not in device.action_mapping
@@ -116,3 +136,25 @@ def test_apply_family_keeps_transport_when_the_probe_misses():
     skipped = _Family(_Transport(True))
     apply_family(_Device(), skipped)
     assert skipped.built is False
+
+
+def test_apply_family_refreshes_robot_vacuum_5_controls_on_a_full_poll():
+    family = resolve_family(MODEL_ROBOT_VACUUM_5)
+    assert family is not None
+    device = _Device()
+
+    def original(properties: object = None) -> bool:
+        del properties
+        return False
+
+    device._request_properties = original
+    apply_family(device, family)
+    device._protocol.get_properties = lambda items: [
+        {"siid": item["siid"], "piid": item["piid"], "code": 0, "value": 1}
+        for item in items
+    ]
+    assert device._request_properties([DreameVacuumProperty.STATE]) is False
+    assert device._xiaomi_values == {}
+    assert device._request_properties() is True
+    assert device._xiaomi_values
+    assert all(value == 1 for value in device._xiaomi_values.values())

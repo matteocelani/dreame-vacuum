@@ -28,6 +28,7 @@ from .entity import (
     DreameVacuumEntityDescription,
     remove_entities,
 )
+from .xiaomi_controls import add_xiaomi_controls
 from .dreame import DreameVacuumProperty, EntityUnavailableException, InvalidActionException
 
 
@@ -240,6 +241,7 @@ async def async_setup_entry(
         for description in NUMBERS
         if description.exists_fn(description, coordinator.device)
     )
+    add_xiaomi_controls(coordinator, async_add_entities, "number")
 
     update_segment_numbers = partial(async_update_segment_numbers, coordinator, {}, async_add_entities)
     coordinator.async_add_listener(update_segment_numbers)
