@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Collection, Mapping
-from dataclasses import replace
 from enum import IntEnum
 from typing import Final
 
@@ -19,42 +17,16 @@ from .controls import (
     number_control,
     text_sensor,
 )
-
-
-class StoredState(IntEnum):
-    """Dreame state codes stored after Xiaomi values are converted."""
-
-    SWEEPING = 1
-    IDLE = 2
-    PAUSED = 3
-    ERROR = 4
-    RETURNING = 5
-    CHARGING = 6
-    MOPPING = 7
-    DRYING = 8
-    WASHING = 9
-    RETURNING_TO_WASH = 10
-    BUILDING = 11
-    SWEEPING_AND_MOPPING = 12
-    CHARGING_COMPLETED = 13
-    UPGRADING = 14
-    # Below 19, so the old state enum does not relabel clean-summon.
-    CLEAN_SUMMON = 15
-    WASHING_PAUSED = 21
-    REMOTE_CONTROL = 23
-    STATION_CLEANING = 30
-
-
-class StoredTask(IntEnum):
-    """Dreame task-status codes stored for Xiaomi models."""
-
-    COMPLETED = 0
-    AUTO_CLEANING = 1
-    ZONE_CLEANING = 2
-    SEGMENT_CLEANING = 3
-    SPOT_CLEANING = 4
-    FAST_MAPPING = 5
-    AUTO_CLEANING_PAUSED = 6
+from .model import (
+    StoredState,
+    StoredTask,
+    compose_addresses,
+    compose_codes,
+    compose_controls,
+    control_with_options,
+    select_controls,
+    wire_map,
+)
 
 
 class StationWireState(IntEnum):
@@ -118,100 +90,6 @@ class ExtendedStationWireTask(IntEnum):
     LINKAGE = 9
     FAST_MAPPING = 10
     AI_HOSTING = 11
-
-
-def wire_map(pairs: tuple[tuple[IntEnum, IntEnum], ...]) -> dict[int, int]:
-    """Build a wire-code map from named pairs."""
-    return {int(wire): int(stored) for wire, stored in pairs}
-
-
-def compose_addresses(
-    base: Mapping[str, Mapping[str, int]],
-    additions: Mapping[str, Mapping[str, int]] | None = None,
-    omitted: Collection[str] | None = None,
-) -> dict[str, dict[str, int]]:
-    """Copy a shared address table, drop omitted names, and apply additions."""
-    merged = {name: dict(address) for name, address in base.items()}
-    if omitted:
-        for name in omitted:
-            if name not in merged:
-                raise KeyError(name)
-            del merged[name]
-    if not additions:
-        return merged
-    for name, address in additions.items():
-        merged[name] = dict(address)
-    return merged
-
-
-def compose_codes(
-    base: Mapping[int, int],
-    overrides: Mapping[int, int] | None = None,
-    omitted: Collection[int] | None = None,
-) -> dict[int, int]:
-    """Copy a shared wire map, apply overrides, and drop codes the spec omits."""
-    merged = {int(wire): int(stored) for wire, stored in base.items()}
-    if overrides:
-        for wire, stored in overrides.items():
-            merged[int(wire)] = int(stored)
-    if omitted:
-        for wire in omitted:
-            key = int(wire)
-            if key not in merged:
-                raise KeyError(key)
-            del merged[key]
-    return merged
-
-
-def compose_controls(
-    base: tuple[XiaomiControl, ...],
-    additions: tuple[XiaomiControl, ...] = (),
-    omitted: Collection[str] | None = None,
-    replaced: Mapping[str, XiaomiControl] | None = None,
-) -> tuple[XiaomiControl, ...]:
-    """Copy a control list, drop keys, swap replacements, and append additions."""
-    skipped = set(omitted) if omitted else set()
-    swaps = dict(replaced) if replaced else {}
-    overlap = skipped & set(swaps)
-    if overlap:
-        raise KeyError(next(iter(overlap)))
-    present = {control.key for control in base}
-    for name in skipped | set(swaps):
-        if name not in present:
-            raise KeyError(name)
-    kept = tuple(
-        swaps.get(control.key, control)
-        for control in base
-        if control.key not in skipped
-    )
-    return kept + additions
-
-
-def select_controls(
-    controls: tuple[XiaomiControl, ...],
-    keys: tuple[str, ...],
-) -> tuple[XiaomiControl, ...]:
-    """Return named controls from a shared tuple, in the requested order."""
-    by_key = {control.key: control for control in controls}
-    chosen: list[XiaomiControl] = []
-    for key in keys:
-        control = by_key.get(key)
-        if control is None:
-            raise KeyError(key)
-        chosen.append(control)
-    return tuple(chosen)
-
-
-def control_with_options(
-    controls: tuple[XiaomiControl, ...],
-    key: str,
-    options: tuple[tuple[int, str], ...],
-) -> XiaomiControl:
-    """Copy one shared control with the value-list a single model publishes."""
-    for control in controls:
-        if control.key == key:
-            return replace(control, options=options)
-    raise KeyError(key)
 
 
 STATION_PROPERTIES: Final[dict[str, dict[str, int]]] = {

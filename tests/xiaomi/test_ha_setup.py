@@ -11,6 +11,9 @@ from custom_components.dreame_vacuum.const import (
     DOMAIN,
 )
 from custom_components.dreame_vacuum.xiaomi import (
+    MODEL_E10,
+    MODEL_E10C,
+    MODEL_E12,
     MODEL_H50,
     MODEL_H50_PRO,
     MODEL_H50_PRO_ROLLER,
@@ -142,6 +145,72 @@ async def test_setup_creates_vacuum_and_safe_commands_for_both_models(
             (actions["START"]["siid"], actions["START"]["aiid"]),
             (actions["PAUSE"]["siid"], actions["PAUSE"]["aiid"]),
             (actions["RESUME"]["siid"], actions["RESUME"]["aiid"]),
+            (actions["CHARGE"]["siid"], actions["CHARGE"]["aiid"]),
+        ]
+        assert not set(fake.actions) & _FORBIDDEN
+
+
+async def test_sweep_family_setup_starts_and_returns_without_pause(
+    hass: HomeAssistant,
+    socket_enabled: None,
+    enable_custom_integrations: None,
+    integration_package: object,
+) -> None:
+    """E10 docks, cleans, and returns. Pause is not a mapped action."""
+    del integration_package
+    from custom_components.dreame_vacuum.dreame import VERSION
+    from custom_components.dreame_vacuum.xiaomi import resolve_family
+
+    for model, name in (
+        (MODEL_E10, "E10 Sim"),
+        (MODEL_E12, "E12 Sim"),
+        (MODEL_E10C, "E10C Sim"),
+    ):
+        family = resolve_family(model)
+        assert family is not None
+        actions = family.action_overrides
+        with FakeMiio(model) as fake:
+            entry = MockConfigEntry(
+                domain=DOMAIN,
+                unique_id=name,
+                data={
+                    CONF_NAME: name,
+                    CONF_HOST: "127.0.0.1",
+                    CONF_TOKEN: _TOKEN,
+                    CONF_MAC: _MAC,
+                    CONF_ACCOUNT_TYPE: "mi",
+                },
+                options={
+                    CONF_PREFER_CLOUD: False,
+                    CONF_NOTIFY: False,
+                    CONF_VERSION: VERSION,
+                },
+            )
+            entry.add_to_hass(hass)
+            assert await hass.config_entries.async_setup(entry.entry_id)
+            await hass.async_block_till_done()
+            device = hass.data[DOMAIN][entry.entry_id].device
+            try:
+                vacuum = _vacuum(hass)
+                assert vacuum.state == "docked"
+                assert not _unsafe_entities(hass)
+                await _cycle(hass, vacuum.entity_id)
+                await _refresh(hass, entry.entry_id)
+                assert _vacuum(hass).state == "cleaning"
+                await hass.services.async_call(
+                    "vacuum",
+                    "return_to_base",
+                    {"entity_id": vacuum.entity_id},
+                    blocking=True,
+                )
+                await _refresh(hass, entry.entry_id)
+                assert _vacuum(hass).state == "docked"
+            finally:
+                assert await hass.config_entries.async_unload(entry.entry_id)
+                await hass.async_block_till_done()
+                release_device(device)
+        assert fake.actions == [
+            (actions["START"]["siid"], actions["START"]["aiid"]),
             (actions["CHARGE"]["siid"], actions["CHARGE"]["aiid"]),
         ]
         assert not set(fake.actions) & _FORBIDDEN

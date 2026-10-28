@@ -5,10 +5,16 @@ from __future__ import annotations
 from typing import Final
 
 from .b108gl import S20_PLUS
+from .b112 import E10
+from .b112bk import E10C
+from .b112gl import E12
 from .d102gl import X20_PRO
 from .d109gl import X20_MAX
 from .e101gb import S40C
 from .model import (
+    MODEL_E10,
+    MODEL_E10C,
+    MODEL_E12,
     MODEL_H40,
     MODEL_H50,
     MODEL_H50_PRO,
@@ -63,6 +69,9 @@ _FAMILIES: Final[dict[str, XiaomiModel]] = {
     MODEL_H50_PRO: H50_PRO,
     MODEL_H50_PRO_ROLLER: H50_PRO_ROLLER,
     MODEL_H50_ROLLER: H50_ROLLER,
+    MODEL_E10: E10,
+    MODEL_E12: E12,
+    MODEL_E10C: E10C,
 }
 
 

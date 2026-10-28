@@ -13,6 +13,9 @@ from custom_components.dreame_vacuum.dreame.types import (
     DreameVacuumPropertyMapping,
 )
 from custom_components.dreame_vacuum.xiaomi import (
+    MODEL_E10,
+    MODEL_E10C,
+    MODEL_E12,
     MODEL_H50,
     MODEL_H50_PRO,
     MODEL_H50_PRO_ROLLER,
@@ -295,6 +298,32 @@ _PROPERTY_TEXT[MODEL_H50_ROLLER] = {
     "CLEANING_MODE": "Sweep Mop Type",
 }
 _ACTION_TEXT[MODEL_H50_ROLLER] = _ACTION_TEXT[MODEL_ROBOT_VACUUM_6]
+_SWEEP_PROPERTY_TEXT = {
+    "STATE": "Status",
+    "ERROR": "Device Fault",
+    "BATTERY_LEVEL": "Battery Level",
+    "SIDE_BRUSH_LEFT": "",
+    "SIDE_BRUSH_TIME_LEFT": "",
+    "MAIN_BRUSH_LEFT": "",
+    "MAIN_BRUSH_TIME_LEFT": "",
+    "FILTER_LEFT": "",
+    "FILTER_TIME_LEFT": "",
+    "MOP_PAD_LEFT": "",
+    "MOP_PAD_TIME_LEFT": "",
+    "CLEANING_TIME": "",
+    "CLEANED_AREA": "",
+}
+_PROPERTY_TEXT[MODEL_E10] = _SWEEP_PROPERTY_TEXT
+_PROPERTY_TEXT[MODEL_E12] = _SWEEP_PROPERTY_TEXT
+_PROPERTY_TEXT[MODEL_E10C] = _SWEEP_PROPERTY_TEXT
+_SWEEP_ACTION_TEXT = {
+    "START": "Start Sweep",
+    "STOP": "Stop Sweeping",
+    "CHARGE": "Start Charge",
+}
+_ACTION_TEXT[MODEL_E10] = _SWEEP_ACTION_TEXT
+_ACTION_TEXT[MODEL_E12] = _SWEEP_ACTION_TEXT
+_ACTION_TEXT[MODEL_E10C] = _SWEEP_ACTION_TEXT
 _SPEC_FILES = {
     MODEL_S20_PLUS: ("b108gl.json",),
     MODEL_X20_MAX: ("d109gl.json", "d109gl_v1.json"),
@@ -314,6 +343,9 @@ _SPEC_FILES = {
     MODEL_S60: ("pv81gl.json",),
     MODEL_H50_PRO_ROLLER: ("qv41gl.json",),
     MODEL_H50_ROLLER: ("qv42gl.json",),
+    MODEL_E10: ("b112.json",),
+    MODEL_E12: ("b112gl.json",),
+    MODEL_E10C: ("b112bk.json",),
 }
 _ABSENT_PROPERTIES = (
     "STATUS",

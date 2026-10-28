@@ -60,6 +60,8 @@ class EntityCase:
     status_samples: Mapping[str, tuple[object, str]]
     consumable_life: tuple[str, ...]
     omitted_legacy_selects: frozenset[str] = frozenset()
+    reports_charging: bool = True
+    station_vacuum: bool = True
 
 
 async def exercise_home_assistant_entities(
@@ -79,7 +81,7 @@ async def exercise_home_assistant_entities(
             await _exercise_selects_switches_number_and_buttons(
                 hass, fake, family, case
             )
-            await _exercise_vacuum_states(hass, entry.entry_id, fake, family)
+            await _exercise_vacuum_states(hass, entry.entry_id, fake, family, case)
             await _exercise_sensors(hass, entry.entry_id, fake, family, case)
             await _exercise_binary_sensors(hass, entry.entry_id, fake, family, case)
             await _exercise_controls(hass, entry.entry_id, fake, family)
@@ -172,9 +174,10 @@ async def _exercise_selects_switches_number_and_buttons(
     entry_id = _config_entry_id(hass)
     await _select_legacy(hass, entry_id, case, "suction_level")
     await _select_legacy(hass, entry_id, case, "cleaning_mode")
-    tank = family.property_overrides["WATER_TANK"]
-    fake.set_value(tank["siid"], tank["piid"], True)
-    await _refresh(hass, entry_id)
+    if "WATER_TANK" in family.property_overrides:
+        tank = family.property_overrides["WATER_TANK"]
+        fake.set_value(tank["siid"], tank["piid"], True)
+        await _refresh(hass, entry_id)
     await _select_legacy(hass, entry_id, case, "water_volume")
     await _select_legacy(hass, entry_id, case, "cleaning_mode")
     if "AUTO_DUST_COLLECTING" in family.property_overrides:
@@ -186,9 +189,12 @@ async def _exercise_selects_switches_number_and_buttons(
     for key in _LEGACY_SWITCHES:
         if key not in present_switches:
             continue
+        if key == "dnd" and "DND" not in family.property_overrides:
+            continue
         await _flip_legacy_switch(hass, entry_id, key)
-    await _set_volume_samples(hass, entry_id)
-    await _press_reset_buttons(hass, entry_id, case)
+    if ("number", "volume") in case.entities:
+        await _set_volume_samples(hass, entry_id)
+    await _press_reset_buttons(hass, entry_id, family, case)
     await _press_unavailable_auto_empty(hass, fake, entry_id, case)
 
 
@@ -217,12 +223,14 @@ async def _set_volume_samples(hass: HomeAssistant, entry_id: str) -> None:
 
 
 async def _press_reset_buttons(
-    hass: HomeAssistant, entry_id: str, case: EntityCase
+    hass: HomeAssistant, entry_id: str, family: XiaomiModel, case: EntityCase
 ) -> None:
     """Press each legacy reset button this model exposes."""
     present = {key for domain, key in case.entities if domain == "button"}
     for key in _LEGACY_RESET_BUTTONS:
         if key not in present:
+            continue
+        if key.upper() not in family.action_overrides:
             continue
         await hass.services.async_call(
             "button",
@@ -279,13 +287,22 @@ async def _select_each(hass: HomeAssistant, entry_id: str, key: str) -> None:
 
 
 async def _exercise_vacuum_states(
-    hass: HomeAssistant, entry_id: str, fake: FakeMiio, family: XiaomiModel
+    hass: HomeAssistant,
+    entry_id: str,
+    fake: FakeMiio,
+    family: XiaomiModel,
+    case: EntityCase,
 ) -> None:
     """Drive start, pause, resume, stop, return, locate, and the error states."""
     state = family.property_overrides["STATE"]
-    charging = family.property_overrides["CHARGING_STATUS"]
+    charging = family.property_overrides.get("CHARGING_STATUS", {})
     error = family.property_overrides["ERROR"]
     vacuum_id = _entity_id(hass, entry_id, "vacuum", "dreame_vacuum")
+    if not case.station_vacuum:
+        await _exercise_sweep_vacuum(
+            hass, fake, entry_id, family, vacuum_id, state, error
+        )
+        return
     await _show_vacuum(
         hass, fake, entry_id, vacuum_id, state, charging, error, 1, 2, 0, "idle"
     )
@@ -339,6 +356,71 @@ async def _exercise_vacuum_states(
         family.action_overrides["LOCATE"]["siid"],
         family.action_overrides["LOCATE"]["aiid"],
     )
+
+
+async def _exercise_sweep_vacuum(
+    hass: HomeAssistant,
+    fake: FakeMiio,
+    entry_id: str,
+    family: XiaomiModel,
+    vacuum_id: str,
+    state: Mapping[str, int],
+    error: Mapping[str, int],
+) -> None:
+    """Drive start, refused pause, stop, return, and error without a charging property."""
+    await _show_sweep(hass, fake, entry_id, vacuum_id, state, error, 1, 0, "idle")
+    await hass.services.async_call(
+        "vacuum", "start", {"entity_id": vacuum_id}, blocking=True
+    )
+    await _refresh(hass, entry_id)
+    assert _vacuum_state(hass, vacuum_id) == "cleaning"
+    before = len(fake.actions)
+    with contextlib.suppress(HomeAssistantError):
+        await hass.services.async_call(
+            "vacuum", "pause", {"entity_id": vacuum_id}, blocking=True
+        )
+    assert len(fake.actions) == before
+    await _refresh(hass, entry_id)
+    assert _vacuum_state(hass, vacuum_id) == "cleaning"
+    await hass.services.async_call(
+        "vacuum", "stop", {"entity_id": vacuum_id}, blocking=True
+    )
+    assert fake.actions[-1] == (
+        family.action_overrides["STOP"]["siid"],
+        family.action_overrides["STOP"]["aiid"],
+    )
+    await _show_sweep(hass, fake, entry_id, vacuum_id, state, error, 3, 0, "returning")
+    await hass.services.async_call(
+        "vacuum", "return_to_base", {"entity_id": vacuum_id}, blocking=True
+    )
+    await _refresh(hass, entry_id)
+    assert _vacuum_state(hass, vacuum_id) == "docked"
+    await _show_sweep(hass, fake, entry_id, vacuum_id, state, error, 4, 0, "docked")
+    await _show_sweep(hass, fake, entry_id, vacuum_id, state, error, 1, 1, "error")
+    before = len(fake.actions)
+    with contextlib.suppress(HomeAssistantError):
+        await hass.services.async_call(
+            "vacuum", "locate", {"entity_id": vacuum_id}, blocking=True
+        )
+    assert len(fake.actions) == before
+
+
+async def _show_sweep(
+    hass: HomeAssistant,
+    fake: FakeMiio,
+    entry_id: str,
+    vacuum_id: str,
+    state: Mapping[str, int],
+    error: Mapping[str, int],
+    wire: int,
+    error_wire: int,
+    expected: str,
+) -> None:
+    """Publish one sweep status and assert the vacuum entity state."""
+    fake.set_value(state["siid"], state["piid"], wire)
+    fake.set_value(error["siid"], error["piid"], error_wire)
+    await _refresh(hass, entry_id)
+    assert _vacuum_state(hass, vacuum_id) == expected
 
 
 def _vacuum_state(hass: HomeAssistant, vacuum_id: str) -> str:
@@ -426,16 +508,20 @@ async def _exercise_binary_sensors(
     assert binary_keys == {"charging_state", "problem", "maintenance"} | {
         control.key for control in family.controls if control.domain == "binary_sensor"
     }
-    charging = family.property_overrides["CHARGING_STATUS"]
     battery = family.property_overrides["BATTERY_LEVEL"]
     error = family.property_overrides["ERROR"]
     fake.set_value(battery["siid"], battery["piid"], 90)
-    fake.set_value(charging["siid"], charging["piid"], 1)
-    await _refresh(hass, entry_id)
-    assert _state(hass, entry_id, "binary_sensor", "charging_state") == "on"
-    fake.set_value(charging["siid"], charging["piid"], 2)
-    await _refresh(hass, entry_id)
-    assert _state(hass, entry_id, "binary_sensor", "charging_state") == "off"
+    if case.reports_charging:
+        charging = family.property_overrides["CHARGING_STATUS"]
+        fake.set_value(charging["siid"], charging["piid"], 1)
+        await _refresh(hass, entry_id)
+        assert _state(hass, entry_id, "binary_sensor", "charging_state") == "on"
+        fake.set_value(charging["siid"], charging["piid"], 2)
+        await _refresh(hass, entry_id)
+        assert _state(hass, entry_id, "binary_sensor", "charging_state") == "off"
+    else:
+        await _refresh(hass, entry_id)
+        assert _state(hass, entry_id, "binary_sensor", "charging_state") == "off"
     fake.set_value(error["siid"], error["piid"], 0)
     await _refresh(hass, entry_id)
     assert _state(hass, entry_id, "binary_sensor", "problem") == "off"

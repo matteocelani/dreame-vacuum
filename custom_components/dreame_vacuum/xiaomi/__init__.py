@@ -6,6 +6,9 @@ from .controls import XiaomiControl, invoke_control, read_control, write_control
 from .exceptions import XiaomiControlException
 from .mapping import resolve_family
 from .model import (
+    MODEL_E10,
+    MODEL_E10C,
+    MODEL_E12,
     MODEL_H50,
     MODEL_H50_PRO,
     MODEL_H50_PRO_ROLLER,
@@ -22,6 +25,9 @@ from .model import (
 )
 
 __all__ = [
+    "MODEL_E10",
+    "MODEL_E10C",
+    "MODEL_E12",
     "MODEL_H50",
     "MODEL_H50_PRO",
     "MODEL_H50_PRO_ROLLER",
