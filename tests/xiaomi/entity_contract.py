@@ -177,15 +177,19 @@ async def _exercise_selects_switches_number_and_buttons(
     await _refresh(hass, entry_id)
     await _select_legacy(hass, entry_id, case, "water_volume")
     await _select_legacy(hass, entry_id, case, "cleaning_mode")
-    dust = family.property_overrides["AUTO_DUST_COLLECTING"]
-    fake.set_value(dust["siid"], dust["piid"], 1)
-    await _refresh(hass, entry_id)
-    await _select_each(hass, entry_id, "auto_empty_frequency")
+    if "AUTO_DUST_COLLECTING" in family.property_overrides:
+        dust = family.property_overrides["AUTO_DUST_COLLECTING"]
+        fake.set_value(dust["siid"], dust["piid"], 1)
+        await _refresh(hass, entry_id)
+        await _select_each(hass, entry_id, "auto_empty_frequency")
+    present_switches = {key for domain, key in case.entities if domain == "switch"}
     for key in _LEGACY_SWITCHES:
+        if key not in present_switches:
+            continue
         await _flip_legacy_switch(hass, entry_id, key)
     await _set_volume_samples(hass, entry_id)
     await _press_reset_buttons(hass, entry_id, case)
-    await _press_unavailable_auto_empty(hass, fake, entry_id)
+    await _press_unavailable_auto_empty(hass, fake, entry_id, case)
 
 
 async def _flip_legacy_switch(hass: HomeAssistant, entry_id: str, key: str) -> None:
@@ -229,9 +233,11 @@ async def _press_reset_buttons(
 
 
 async def _press_unavailable_auto_empty(
-    hass: HomeAssistant, fake: FakeMiio, entry_id: str
+    hass: HomeAssistant, fake: FakeMiio, entry_id: str, case: EntityCase
 ) -> None:
-    """Assert auto-empty is unavailable and a press sends no action."""
+    """Assert a press sends nothing when this model exposes auto-empty."""
+    if ("button", "start_auto_empty") not in case.entities:
+        return
     empty_id = _entity_id(hass, entry_id, "button", "start_auto_empty")
     state = hass.states.get(empty_id)
     assert state is not None

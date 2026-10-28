@@ -14,6 +14,8 @@ from custom_components.dreame_vacuum.xiaomi import (
     MODEL_ROBOT_VACUUM_6,
     MODEL_ROBOT_VACUUM_6_MAX,
     MODEL_ROBOT_VACUUM_6_PRO,
+    MODEL_S60,
+    MODEL_S60_PLUS,
     MODEL_X20_PRO,
     resolve_family,
 )
@@ -56,6 +58,8 @@ def test_loopback_device_start_pause_resume_and_dock_send_only_mapped_actions(
         MODEL_ROBOT_VACUUM_6,
         MODEL_ROBOT_VACUUM_6_MAX,
         MODEL_ROBOT_VACUUM_6_PRO,
+        MODEL_S60,
+        MODEL_S60_PLUS,
         MODEL_X20_PRO,
     ):
         family = resolve_family(model)

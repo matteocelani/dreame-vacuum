@@ -197,6 +197,8 @@ def test_catalog_row_stays_until_the_xiaomi_codec_is_installed():
         "xiaomi.vacuum.pv32gl",
         "xiaomi.vacuum.pv11gl",
         "xiaomi.vacuum.pv21gl",
+        "xiaomi.vacuum.pv51gl",
+        "xiaomi.vacuum.pv81gl",
     ):
         copied = _load(model, None)
         assert tuple(copied.list) == _COPIED_XIAOMI_ROW
@@ -219,6 +221,8 @@ def test_s20_plus_and_x20_max_use_the_xiaomi_base():
     vacuum_6 = _load("xiaomi.vacuum.pv32gl", resolve_family("xiaomi.vacuum.pv32gl"))
     vacuum_6_max = _load("xiaomi.vacuum.pv11gl", resolve_family("xiaomi.vacuum.pv11gl"))
     vacuum_6_pro = _load("xiaomi.vacuum.pv21gl", resolve_family("xiaomi.vacuum.pv21gl"))
+    s60_plus = _load("xiaomi.vacuum.pv51gl", resolve_family("xiaomi.vacuum.pv51gl"))
+    s60 = _load("xiaomi.vacuum.pv81gl", resolve_family("xiaomi.vacuum.pv81gl"))
     assert tuple(s20.list) == _S20_PLUS
     assert tuple(x20.list) == _X20_MAX
     assert tuple(x20_pro.list) == _X20_MAX
@@ -243,6 +247,8 @@ def test_s20_plus_and_x20_max_use_the_xiaomi_base():
         vacuum_6,
         vacuum_6_max,
         vacuum_6_pro,
+        s60_plus,
+        s60,
     ):
         assert capability.self_wash_base is False
         assert capability.station_cleaning is False
@@ -336,6 +342,20 @@ def test_s20_plus_and_x20_max_use_the_xiaomi_base():
     assert vacuum_6_pro.lidar_navigation is False
     assert vacuum_6_pro.station_cleaning is False
     assert vacuum_6_pro.dnd is True
+    assert tuple(s60_plus.list) == _S40_PRO
+    assert s60_plus.auto_empty_base is True
+    assert s60_plus.auto_emptying is True
+    assert s60_plus.detergent is False
+    assert s60_plus.self_wash_base is False
+    assert s60_plus.lidar_navigation is False
+    assert s60_plus.station_cleaning is False
+    assert tuple(s60.list) == _S20_PLUS
+    assert s60.auto_empty_base is False
+    assert s60.auto_emptying is False
+    assert s60.detergent is False
+    assert s60.self_wash_base is False
+    assert s60.lidar_navigation is False
+    assert s60.station_cleaning is False
 
 
 def test_a_mapped_wash_base_or_map_turns_only_that_flag_on():

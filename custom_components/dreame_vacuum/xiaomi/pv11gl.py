@@ -17,10 +17,9 @@ from .profile import (
     STATION_PROPERTIES,
     STATION_STATISTICS_PROPERTIES,
     SUMMON_STATES,
+    SWEEP_SUMMON_STATES,
     WORRY_FREE_THROUGH_BUTLER,
     ExtendedStationWireState,
-    StoredState,
-    SummonWireState,
     compose_addresses,
     compose_codes,
     compose_controls,
@@ -28,11 +27,6 @@ from .profile import (
 
 # The Dreame cleaning-mode select would write mop-only, which this spec omits.
 _OMITTED_PROPERTIES: Final = frozenset({"CLEANING_MODE"})
-
-# Sweep-summon is published here and is not part of the shared summon pair.
-_SWEEP_SUMMON: Final = {
-    int(SummonWireState.SWEEP_SUMMONING): int(StoredState.SWEEPING),
-}
 
 ROBOT_VACUUM_6_MAX: Final = XiaomiModel(
     model=MODEL_ROBOT_VACUUM_6_MAX,
@@ -44,7 +38,7 @@ ROBOT_VACUUM_6_MAX: Final = XiaomiModel(
     action_overrides=compose_addresses(STATION_ACTIONS),
     state_by_wire=compose_codes(
         EXTENDED_STATION_STATES,
-        {**SUMMON_STATES, **_SWEEP_SUMMON},
+        {**SUMMON_STATES, **SWEEP_SUMMON_STATES},
         omitted=(
             int(ExtendedStationWireState.STATION_ASSISTING),
             int(ExtendedStationWireState.STATION_ASSISTED),

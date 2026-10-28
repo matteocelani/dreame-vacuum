@@ -2277,6 +2277,9 @@
       "xiaomi_use_detergent": {
         "name": "Use detergent"
       },
+      "xiaomi_vibration_mop": {
+        "name": "Vibration mop"
+      },
       "xiaomi_exit_remote_dialog": {
         "name": "Exit remote dialog"
       },
