@@ -9,6 +9,7 @@ from .model import (
     MODEL_H50,
     MODEL_H50_PRO,
     MODEL_ROBOT_VACUUM_5_PRO,
+    MODEL_ROBOT_VACUUM_6,
     control_keys,
     controls_of,
 )
@@ -17,6 +18,7 @@ __all__ = [
     "MODEL_H50",
     "MODEL_H50_PRO",
     "MODEL_ROBOT_VACUUM_5_PRO",
+    "MODEL_ROBOT_VACUUM_6",
     "XiaomiControl",
     "XiaomiControlException",
     "control_keys",
