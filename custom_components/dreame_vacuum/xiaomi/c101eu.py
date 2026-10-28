@@ -92,19 +92,20 @@ class _ExtraWireState(IntEnum):
     AIR_DRY_PAUSED = 12
 
 
-# Air-dry paused has no shell state, so it stays paused rather than drying.
-_EXTRA_STATES: Final[dict[int, int]] = {
-    int(_ExtraWireState.WASHING): int(StoredState.WASHING),
-    int(_ExtraWireState.DRYING): int(StoredState.DRYING),
-    int(_ExtraWireState.DUST_COLLECTION): _LEGACY_AUTO_EMPTYING,
-    int(_ExtraWireState.AIR_DRY_PAUSED): int(StoredState.PAUSED),
-}
-
 X20: Final = XiaomiModel(
     model=MODEL_X20,
     property_overrides=compose_addresses(SWEEP_PROPERTIES),
     action_overrides=compose_addresses(SWEEP_ACTIONS),
-    state_by_wire=compose_codes(SWEEP_STATES, _EXTRA_STATES),
+    # Air-dry paused has no shell state, so it stays paused rather than drying.
+    state_by_wire=compose_codes(
+        SWEEP_STATES,
+        {
+            int(_ExtraWireState.WASHING): int(StoredState.WASHING),
+            int(_ExtraWireState.DRYING): int(StoredState.DRYING),
+            int(_ExtraWireState.DUST_COLLECTION): _LEGACY_AUTO_EMPTYING,
+            int(_ExtraWireState.AIR_DRY_PAUSED): int(StoredState.PAUSED),
+        },
+    ),
     task_by_wire={},
     controls=compose_controls(
         SWEEP_CONTROLS,

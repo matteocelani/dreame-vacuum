@@ -225,9 +225,7 @@ def test_the_record_keeps_sweep_addresses_and_replaces_value_lists() -> None:
     air_dry = next(item for item in family.controls if item.key == "xiaomi_air_dry")
     assert (air_dry.siid, air_dry.piid) == (7, 54)
     assert not any(item.key == "xiaomi_suction_level" for item in family.controls)
-    assert not any(
-        item.siid == 2 and item.piid == 11 for item in family.controls if item.piid
-    )
+    assert not any(item.siid == 2 and item.piid == 11 for item in family.controls)
 
 
 def test_every_published_status_wire_has_a_shell_state() -> None:
