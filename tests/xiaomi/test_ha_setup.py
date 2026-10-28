@@ -23,6 +23,7 @@ from custom_components.dreame_vacuum.xiaomi import (
     MODEL_ROBOT_VACUUM_6,
     MODEL_ROBOT_VACUUM_6_MAX,
     MODEL_ROBOT_VACUUM_6_PRO,
+    MODEL_S20,
     MODEL_S60,
     MODEL_S60_PLUS,
     MODEL_X20_PRO,
@@ -167,6 +168,7 @@ async def test_sweep_family_setup_starts_and_returns_without_pause(
         (MODEL_E10, "E10 Sim"),
         (MODEL_E12, "E12 Sim"),
         (MODEL_E10C, "E10C Sim"),
+        (MODEL_S20, "Robot Vacuum S20 Sim"),
     ):
         family = resolve_family(model)
         assert family is not None
