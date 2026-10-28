@@ -19,6 +19,7 @@ MODEL_S40: Final = "xiaomi.vacuum.ov81gl"
 MODEL_S40_PRO: Final = "xiaomi.vacuum.ov71gl"
 MODEL_S40C: Final = "xiaomi.vacuum.e101gb"
 MODEL_H40: Final = "xiaomi.vacuum.ov51gl"
+MODEL_H50_PRO: Final = "xiaomi.vacuum.ov42gl"
 _ONE_INDEXED_PROPERTIES: Final[frozenset[str]] = frozenset(
     {"CLEANING_MODE", "SUCTION_LEVEL"}
 )

@@ -2284,6 +2284,9 @@
       "xiaomi_liquid_dirt_detection": {
         "name": "Liquid dirt detection"
       },
+      "xiaomi_solid_dirt_detection": {
+        "name": "Solid dirt detection"
+      },
       "xiaomi_edge_swing_tail_sweep": {
         "name": "Edge swing sweep"
       },

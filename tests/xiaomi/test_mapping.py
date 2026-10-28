@@ -18,6 +18,7 @@ from custom_components.dreame_vacuum.xiaomi import (
 )
 from custom_components.dreame_vacuum.xiaomi.mapping import (
     MODEL_H40,
+    MODEL_H50_PRO,
     MODEL_ROBOT_VACUUM_5,
     MODEL_S20_PLUS,
     MODEL_S40,
@@ -33,6 +34,7 @@ from custom_components.dreame_vacuum.xiaomi.profile import (
     HAIR_CUTTING_CONTROLS,
     S40_CLASS_CONTROLS,
     S40_CLASS_OMITTED_CONTROLS,
+    SOLID_DIRT_CONTROLS,
     STATION_ACTIONS,
     STATION_PROPERTIES,
     STATION_STATISTICS_PROPERTIES,
@@ -339,6 +341,37 @@ def test_s40c_reuses_the_s40_map_and_replaces_worry_free_mode() -> None:
         )
 
 
+def test_h50_pro_reuses_the_s40_map_and_restores_published_controls() -> None:
+    h50 = resolve_family(MODEL_H50_PRO)
+    s40 = resolve_family(MODEL_S40)
+    assert h50 is not None
+    assert s40 is not None
+    assert h50.property_overrides == s40.property_overrides
+    assert h50.property_overrides is not s40.property_overrides
+    assert h50.action_overrides == s40.action_overrides
+    assert h50.action_overrides is not s40.action_overrides
+    assert h50.state_by_wire == s40.state_by_wire
+    assert h50.state_by_wire is not s40.state_by_wire
+    assert h50.task_by_wire == s40.task_by_wire
+    assert h50.task_by_wire is not s40.task_by_wire
+    shared = {control.key: control for control in EXTENDED_STATION_CONTROLS}
+    added = {control.key: control for control in S40_CLASS_CONTROLS}
+    solid = {control.key: control for control in SOLID_DIRT_CONTROLS}
+    for control in h50.controls:
+        if control.key in shared:
+            assert control is shared[control.key]
+        elif control.key in added:
+            assert control is added[control.key]
+        else:
+            assert control is solid[control.key]
+    omitted = set(shared) - {control.key for control in h50.controls}
+    assert omitted == {"xiaomi_laser_position", "xiaomi_obstacle_crossing"}
+    restored = set(S40_CLASS_OMITTED_CONTROLS) - omitted
+    assert {control.key for control in h50.controls} == (
+        {control.key for control in s40.controls} | restored | set(solid)
+    )
+
+
 def test_compose_rejects_an_omission_the_profile_does_not_define():
     with pytest.raises(KeyError):
         compose_addresses(STATION_PROPERTIES, omitted=frozenset({"NO_SUCH"}))
@@ -354,6 +387,7 @@ def test_station_address_literals_are_declared_once():
         "d109gl.py",
         "e101gb.py",
         "ov31gl.py",
+        "ov42gl.py",
         "ov51gl.py",
         "ov71gl.py",
         "ov81gl.py",
@@ -395,6 +429,7 @@ def test_property_and_action_names_exist_on_the_dreame_enums():
         MODEL_S40_PRO,
         MODEL_S40,
         MODEL_H40,
+        MODEL_H50_PRO,
         MODEL_S40C,
     ):
         family = resolve_family(model)

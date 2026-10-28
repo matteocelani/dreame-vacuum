@@ -671,3 +671,8 @@ S40_CLASS_OMITTED_CONTROLS: Final[frozenset[str]] = frozenset(
         "xiaomi_sweep_carpet_first",
     }
 )
+
+# Piid 52 is solid-dirt detection. The S40-class spec skips that iid.
+SOLID_DIRT_CONTROLS: Final[tuple[XiaomiControl, ...]] = (
+    boolean_switch("xiaomi_solid_dirt_detection", 2, 52),
+)

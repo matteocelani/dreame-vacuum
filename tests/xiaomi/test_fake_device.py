@@ -10,6 +10,7 @@ from custom_components.dreame_vacuum.dreame.types import (
 from custom_components.dreame_vacuum.xiaomi import resolve_family
 from custom_components.dreame_vacuum.xiaomi.mapping import (
     MODEL_H40,
+    MODEL_H50_PRO,
     MODEL_ROBOT_VACUUM_5,
     MODEL_S20_PLUS,
     MODEL_S40,
@@ -40,6 +41,7 @@ def test_loopback_device_start_pause_resume_and_dock_send_only_mapped_actions(
         MODEL_S40_PRO,
         MODEL_S40,
         MODEL_H40,
+        MODEL_H50_PRO,
         MODEL_S40C,
     ):
         family = resolve_family(model)
