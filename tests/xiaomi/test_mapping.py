@@ -37,6 +37,7 @@ from custom_components.dreame_vacuum.xiaomi.profile import (
     EXTENDED_STATION_TASKS,
     HAIR_CUTTING_CONTROLS,
     LIDAR_HARDWARE_CONTROLS,
+    ROLLER_CLEANING_MODE,
     ROLLER_CONTROLS,
     S40_CLASS_CONTROLS,
     S40_CLASS_OMITTED_CONTROLS,
@@ -511,6 +512,7 @@ def test_robot_vacuum_6_keeps_shared_controls_and_adds_the_roller() -> None:
     assert vacuum is not None
     assert h50 is not None
     assert set(vacuum.property_overrides) == set(h50.property_overrides) - {
+        "CLEANING_MODE",
         "MOP_PAD_LEFT",
         "MOP_PAD_TIME_LEFT",
         "DETERGENT_LEFT",
@@ -527,6 +529,7 @@ def test_robot_vacuum_6_keeps_shared_controls_and_adds_the_roller() -> None:
     added = {
         control.key: control
         for control in (
+            ROLLER_CLEANING_MODE,
             *AI_CAMERA_CONTROLS,
             SELF_CHECK_RESULTS,
             SWEEP_DUST_ARREST,
@@ -560,6 +563,11 @@ def test_robot_vacuum_6_keeps_shared_controls_and_adds_the_roller() -> None:
         "butler",
     ]
     assert [value for value, _slug in host_tank.options] == [0, 1, 2, 3, 4]
+    cleaning_mode = next(
+        control for control in vacuum.controls if control.key == "xiaomi_cleaning_mode"
+    )
+    assert [value for value, _slug in cleaning_mode.options] == [1, 3, 4]
+    assert "CLEANING_MODE" not in vacuum.property_overrides
 
 
 def test_compose_rejects_an_omission_the_profile_does_not_define():

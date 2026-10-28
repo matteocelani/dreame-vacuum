@@ -505,6 +505,7 @@ def _assert_value_lists(
     ]
     mode = current[("property", 2, 4)].get("value-list")
     assert isinstance(mode, list)
+    assert [item["value"] for item in mode if isinstance(item, dict)] == [1, 3, 4]
     assert [item["description"] for item in mode if isinstance(item, dict)] == [
         "Sweep",
         "Sweep Mop",

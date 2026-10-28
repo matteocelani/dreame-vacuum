@@ -10,6 +10,7 @@ from .profile import (
     EXTENDED_STATION_CONTROLS,
     EXTENDED_STATION_STATES,
     EXTENDED_STATION_TASKS,
+    ROLLER_CLEANING_MODE,
     ROLLER_CONTROLS,
     SELF_CHECK_RESULTS,
     STATION_ACTIONS,
@@ -51,6 +52,7 @@ _HOST_TANK: Final = control_with_options(
 # The published spec has no mop pad, detergent consumable, hair cut, or stream.
 _OMITTED_PROPERTIES: Final = frozenset(
     {
+        "CLEANING_MODE",
         "MOP_PAD_LEFT",
         "MOP_PAD_TIME_LEFT",
         "DETERGENT_LEFT",
@@ -84,6 +86,7 @@ _OMITTED_CONTROLS: Final = frozenset(
     }
 )
 _ADDED_CONTROLS: Final = (
+    ROLLER_CLEANING_MODE,
     *AI_CAMERA_CONTROLS,
     SELF_CHECK_RESULTS,
     SWEEP_DUST_ARREST,

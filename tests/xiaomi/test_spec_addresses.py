@@ -244,7 +244,7 @@ _ACTION_TEXT[MODEL_ROBOT_VACUUM_5_PRO] = _ACTION_TEXT[MODEL_S40]
 _PROPERTY_TEXT[MODEL_ROBOT_VACUUM_6] = {
     name: text
     for name, text in _PROPERTY_TEXT[MODEL_S40_PRO].items()
-    if name not in {"MOP_PAD_LEFT", "MOP_PAD_TIME_LEFT"}
+    if name not in {"CLEANING_MODE", "MOP_PAD_LEFT", "MOP_PAD_TIME_LEFT"}
 }
 _ACTION_TEXT[MODEL_ROBOT_VACUUM_6] = {
     name: text

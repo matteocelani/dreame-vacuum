@@ -738,6 +738,21 @@ SELF_CHECK_RESULTS: Final = text_sensor(
     _SELF_CHECK_RESULTS_PROPERTY,
 )
 
+_VACUUM_SERVICE: Final = 2
+_CLEANING_MODE_PROPERTY: Final = 4
+
+# This spec has no mop-only value. The Dreame select would send wire 2.
+ROLLER_CLEANING_MODE: Final = enum_select(
+    "xiaomi_cleaning_mode",
+    _VACUUM_SERVICE,
+    _CLEANING_MODE_PROPERTY,
+    (
+        (1, "sweeping"),
+        (3, "sweeping_and_mopping"),
+        (4, "mopping_after_sweeping"),
+    ),
+)
+
 _ROLLER_SERVICE: Final = 24
 _ROLLER_LIFE_PROPERTY: Final = 1
 _ROLLER_TIME_PROPERTY: Final = 2

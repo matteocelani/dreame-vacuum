@@ -766,6 +766,14 @@
           "low_frequency": "Low frequency"
         }
       },
+      "xiaomi_cleaning_mode": {
+        "name": "Cleaning mode",
+        "state": {
+          "sweeping": "Sweeping",
+          "sweeping_and_mopping": "Sweeping and mopping",
+          "mopping_after_sweeping": "Sweep then mop"
+        }
+      },
       "xiaomi_clean_times": {
         "name": "Clean times",
         "state": {

@@ -22,7 +22,6 @@ _ENTITIES: Final[frozenset[tuple[str, str]]] = frozenset(
         ("sensor", "firmware_version"),
         ("number", "volume"),
         ("select", "auto_empty_frequency"),
-        ("select", "cleaning_mode"),
         ("select", "suction_level"),
         ("select", "water_volume"),
         ("sensor", "battery_level"),
@@ -89,6 +88,7 @@ _CASE = EntityCase(
     counter_samples=_COUNTER_SAMPLES,
     status_samples=_STATUS_SAMPLES,
     consumable_life=_CONSUMABLE_LIFE,
+    omitted_legacy_selects=frozenset({"cleaning_mode"}),
 )
 
 pytestmark = [
