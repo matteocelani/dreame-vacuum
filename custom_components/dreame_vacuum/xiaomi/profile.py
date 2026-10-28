@@ -38,6 +38,8 @@ class StoredState(IntEnum):
     SWEEPING_AND_MOPPING = 12
     CHARGING_COMPLETED = 13
     UPGRADING = 14
+    # Below 19, so the old state enum does not relabel clean-summon.
+    CLEAN_SUMMON = 15
     WASHING_PAUSED = 21
     REMOTE_CONTROL = 23
     STATION_CLEANING = 30
@@ -175,6 +177,21 @@ def compose_controls(
         if control.key not in skipped
     )
     return kept + additions
+
+
+def select_controls(
+    controls: tuple[XiaomiControl, ...],
+    keys: tuple[str, ...],
+) -> tuple[XiaomiControl, ...]:
+    """Return named controls from a shared tuple, in the requested order."""
+    by_key = {control.key: control for control in controls}
+    chosen: list[XiaomiControl] = []
+    for key in keys:
+        control = by_key.get(key)
+        if control is None:
+            raise KeyError(key)
+        chosen.append(control)
+    return tuple(chosen)
 
 
 def control_with_options(
@@ -619,6 +636,31 @@ EXTENDED_STATION_CONTROLS: Final[tuple[XiaomiControl, ...]] = (
     action_button("xiaomi_reset_dust_bag", 19, 1),
 )
 
+# The shared list also publishes Pet.
+WORRY_FREE_THROUGH_BUTLER: Final = control_with_options(
+    EXTENDED_STATION_CONTROLS,
+    "xiaomi_worry_free_mode",
+    (
+        (0, "silent_clean"),
+        (1, "deep_clean"),
+        (2, "general"),
+        (3, "butler"),
+    ),
+)
+
+# The shared list stops at emptying failed.
+HOST_TANK_WITH_NOT_INSTALLED: Final = control_with_options(
+    EXTENDED_STATION_CONTROLS,
+    "xiaomi_host_tank",
+    (
+        (0, "idle"),
+        (1, "emptying"),
+        (2, "emptying_completed"),
+        (3, "emptying_failed"),
+        (4, "not_installed"),
+    ),
+)
+
 HAIR_CUTTING_CONTROLS: Final[tuple[XiaomiControl, ...]] = (
     boolean_switch("xiaomi_cut_hair", 2, 63),
     enum_select(
@@ -740,8 +782,9 @@ SELF_CHECK_RESULTS: Final = text_sensor(
 
 _VACUUM_SERVICE: Final = 2
 _CLEANING_MODE_PROPERTY: Final = 4
+_MOP_TEMPERATURE_PROPERTY: Final = 107
 
-# This spec has no mop-only value. The Dreame select would send wire 2.
+# The Dreame select would send mop-only, which these specs do not publish.
 ROLLER_CLEANING_MODE: Final = enum_select(
     "xiaomi_cleaning_mode",
     _VACUUM_SERVICE,
@@ -804,12 +847,33 @@ ROLLER_CONTROLS: Final[tuple[XiaomiControl, ...]] = (
 
 _CUSTOM_SERVICE: Final = 20
 _SWEEP_DUST_ARREST_ACTION: Final = 9
+_ENTER_CHECK_MODE_ACTION: Final = 11
 
 # Dust collection during a clean. Start-dust-arrest remains the dock empty.
 SWEEP_DUST_ARREST: Final = action_button(
     "xiaomi_sweep_dust_arrest",
     _CUSTOM_SERVICE,
     _SWEEP_DUST_ARREST_ACTION,
+)
+
+# A parameter-free self-check entry. The result string is a separate sensor.
+ENTER_CHECK_MODE: Final = action_button(
+    "xiaomi_enter_check_mode",
+    _CUSTOM_SERVICE,
+    _ENTER_CHECK_MODE_ACTION,
+)
+
+# Device mop-water temperature. It is not the per-room Dreame mop-temperature map.
+MOP_TEMPERATURE: Final = enum_select(
+    "xiaomi_mop_temperature",
+    _VACUUM_SERVICE,
+    _MOP_TEMPERATURE_PROPERTY,
+    (
+        (0, "normal"),
+        (1, "warm"),
+        (2, "hot"),
+        (3, "smart"),
+    ),
 )
 
 # Extended-station controls whose addresses the S40-class spec does not publish.

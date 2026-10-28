@@ -84,6 +84,7 @@ Configure a Dreame, MOVA, Mijia, or TROUVER vacuum with the upstream guides. Tho
 | Xiaomi Robot Vacuum 5 Pro | `xiaomi.vacuum.ov21gl` |
 | Xiaomi Robot Vacuum H50 | `xiaomi.vacuum.ov43gb` |
 | Xiaomi Robot Vacuum 6 | `xiaomi.vacuum.pv32gl` |
+| Xiaomi Robot Vacuum 6 Max | `xiaomi.vacuum.pv11gl` |
 
 Map, rooms, and zones are not supported yet on Xiaomi models. These models were tested on a simulated robot, not real hardware. A manual check for a real S20+ or X20 Max is [hardware-test-s20-plus-x20-max.md](hardware-test-s20-plus-x20-max.md). That procedure does not add map, room, or zone support.
 

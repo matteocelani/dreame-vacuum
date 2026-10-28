@@ -10,6 +10,7 @@ from .profile import (
     EXTENDED_STATION_CONTROLS,
     EXTENDED_STATION_STATES,
     EXTENDED_STATION_TASKS,
+    HOST_TANK_WITH_NOT_INSTALLED,
     ROLLER_CLEANING_MODE,
     ROLLER_CONTROLS,
     SELF_CHECK_RESULTS,
@@ -17,36 +18,11 @@ from .profile import (
     STATION_PROPERTIES,
     STATION_STATISTICS_PROPERTIES,
     SWEEP_DUST_ARREST,
+    WORRY_FREE_THROUGH_BUTLER,
     ExtendedStationWireState,
     compose_addresses,
     compose_codes,
     compose_controls,
-    control_with_options,
-)
-
-# This spec stops at Butler. The shared list also publishes Pet.
-_WORRY_FREE_MODE: Final = control_with_options(
-    EXTENDED_STATION_CONTROLS,
-    "xiaomi_worry_free_mode",
-    (
-        (0, "silent_clean"),
-        (1, "deep_clean"),
-        (2, "general"),
-        (3, "butler"),
-    ),
-)
-
-# This spec adds Not Installed. The shared list stops at emptying failed.
-_HOST_TANK: Final = control_with_options(
-    EXTENDED_STATION_CONTROLS,
-    "xiaomi_host_tank",
-    (
-        (0, "idle"),
-        (1, "emptying"),
-        (2, "emptying_completed"),
-        (3, "emptying_failed"),
-        (4, "not_installed"),
-    ),
 )
 
 # The published spec has no mop pad, detergent consumable, hair cut, or stream.
@@ -114,8 +90,8 @@ ROBOT_VACUUM_6: Final = XiaomiModel(
         _ADDED_CONTROLS,
         omitted=_OMITTED_CONTROLS,
         replaced={
-            "xiaomi_host_tank": _HOST_TANK,
-            "xiaomi_worry_free_mode": _WORRY_FREE_MODE,
+            "xiaomi_host_tank": HOST_TANK_WITH_NOT_INSTALLED,
+            "xiaomi_worry_free_mode": WORRY_FREE_THROUGH_BUTLER,
         },
     ),
 )

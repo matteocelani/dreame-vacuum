@@ -10,6 +10,7 @@ from .model import (
     MODEL_H50_PRO,
     MODEL_ROBOT_VACUUM_5_PRO,
     MODEL_ROBOT_VACUUM_6,
+    MODEL_ROBOT_VACUUM_6_MAX,
     control_keys,
     controls_of,
 )
@@ -19,6 +20,7 @@ __all__ = [
     "MODEL_H50_PRO",
     "MODEL_ROBOT_VACUUM_5_PRO",
     "MODEL_ROBOT_VACUUM_6",
+    "MODEL_ROBOT_VACUUM_6_MAX",
     "XiaomiControl",
     "XiaomiControlException",
     "control_keys",

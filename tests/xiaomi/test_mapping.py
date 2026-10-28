@@ -16,6 +16,7 @@ from custom_components.dreame_vacuum.xiaomi import (
     MODEL_H50_PRO,
     MODEL_ROBOT_VACUUM_5_PRO,
     MODEL_ROBOT_VACUUM_6,
+    MODEL_ROBOT_VACUUM_6_MAX,
     control_keys,
     controls_of,
     resolve_family,
@@ -32,11 +33,14 @@ from custom_components.dreame_vacuum.xiaomi.mapping import (
 from custom_components.dreame_vacuum.xiaomi.profile import (
     AI_CAMERA_CONTROLS,
     DETERGENT_TIME_PROPERTIES,
+    ENTER_CHECK_MODE,
     EXTENDED_STATION_CONTROLS,
     EXTENDED_STATION_STATES,
     EXTENDED_STATION_TASKS,
     HAIR_CUTTING_CONTROLS,
+    HOST_TANK_WITH_NOT_INSTALLED,
     LIDAR_HARDWARE_CONTROLS,
+    MOP_TEMPERATURE,
     ROLLER_CLEANING_MODE,
     ROLLER_CONTROLS,
     S40_CLASS_CONTROLS,
@@ -48,10 +52,12 @@ from custom_components.dreame_vacuum.xiaomi.profile import (
     STATION_STATISTICS_PROPERTIES,
     STREAM_CONTROLS,
     SWEEP_DUST_ARREST,
+    WORRY_FREE_THROUGH_BUTLER,
     compose_addresses,
     compose_codes,
     compose_controls,
     control_with_options,
+    select_controls,
 )
 import pytest
 from tests.xiaomi.spec_helpers import spec_index
@@ -570,6 +576,74 @@ def test_robot_vacuum_6_keeps_shared_controls_and_adds_the_roller() -> None:
     assert "CLEANING_MODE" not in vacuum.property_overrides
 
 
+def test_robot_vacuum_6_max_reuses_the_station_profile() -> None:
+    """Only the spec's own omissions and additions differ from the shared lists."""
+    vacuum = resolve_family(MODEL_ROBOT_VACUUM_6_MAX)
+    vacuum_6 = resolve_family(MODEL_ROBOT_VACUUM_6)
+    assert vacuum is not None
+    assert vacuum_6 is not None
+    assert set(vacuum.property_overrides) == set(vacuum_6.property_overrides) | {
+        "MOP_PAD_LEFT",
+        "MOP_PAD_TIME_LEFT",
+        "DETERGENT_LEFT",
+        "DETERGENT_TIME_LEFT",
+    }
+    assert set(vacuum.action_overrides) == set(vacuum_6.action_overrides) | {
+        "RESET_MOP_PAD",
+        "RESET_DETERGENT",
+    }
+    assert set(vacuum.state_by_wire) == set(vacuum_6.state_by_wire) | {25, 26, 27}
+    assert vacuum.task_by_wire == vacuum_6.task_by_wire
+    assert vacuum.task_by_wire is not vacuum_6.task_by_wire
+    shared = {control.key: control for control in EXTENDED_STATION_CONTROLS}
+    added_keys = {
+        "xiaomi_auto_night_fill_light",
+        "xiaomi_ai_wake_up",
+        "xiaomi_cleaning_mode",
+        "xiaomi_dirt_detection",
+        "xiaomi_edge_sweep_frequency",
+        "xiaomi_enter_check_mode",
+        "xiaomi_flash_light",
+        "xiaomi_mop_auto_lift",
+        "xiaomi_mop_temperature",
+        "xiaomi_object_detection",
+        "xiaomi_real_scene_capture",
+        "xiaomi_room_detection",
+        "xiaomi_self_check_results",
+        "xiaomi_stream_enabled",
+        "xiaomi_stream_physical_lock",
+        "xiaomi_stream_visible_to_shared_users",
+        "xiaomi_sweep_ai_detection",
+        "xiaomi_sweep_dust_arrest",
+        "xiaomi_video_recording_warnings",
+        "xiaomi_auto_wash_roller",
+        "xiaomi_reset_roller",
+        "xiaomi_roller_life",
+        "xiaomi_roller_outswing",
+        "xiaomi_roller_time_left",
+        "xiaomi_start_roller_wash",
+        "xiaomi_stop_roller_wash",
+    }
+    for control in vacuum.controls:
+        if control.key in {"xiaomi_worry_free_mode", "xiaomi_host_tank"}:
+            assert control is not shared[control.key]
+        elif control.key in shared:
+            assert control is shared[control.key]
+        else:
+            assert control.key in added_keys
+    assert WORRY_FREE_THROUGH_BUTLER in vacuum.controls
+    assert HOST_TANK_WITH_NOT_INSTALLED in vacuum.controls
+    assert WORRY_FREE_THROUGH_BUTLER in vacuum_6.controls
+    assert MOP_TEMPERATURE in vacuum.controls
+    assert ENTER_CHECK_MODE in vacuum.controls
+    assert "xiaomi_find_pet" not in {control.key for control in vacuum.controls}
+    assert "xiaomi_pet_snaps" not in {control.key for control in vacuum.controls}
+    assert "xiaomi_start_mop" not in {control.key for control in vacuum.controls}
+    assert "CLEANING_MODE" not in vacuum.property_overrides
+    with pytest.raises(KeyError):
+        select_controls(EXTENDED_STATION_CONTROLS, ("missing",))
+
+
 def test_compose_rejects_an_omission_the_profile_does_not_define():
     with pytest.raises(KeyError):
         compose_addresses(STATION_PROPERTIES, omitted=frozenset({"NO_SUCH"}))
@@ -590,6 +664,7 @@ def test_station_address_literals_are_declared_once():
         "ov31gl.py",
         "ov42gl.py",
         "ov43gb.py",
+        "pv11gl.py",
         "pv32gl.py",
         "ov51gl.py",
         "ov71gl.py",
@@ -637,6 +712,7 @@ def test_property_and_action_names_exist_on_the_dreame_enums():
         MODEL_S40C,
         MODEL_ROBOT_VACUUM_5_PRO,
         MODEL_ROBOT_VACUUM_6,
+        MODEL_ROBOT_VACUUM_6_MAX,
     ):
         family = resolve_family(model)
         assert family is not None
