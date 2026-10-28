@@ -53,6 +53,7 @@ from custom_components.dreame_vacuum.xiaomi.profile import (
     STREAM_CONTROLS,
     SWEEP_DUST_ARREST,
     WORRY_FREE_THROUGH_BUTLER,
+    StoredState,
     compose_addresses,
     compose_codes,
     compose_controls,
@@ -624,21 +625,33 @@ def test_robot_vacuum_6_max_reuses_the_station_profile() -> None:
         "xiaomi_start_roller_wash",
         "xiaomi_stop_roller_wash",
     }
-    for control in vacuum.controls:
-        if control.key in {"xiaomi_worry_free_mode", "xiaomi_host_tank"}:
-            assert control is not shared[control.key]
-        elif control.key in shared:
-            assert control is shared[control.key]
-        else:
-            assert control.key in added_keys
-    assert WORRY_FREE_THROUGH_BUTLER in vacuum.controls
-    assert HOST_TANK_WITH_NOT_INSTALLED in vacuum.controls
+    present = {control.key: control for control in vacuum.controls}
+    omitted = {
+        "xiaomi_calibrate_imu",
+        "xiaomi_dust_arrest_power",
+        "xiaomi_start_cut_hair",
+        "xiaomi_start_mop",
+        "xiaomi_start_station_self_clean",
+        "xiaomi_stop_cut_hair",
+        "xiaomi_stop_station_self_clean",
+    }
+    for key, control in present.items():
+        if key in {"xiaomi_worry_free_mode", "xiaomi_host_tank"}:
+            assert control is not shared[key]
+        elif key in shared:
+            assert control is shared[key]
+    assert set(present) - set(shared) == added_keys
+    assert set(shared) - set(present) == omitted
+    assert present["xiaomi_worry_free_mode"] is WORRY_FREE_THROUGH_BUTLER
+    assert present["xiaomi_host_tank"] is HOST_TANK_WITH_NOT_INSTALLED
+    assert vacuum_6.controls
     assert WORRY_FREE_THROUGH_BUTLER in vacuum_6.controls
-    assert MOP_TEMPERATURE in vacuum.controls
-    assert ENTER_CHECK_MODE in vacuum.controls
-    assert "xiaomi_find_pet" not in {control.key for control in vacuum.controls}
-    assert "xiaomi_pet_snaps" not in {control.key for control in vacuum.controls}
-    assert "xiaomi_start_mop" not in {control.key for control in vacuum.controls}
+    assert HOST_TANK_WITH_NOT_INSTALLED in vacuum_6.controls
+    assert present["xiaomi_mop_temperature"] is MOP_TEMPERATURE
+    assert present["xiaomi_enter_check_mode"] is ENTER_CHECK_MODE
+    assert vacuum.state_by_wire[25] == -1
+    assert vacuum.state_by_wire[26] == int(StoredState.CLEAN_SUMMON)
+    assert vacuum.state_by_wire[27] == int(StoredState.SWEEPING)
     assert "CLEANING_MODE" not in vacuum.property_overrides
     with pytest.raises(KeyError):
         select_controls(EXTENDED_STATION_CONTROLS, ("missing",))

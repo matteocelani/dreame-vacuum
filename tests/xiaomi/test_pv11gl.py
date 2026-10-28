@@ -18,7 +18,9 @@ from tests.xiaomi.spec_helpers import (
     exercise_rejected_control_traffic,
     exercise_status_wires,
     exercise_writable_values,
+    mapped_addresses,
     normalize_spec,
+    require_family,
     spec_index,
 )
 
@@ -213,6 +215,14 @@ def test_every_published_status_wire_has_a_shell_state() -> None:
     wires = [item["value"] for item in listed if isinstance(item, dict)]
     assert wires == [*range(1, 22), 24, 25, 26, 27]
     assert set(wires) == set(_STATE_AFTER_READ)
+
+
+def test_video_password_actions_are_not_mapped() -> None:
+    """Password actions stay off the wire. There is no confirmation flow."""
+    actions = mapped_addresses(require_family(MODEL_ROBOT_VACUUM_6_MAX), "action")
+    assert (21, 6) not in actions
+    assert (21, 7) not in actions
+    assert (21, 8) not in actions
 
 
 def test_every_control_has_an_english_name() -> None:
