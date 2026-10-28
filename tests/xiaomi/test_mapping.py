@@ -16,6 +16,11 @@ from custom_components.dreame_vacuum.xiaomi import (
     MODEL_H50_PRO,
     MODEL_H50_PRO_ROLLER,
     MODEL_H50_ROLLER,
+    MODEL_MIJIA_5_PRO,
+    MODEL_MIJIA_5C,
+    MODEL_MIJIA_7C,
+    MODEL_MIJIA_M40_S,
+    MODEL_MIJIA_ROBOT_VACUUM_6,
     MODEL_ROBOT_VACUUM_5_PRO,
     MODEL_ROBOT_VACUUM_6,
     MODEL_ROBOT_VACUUM_6_MAX,
@@ -36,6 +41,13 @@ from custom_components.dreame_vacuum.xiaomi.mapping import (
     MODEL_S40C,
     MODEL_X20_MAX,
 )
+from custom_components.dreame_vacuum.xiaomi.ov21gl import (
+    ROBOT_VACUUM_5_PRO as VACUUM_5_PRO_RECORD,
+)
+from custom_components.dreame_vacuum.xiaomi.ov31gl import (
+    ROBOT_VACUUM_5 as VACUUM_5_RECORD,
+)
+from custom_components.dreame_vacuum.xiaomi.ov42gl import H50_PRO as H50_PRO_RECORD
 from custom_components.dreame_vacuum.xiaomi.profile import (
     AI_CAMERA_CONTROLS,
     CAMERA_ROLLER_CONTROLS,
@@ -79,6 +91,12 @@ from custom_components.dreame_vacuum.xiaomi.profile import (
     compose_controls,
     control_with_options,
     select_controls,
+)
+from custom_components.dreame_vacuum.xiaomi.pv32gl import (
+    ROBOT_VACUUM_6 as VACUUM_6_RECORD,
+)
+from custom_components.dreame_vacuum.xiaomi.qv41gl import (
+    H50_PRO_ROLLER as H50_PRO_ROLLER_RECORD,
 )
 import pytest
 from tests.xiaomi.spec_helpers import spec_index
@@ -949,6 +967,11 @@ def test_station_address_literals_are_declared_once():
         "ov51gl.py",
         "ov71gl.py",
         "ov81gl.py",
+        "ov21cn.py",
+        "ov31cn.py",
+        "ov42cn.py",
+        "pv32cn.py",
+        "qv41cn.py",
     ):
         text = (root / name).read_text(encoding="utf-8")
         assert "siid" not in text, name
@@ -999,6 +1022,11 @@ def test_property_and_action_names_exist_on_the_dreame_enums():
         MODEL_H50_PRO_ROLLER,
         MODEL_H50_ROLLER,
         MODEL_X20_PRO,
+        MODEL_MIJIA_ROBOT_VACUUM_6,
+        MODEL_MIJIA_7C,
+        MODEL_MIJIA_M40_S,
+        MODEL_MIJIA_5_PRO,
+        MODEL_MIJIA_5C,
     ):
         family = resolve_family(model)
         assert family is not None
@@ -1006,6 +1034,16 @@ def test_property_and_action_names_exist_on_the_dreame_enums():
             DreameVacuumProperty[name]
         for name in family.action_overrides:
             DreameVacuumAction[name]
+
+
+def test_chinese_variants_leave_the_global_records_unchanged():
+    """A regional record copies or aliases its global model and does not replace it."""
+    assert resolve_family(MODEL_ROBOT_VACUUM_6) is VACUUM_6_RECORD
+    assert resolve_family(MODEL_H50_PRO_ROLLER) is H50_PRO_ROLLER_RECORD
+    assert resolve_family(MODEL_ROBOT_VACUUM_5) is VACUUM_5_RECORD
+    assert resolve_family(MODEL_ROBOT_VACUUM_5_PRO) is VACUUM_5_PRO_RECORD
+    assert resolve_family(MODEL_H50_PRO) is H50_PRO_RECORD
+    assert resolve_family(MODEL_MIJIA_5C).controls is H50_PRO_RECORD.controls
 
 
 def test_build_property_transport_skips_cloud_fallback_cases():

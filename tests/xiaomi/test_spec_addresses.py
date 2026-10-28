@@ -21,6 +21,10 @@ from custom_components.dreame_vacuum.xiaomi import (
     MODEL_H50_PRO,
     MODEL_H50_PRO_ROLLER,
     MODEL_H50_ROLLER,
+    MODEL_MIJIA_5_PRO,
+    MODEL_MIJIA_5C,
+    MODEL_MIJIA_7C,
+    MODEL_MIJIA_ROBOT_VACUUM_6,
     MODEL_ROBOT_VACUUM_5_PRO,
     MODEL_ROBOT_VACUUM_6,
     MODEL_ROBOT_VACUUM_6_MAX,
@@ -35,6 +39,7 @@ from custom_components.dreame_vacuum.xiaomi import (
 )
 from custom_components.dreame_vacuum.xiaomi.mapping import (
     MODEL_H40,
+    MODEL_MIJIA_M40_S,
     MODEL_ROBOT_VACUUM_5,
     MODEL_S20_PLUS,
     MODEL_S40,
@@ -298,6 +303,16 @@ _ACTION_TEXT[MODEL_ROBOT_VACUUM_6] = {
 }
 _PROPERTY_TEXT[MODEL_H50_PRO_ROLLER] = _PROPERTY_TEXT[MODEL_ROBOT_VACUUM_6]
 _ACTION_TEXT[MODEL_H50_PRO_ROLLER] = _ACTION_TEXT[MODEL_ROBOT_VACUUM_6]
+_PROPERTY_TEXT[MODEL_MIJIA_ROBOT_VACUUM_6] = _PROPERTY_TEXT[MODEL_ROBOT_VACUUM_6]
+_ACTION_TEXT[MODEL_MIJIA_ROBOT_VACUUM_6] = _ACTION_TEXT[MODEL_ROBOT_VACUUM_6]
+_PROPERTY_TEXT[MODEL_MIJIA_7C] = _PROPERTY_TEXT[MODEL_H50_PRO_ROLLER]
+_ACTION_TEXT[MODEL_MIJIA_7C] = _ACTION_TEXT[MODEL_H50_PRO_ROLLER]
+_PROPERTY_TEXT[MODEL_MIJIA_M40_S] = _PROPERTY_TEXT[MODEL_ROBOT_VACUUM_5]
+_ACTION_TEXT[MODEL_MIJIA_M40_S] = _ACTION_TEXT[MODEL_ROBOT_VACUUM_5]
+_PROPERTY_TEXT[MODEL_MIJIA_5_PRO] = _PROPERTY_TEXT[MODEL_ROBOT_VACUUM_5_PRO]
+_ACTION_TEXT[MODEL_MIJIA_5_PRO] = _ACTION_TEXT[MODEL_ROBOT_VACUUM_5_PRO]
+_PROPERTY_TEXT[MODEL_MIJIA_5C] = _PROPERTY_TEXT[MODEL_H50_PRO]
+_ACTION_TEXT[MODEL_MIJIA_5C] = _ACTION_TEXT[MODEL_H50_PRO]
 _PROPERTY_TEXT[MODEL_H50_ROLLER] = {
     **_PROPERTY_TEXT[MODEL_ROBOT_VACUUM_6],
     "CLEANING_MODE": "Sweep Mop Type",
@@ -361,19 +376,24 @@ _SPEC_FILES = {
     MODEL_X20_MAX: ("d109gl.json", "d109gl_v1.json"),
     MODEL_X20_PRO: ("d102gl.json",),
     MODEL_ROBOT_VACUUM_5: ("ov31gl.json", "ov31gl_v1.json"),
+    MODEL_MIJIA_M40_S: ("ov31cn.json", "ov31cn_v1.json"),
     MODEL_S40_PRO: ("ov71gl.json",),
     MODEL_S40: ("ov81gl.json",),
     MODEL_H40: ("ov51gl.json",),
     MODEL_S40C: ("e101gb.json",),
     MODEL_H50_PRO: ("ov42gl.json", "ov42gl_v1.json"),
+    MODEL_MIJIA_5C: ("ov42cn.json", "ov42cn_v1.json"),
     MODEL_H50: ("ov43gb.json", "ov43gb_v1.json"),
     MODEL_ROBOT_VACUUM_5_PRO: ("ov21gl.json", "ov21gl_v1.json"),
+    MODEL_MIJIA_5_PRO: ("ov21cn.json", "ov21cn_v1.json"),
     MODEL_ROBOT_VACUUM_6: ("pv32gl.json", "pv32gl_v1.json"),
+    MODEL_MIJIA_ROBOT_VACUUM_6: ("pv32cn.json", "pv32cn_v1.json"),
     MODEL_ROBOT_VACUUM_6_MAX: ("pv11gl.json",),
     MODEL_ROBOT_VACUUM_6_PRO: ("pv21gl.json",),
     MODEL_S60_PLUS: ("pv51gl.json",),
     MODEL_S60: ("pv81gl.json",),
     MODEL_H50_PRO_ROLLER: ("qv41gl.json",),
+    MODEL_MIJIA_7C: ("qv41cn.json",),
     MODEL_H50_ROLLER: ("qv42gl.json",),
     MODEL_E10: ("b112.json",),
     MODEL_E12: ("b112gl.json",),
@@ -478,6 +498,15 @@ def test_charging_value_three_is_not_chargeable():
         "pv81gl.json",
         "qv41gl.json",
         "qv42gl.json",
+        "pv32cn.json",
+        "pv32cn_v1.json",
+        "qv41cn.json",
+        "ov31cn.json",
+        "ov31cn_v1.json",
+        "ov21cn.json",
+        "ov21cn_v1.json",
+        "ov42cn.json",
+        "ov42cn_v1.json",
     ):
         assert _charging_value(name, 3) == "Not Chargeable"
         assert _charging_value(name, 1) == "Charging"
