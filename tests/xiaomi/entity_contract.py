@@ -18,8 +18,9 @@ from custom_components.dreame_vacuum.const import (
 )
 from custom_components.dreame_vacuum.xiaomi.controls import XiaomiControl
 from custom_components.dreame_vacuum.xiaomi.mapping import XiaomiModel
+from custom_components.dreame_vacuum.xiaomi.model import StoredState
 from pytest_homeassistant_custom_component.common import MockConfigEntry
-from tests.xiaomi.helpers import FakeMiio, release_device
+from tests.xiaomi.helpers import FakeMiio, release_device, wire_for_state
 from tests.xiaomi.spec_helpers import (
     LOOPBACK_HOST,
     LOOPBACK_MAC,
@@ -105,7 +106,10 @@ async def assert_entities_read_or_write(hass: HomeAssistant, case: EntityCase) -
         try:
             keys = _registry_keys(hass, entry.entry_id)
             assert ("switch", "dnd") not in keys
-            assert not any(key.startswith("reset_") for _domain, key in keys)
+            for domain, key in keys:
+                if key.startswith("reset_"):
+                    assert domain == "button"
+                    assert key.upper() in family.action_overrides
             polled: list[tuple[int, int]] = []
             original = device._protocol.get_properties
 
@@ -204,6 +208,17 @@ async def assert_entities_read_or_write(hass: HomeAssistant, case: EntityCase) -
                             control.piid,
                             control.options[0][0],
                         )
+                    continue
+                action_name = key.upper()
+                if domain == "button" and action_name in family.action_overrides:
+                    await hass.services.async_call(
+                        "button",
+                        "press",
+                        {"entity_id": _entity_id(hass, entry.entry_id, "button", key)},
+                        blocking=True,
+                    )
+                    action = family.action_overrides[action_name]
+                    assert fake.actions[-1] == (action["siid"], action["aiid"])
                     continue
                 prop = key.upper()
                 assert prop in properties, (domain, key)
@@ -490,21 +505,39 @@ async def _exercise_sweep_vacuum(
     state: Mapping[str, int],
     error: Mapping[str, int],
 ) -> None:
-    """Drive start, refused pause, stop, return, and error without a charging property."""
+    """Drive start, stop, return, and error without a charging property."""
+    returning = wire_for_state(family, StoredState.RETURNING)
+    charging = wire_for_state(family, StoredState.CHARGING)
     await _show_sweep(hass, fake, entry_id, vacuum_id, state, error, 1, 0, "idle")
     await hass.services.async_call(
         "vacuum", "start", {"entity_id": vacuum_id}, blocking=True
     )
     await _refresh(hass, entry_id)
     assert _vacuum_state(hass, vacuum_id) == "cleaning"
-    before = len(fake.actions)
-    with contextlib.suppress(HomeAssistantError):
+    if "PAUSE" in family.action_overrides:
         await hass.services.async_call(
             "vacuum", "pause", {"entity_id": vacuum_id}, blocking=True
         )
-    assert len(fake.actions) == before
-    await _refresh(hass, entry_id)
-    assert _vacuum_state(hass, vacuum_id) == "cleaning"
+        await _refresh(hass, entry_id)
+        assert _vacuum_state(hass, vacuum_id) == "paused"
+        await hass.services.async_call(
+            "vacuum", "start", {"entity_id": vacuum_id}, blocking=True
+        )
+        await _refresh(hass, entry_id)
+        assert _vacuum_state(hass, vacuum_id) == "cleaning"
+        assert fake.actions[-1] == (
+            family.action_overrides["RESUME"]["siid"],
+            family.action_overrides["RESUME"]["aiid"],
+        )
+    else:
+        before = len(fake.actions)
+        with contextlib.suppress(HomeAssistantError):
+            await hass.services.async_call(
+                "vacuum", "pause", {"entity_id": vacuum_id}, blocking=True
+            )
+        assert len(fake.actions) == before
+        await _refresh(hass, entry_id)
+        assert _vacuum_state(hass, vacuum_id) == "cleaning"
     await hass.services.async_call(
         "vacuum", "stop", {"entity_id": vacuum_id}, blocking=True
     )
@@ -512,14 +545,27 @@ async def _exercise_sweep_vacuum(
         family.action_overrides["STOP"]["siid"],
         family.action_overrides["STOP"]["aiid"],
     )
-    await _show_sweep(hass, fake, entry_id, vacuum_id, state, error, 3, 0, "returning")
+    await _show_sweep(
+        hass, fake, entry_id, vacuum_id, state, error, returning, 0, "returning"
+    )
     await hass.services.async_call(
         "vacuum", "return_to_base", {"entity_id": vacuum_id}, blocking=True
     )
     await _refresh(hass, entry_id)
     assert _vacuum_state(hass, vacuum_id) == "docked"
-    await _show_sweep(hass, fake, entry_id, vacuum_id, state, error, 4, 0, "docked")
+    await _show_sweep(
+        hass, fake, entry_id, vacuum_id, state, error, charging, 0, "docked"
+    )
     await _show_sweep(hass, fake, entry_id, vacuum_id, state, error, 1, 1, "error")
+    if "LOCATE" in family.action_overrides:
+        await hass.services.async_call(
+            "vacuum", "locate", {"entity_id": vacuum_id}, blocking=True
+        )
+        assert fake.actions[-1] == (
+            family.action_overrides["LOCATE"]["siid"],
+            family.action_overrides["LOCATE"]["aiid"],
+        )
+        return
     before = len(fake.actions)
     with contextlib.suppress(HomeAssistantError):
         await hass.services.async_call(
@@ -661,7 +707,12 @@ async def _exercise_binary_sensors(
         fake.set_value(mapping["siid"], mapping["piid"], 80)
     await _refresh(hass, entry_id)
     assert _state(hass, entry_id, "binary_sensor", "maintenance") == "off"
-    brush = family.property_overrides["MAIN_BRUSH_LEFT"]
+    worn = (
+        "MAIN_BRUSH_LEFT"
+        if "MAIN_BRUSH_LEFT" in family.property_overrides
+        else case.consumable_life[0]
+    )
+    brush = family.property_overrides[worn]
     fake.set_value(brush["siid"], brush["piid"], 0)
     await _refresh(hass, entry_id)
     assert _state(hass, entry_id, "binary_sensor", "maintenance") == "on"

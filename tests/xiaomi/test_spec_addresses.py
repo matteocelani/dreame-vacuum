@@ -13,6 +13,7 @@ from custom_components.dreame_vacuum.dreame.types import (
     DreameVacuumPropertyMapping,
 )
 from custom_components.dreame_vacuum.xiaomi import (
+    MODEL_E5,
     MODEL_E10,
     MODEL_E10C,
     MODEL_E12,
@@ -324,6 +325,25 @@ _SWEEP_ACTION_TEXT = {
 _ACTION_TEXT[MODEL_E10] = _SWEEP_ACTION_TEXT
 _ACTION_TEXT[MODEL_E12] = _SWEEP_ACTION_TEXT
 _ACTION_TEXT[MODEL_E10C] = _SWEEP_ACTION_TEXT
+_PROPERTY_TEXT[MODEL_E5] = {
+    "STATE": "Status",
+    "ERROR": "Device Fault",
+    "BATTERY_LEVEL": "Battery Level",
+    "FILTER_LEFT": "Filter Life Level",
+    "SIDE_BRUSH_LEFT": "Brush Life Level",
+    "TOTAL_CLEANING_TIME": "total-clean-time",
+    "CLEANING_COUNT": "total-clean-count",
+}
+_ACTION_TEXT[MODEL_E5] = {
+    "START": "Start Sweep",
+    "STOP": "Stop Sweeping",
+    "PAUSE": "Pause Sweeping",
+    "RESUME": "Continue Sweep",
+    "CHARGE": "Stop And Gocharge",
+    "LOCATE": "Identify",
+    "RESET_FILTER": "Reset Filter Life",
+    "RESET_SIDE_BRUSH": "Reset Brush Life",
+}
 _SPEC_FILES = {
     MODEL_S20_PLUS: ("b108gl.json",),
     MODEL_X20_MAX: ("d109gl.json", "d109gl_v1.json"),
@@ -346,6 +366,7 @@ _SPEC_FILES = {
     MODEL_E10: ("b112.json",),
     MODEL_E12: ("b112gl.json",),
     MODEL_E10C: ("b112bk.json",),
+    MODEL_E5: ("c108.json",),
 }
 _ABSENT_PROPERTIES = (
     "STATUS",

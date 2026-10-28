@@ -14,6 +14,7 @@ from custom_components.dreame_vacuum.dreame.types import (
     DreameVacuumState,
 )
 from custom_components.dreame_vacuum.xiaomi import (
+    MODEL_E5,
     MODEL_E10,
     MODEL_E10C,
     MODEL_E12,
@@ -265,6 +266,7 @@ def test_property_reads_stay_inside_the_explicit_map():
         MODEL_E10,
         MODEL_E12,
         MODEL_E10C,
+        MODEL_E5,
     ):
         device, _sent = _device(model)
         requested: list[tuple[int, int]] = []
@@ -301,7 +303,8 @@ def test_property_reads_stay_inside_the_explicit_map():
         }
         assert requested
         assert set(requested) <= allowed | controls
-        assert (7, 2) not in requested
+        if model != MODEL_E5:
+            assert (7, 2) not in requested
         if model in (
             MODEL_ROBOT_VACUUM_5,
             MODEL_S40_PRO,
@@ -379,6 +382,18 @@ def test_property_reads_stay_inside_the_explicit_map():
             assert (7, 5) in requested
             assert (12, 1) in requested
             assert (2, 9) not in requested
+        if model == MODEL_E5:
+            assert (2, 4) in requested
+            assert (2, 5) in requested
+            assert (2, 12) in requested
+            assert (3, 2) in requested
+            assert (6, 2) in requested
+            assert (7, 2) in requested
+            assert (10, 1) in requested
+            assert (14, 1) in requested
+            assert (2, 11) not in requested
+            assert (13, 1) not in requested
+            assert (15, 1) not in requested
         if model == MODEL_X20_PRO:
             assert (4, 1) in requested
             assert (5, 2) in requested
@@ -406,6 +421,7 @@ def test_property_reads_stay_inside_the_explicit_map():
             MODEL_E10,
             MODEL_E12,
             MODEL_E10C,
+            MODEL_E5,
         ):
             assert controls == set()
             assert (4, 1) not in requested

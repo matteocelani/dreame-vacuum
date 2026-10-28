@@ -31,8 +31,14 @@ from custom_components.dreame_vacuum.xiaomi.mapping import (
     MODEL_X20_MAX,
     XiaomiModel,
 )
+from custom_components.dreame_vacuum.xiaomi.model import StoredState
 import pytest
-from tests.xiaomi.helpers import FakeMiio, release_device, traffic_outside_map
+from tests.xiaomi.helpers import (
+    FakeMiio,
+    release_device,
+    traffic_outside_map,
+    wire_for_state,
+)
 
 LOOPBACK_HOST: Final = "127.0.0.1"
 LOOPBACK_TOKEN: Final = "00" * 16
@@ -75,6 +81,7 @@ class SpecCase:
     reason_prefix_counts: Mapping[str, int] | None = None
     absent_items: tuple[tuple[str, int, int], ...] = ()
     checked_events: tuple[tuple[int, int], ...] = ()
+    service_reasons: Mapping[int, str] | None = None
     version_only_controls: frozenset[tuple[int, int]] = frozenset()
     action_spec_filenames: tuple[str, ...] = ()
     previous_spec_filename: str | None = None
@@ -485,12 +492,14 @@ def omission_reason(
     *,
     property_reasons: Mapping[tuple[int, int], str],
     action_reasons: Mapping[tuple[int, int], str],
+    service_reasons: Mapping[int, str] | None = None,
 ) -> str | None:
     """Return the omission reason for one spec item, or None when it is mapped."""
     if kind == "event":
         return _EVENT_REASON
-    if siid in _SERVICE_REASONS:
-        return _SERVICE_REASONS[siid]
+    services = _SERVICE_REASONS if service_reasons is None else service_reasons
+    if siid in services:
+        return services[siid]
     table = property_reasons if kind == "property" else action_reasons
     return table.get((siid, iid))
 
@@ -655,6 +664,7 @@ def assert_spec_is_fully_classified(case: SpecCase) -> None:
                 iid,
                 property_reasons=case.property_reasons,
                 action_reasons=case.action_reasons,
+                service_reasons=case.service_reasons,
             )
             == _EVENT_REASON
         )
@@ -853,6 +863,7 @@ def _classify_file(
             iid,
             property_reasons=case.property_reasons,
             action_reasons=case.action_reasons,
+            service_reasons=case.service_reasons,
         )
         assert mapped != bool(reason), (filename, kind, siid, iid, reason)
         if reason:
@@ -896,6 +907,7 @@ def _reason_prefix_counts(case: SpecCase) -> dict[str, int]:
                 iid,
                 property_reasons=case.property_reasons,
                 action_reasons=case.action_reasons,
+                service_reasons=case.service_reasons,
             )
             if not reason:
                 continue
@@ -1162,9 +1174,10 @@ def _assert_sweep_shell_transitions(
     fake: FakeMiio,
     family: XiaomiModel,
 ) -> None:
-    """Assert idle, start, refused pause, stop, return, and error on the sweep spec."""
+    """Assert idle, start, stop, return, and error when charging status is unmapped."""
     state = family.property_overrides["STATE"]
     error = family.property_overrides["ERROR"]
+    returning = wire_for_state(family, StoredState.RETURNING)
     fake.set_value(error["siid"], error["piid"], 0)
     fake.set_value(state["siid"], state["piid"], 1)
     device._request_properties([DreameVacuumProperty.STATE, DreameVacuumProperty.ERROR])
@@ -1172,23 +1185,35 @@ def _assert_sweep_shell_transitions(
     device.start()
     device._request_properties([DreameVacuumProperty.STATE])
     assert device.status.state is DreameVacuumState.SWEEPING
-    before = len(fake.actions)
-    with pytest.raises(InvalidActionException):
+    if "PAUSE" in family.action_overrides:
         device.pause()
-    assert len(fake.actions) == before
-    device._request_properties([DreameVacuumProperty.STATE])
-    assert device.status.state is DreameVacuumState.SWEEPING
-    device.start()
-    assert fake.actions[-1] == (
-        family.action_overrides["START"]["siid"],
-        family.action_overrides["START"]["aiid"],
-    )
+        device._request_properties([DreameVacuumProperty.STATE])
+        assert device.status.state is DreameVacuumState.PAUSED
+        device.start()
+        device._request_properties([DreameVacuumProperty.STATE])
+        assert device.status.state is DreameVacuumState.SWEEPING
+        assert fake.actions[-1] == (
+            family.action_overrides["RESUME"]["siid"],
+            family.action_overrides["RESUME"]["aiid"],
+        )
+    else:
+        before = len(fake.actions)
+        with pytest.raises(InvalidActionException):
+            device.pause()
+        assert len(fake.actions) == before
+        device._request_properties([DreameVacuumProperty.STATE])
+        assert device.status.state is DreameVacuumState.SWEEPING
+        device.start()
+        assert fake.actions[-1] == (
+            family.action_overrides["START"]["siid"],
+            family.action_overrides["START"]["aiid"],
+        )
     device.stop()
     assert fake.actions[-1] == (
         family.action_overrides["STOP"]["siid"],
         family.action_overrides["STOP"]["aiid"],
     )
-    fake.set_value(state["siid"], state["piid"], 3)
+    fake.set_value(state["siid"], state["piid"], returning)
     device._request_properties([DreameVacuumProperty.STATE])
     assert device.status.state is DreameVacuumState.RETURNING
     device.return_to_base()
@@ -1198,6 +1223,13 @@ def _assert_sweep_shell_transitions(
     fake.set_value(state["siid"], state["piid"], 1)
     device._request_properties([DreameVacuumProperty.ERROR, DreameVacuumProperty.STATE])
     assert device.status.state is DreameVacuumState.ERROR
+    if "LOCATE" not in family.action_overrides:
+        return
+    device.locate()
+    assert fake.actions[-1] == (
+        family.action_overrides["LOCATE"]["siid"],
+        family.action_overrides["LOCATE"]["aiid"],
+    )
 
 
 def _assert_one_control(
