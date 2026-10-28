@@ -321,6 +321,19 @@ DETERGENT_TIME_PROPERTIES: Final[dict[str, dict[str, int]]] = {
     "DETERGENT_TIME_LEFT": {"siid": 18, "piid": 4},
 }
 
+# Detergent service 18 is empty on the S60-class spec.
+_S60_CLASS_OMITTED_PROPERTIES: Final[frozenset[str]] = frozenset({"DETERGENT_LEFT"})
+_S60_CLASS_OMITTED_ACTIONS: Final[frozenset[str]] = frozenset({"RESET_DETERGENT"})
+S60_CLASS_PROPERTIES: Final[dict[str, dict[str, int]]] = compose_addresses(
+    STATION_PROPERTIES,
+    STATION_STATISTICS_PROPERTIES,
+    omitted=_S60_CLASS_OMITTED_PROPERTIES,
+)
+S60_CLASS_ACTIONS: Final[dict[str, dict[str, int]]] = compose_addresses(
+    STATION_ACTIONS,
+    omitted=_S60_CLASS_OMITTED_ACTIONS,
+)
+
 EXTENDED_STATION_STATES: Final[dict[int, int]] = compose_codes(
     STATION_STATES,
     {
@@ -342,6 +355,17 @@ SUMMON_STATES: Final[dict[int, int]] = {
     int(SummonWireState.SELF_CHECK): _UNKNOWN_SHELL_STATE,
     int(SummonWireState.SUMMONING): int(StoredState.CLEAN_SUMMON),
 }
+
+# Sweep-summon has no shell state of its own, so it stays sweeping.
+SWEEP_SUMMON_STATES: Final[dict[int, int]] = {
+    int(SummonWireState.SWEEP_SUMMONING): int(StoredState.SWEEPING),
+}
+
+# Status runs through sweep-summon 27 and keeps station assist 22 and 23.
+S60_CLASS_STATES: Final[dict[int, int]] = compose_codes(
+    EXTENDED_STATION_STATES,
+    {**SUMMON_STATES, **SWEEP_SUMMON_STATES},
+)
 
 EXTENDED_STATION_TASKS: Final[dict[int, int]] = compose_codes(
     STATION_TASKS,
@@ -934,6 +958,57 @@ CAMERA_ROLLER_OMITTED_CONTROLS: Final[frozenset[str]] = frozenset(
         "xiaomi_stop_cut_hair",
         "xiaomi_stop_station_self_clean",
     }
+)
+
+_VIBRATION_MOP_PROPERTY: Final = 109
+
+# Both S60 models publish a vibrating mop pad. It is not a roller wash switch.
+VIBRATION_MOP: Final = boolean_switch(
+    "xiaomi_vibration_mop",
+    _VACUUM_SERVICE,
+    _VIBRATION_MOP_PROPERTY,
+)
+
+# Pad-mop slice both S60 models publish. Wash, roller, and stream services are empty.
+_S60_CLASS_CONTROL_KEYS: Final = (
+    "xiaomi_alarm",
+    "xiaomi_carpet_avoidance",
+    "xiaomi_exit_remote_dialog",
+    "xiaomi_carpet_deep_cleaning",
+    "xiaomi_carpet_discriminate",
+    "xiaomi_sweep_carpet_first",
+    "xiaomi_clean_times",
+    "xiaomi_sweep_route",
+    "xiaomi_worry_free_mode",
+    "xiaomi_carpet_cleaning_method",
+    "xiaomi_last_clean_time",
+    "xiaomi_cleaning_progress",
+    "xiaomi_voltage",
+    "xiaomi_download_progress",
+    "xiaomi_sweep_mop_status",
+    "xiaomi_download_status",
+    "xiaomi_base_station_status",
+    "xiaomi_notice",
+    "xiaomi_current_voice",
+    "xiaomi_sleep_status",
+    "xiaomi_current_child_lock",
+    "xiaomi_current_dnd",
+    "xiaomi_stop_and_charge",
+    "xiaomi_start_sweep",
+    "xiaomi_start_mop",
+    "xiaomi_start_sweep_mop",
+    "xiaomi_try_listen",
+    "xiaomi_enter_remote",
+    "xiaomi_exit_remote",
+    "xiaomi_sweep_before_mop",
+    "xiaomi_stop_working",
+    "xiaomi_calibrate_imu",
+)
+S60_CLASS_CONTROLS: Final[tuple[XiaomiControl, ...]] = (
+    *select_controls(EXTENDED_STATION_CONTROLS, _S60_CLASS_CONTROL_KEYS),
+    *select_controls(S40_CLASS_CONTROLS, ("xiaomi_edge_sweep_frequency",)),
+    SELF_CHECK_RESULTS,
+    VIBRATION_MOP,
 )
 
 # Extended-station controls whose addresses the S40-class spec does not publish.

@@ -18,6 +18,8 @@ from custom_components.dreame_vacuum.xiaomi import (
     MODEL_ROBOT_VACUUM_6,
     MODEL_ROBOT_VACUUM_6_MAX,
     MODEL_ROBOT_VACUUM_6_PRO,
+    MODEL_S60,
+    MODEL_S60_PLUS,
     MODEL_X20_PRO,
     control_keys,
     controls_of,
@@ -49,6 +51,10 @@ from custom_components.dreame_vacuum.xiaomi.profile import (
     ROLLER_CONTROLS,
     S40_CLASS_CONTROLS,
     S40_CLASS_OMITTED_CONTROLS,
+    S60_CLASS_ACTIONS,
+    S60_CLASS_CONTROLS,
+    S60_CLASS_PROPERTIES,
+    S60_CLASS_STATES,
     SELF_CHECK_RESULTS,
     SOLID_DIRT_DETECTION,
     STATION_ACTIONS,
@@ -57,6 +63,8 @@ from custom_components.dreame_vacuum.xiaomi.profile import (
     STREAM_CONTROLS,
     SUMMON_STATES,
     SWEEP_DUST_ARREST,
+    SWEEP_SUMMON_STATES,
+    VIBRATION_MOP,
     WORRY_FREE_THROUGH_BUTLER,
     StoredState,
     SummonWireState,
@@ -774,6 +782,63 @@ def test_x20_pro_reuses_the_x20_max_map_and_omits_unpublished_controls() -> None
     assert "REQUEST_MAP" not in vacuum.action_overrides
 
 
+def test_s60_models_reuse_the_s60_class_profile() -> None:
+    """S60+ adds the auto-empty dock. S60 adds stop-cut-hair and nothing else."""
+    s60_plus = resolve_family(MODEL_S60_PLUS)
+    s60 = resolve_family(MODEL_S60)
+    assert s60_plus is not None
+    assert s60 is not None
+    assert s60_plus.property_overrides.keys() == S60_CLASS_PROPERTIES.keys()
+    assert s60_plus.property_overrides is not S60_CLASS_PROPERTIES
+    assert set(s60.property_overrides) == set(S60_CLASS_PROPERTIES) - {
+        "AUTO_DUST_COLLECTING",
+        "AUTO_EMPTY_FREQUENCY",
+    }
+    assert s60.property_overrides is not s60_plus.property_overrides
+    assert set(s60_plus.action_overrides) == set(S60_CLASS_ACTIONS)
+    assert set(s60.action_overrides) == set(S60_CLASS_ACTIONS) - {"START_AUTO_EMPTY"}
+    assert s60_plus.task_by_wire == s60.task_by_wire == EXTENDED_STATION_TASKS
+    assert s60_plus.task_by_wire is not s60.task_by_wire
+    assert s60_plus.state_by_wire == s60.state_by_wire == S60_CLASS_STATES
+    assert s60_plus.state_by_wire is not S60_CLASS_STATES
+    assert s60_plus.state_by_wire[8] == 19
+    assert s60_plus.state_by_wire[22] == int(StoredState.WASHING)
+    assert s60_plus.state_by_wire[26] == int(StoredState.CLEAN_SUMMON)
+    assert (
+        s60_plus.state_by_wire[int(SummonWireState.SWEEP_SUMMONING)]
+        == SWEEP_SUMMON_STATES[int(SummonWireState.SWEEP_SUMMONING)]
+    )
+    shared = {control.key: control for control in S60_CLASS_CONTROLS}
+    plus = {control.key: control for control in s60_plus.controls}
+    plain = {control.key: control for control in s60.controls}
+    assert set(shared) <= set(plus)
+    assert set(shared) <= set(plain)
+    for key, control in shared.items():
+        assert plus[key] is control
+        assert plain[key] is control
+    assert plus["xiaomi_vibration_mop"] is VIBRATION_MOP
+    assert plain["xiaomi_vibration_mop"] is VIBRATION_MOP
+    dust = {
+        "xiaomi_dust_arrest_power",
+        "xiaomi_dust_bag_life",
+        "xiaomi_dust_bag_time_left",
+        "xiaomi_reset_dust_bag",
+        "xiaomi_sweep_dust_arrest",
+    }
+    assert set(plus) - set(shared) == dust
+    assert set(plain) - set(shared) == {"xiaomi_stop_cut_hair"}
+    assert plus["xiaomi_sweep_dust_arrest"] is SWEEP_DUST_ARREST
+    assert "xiaomi_stop_cut_hair" not in plus
+    assert "DETERGENT_LEFT" not in s60_plus.property_overrides
+    assert "RESET_DETERGENT" not in s60_plus.action_overrides
+    assert "CLEANING_MODE" in s60.property_overrides
+    extended = {control.key: control for control in EXTENDED_STATION_CONTROLS}
+    assert plus["xiaomi_worry_free_mode"] is extended["xiaomi_worry_free_mode"]
+    assert [slug for _value, slug in plus["xiaomi_worry_free_mode"].options][-1] == (
+        "pet"
+    )
+
+
 def test_compose_rejects_an_omission_the_profile_does_not_define():
     with pytest.raises(KeyError):
         compose_addresses(STATION_PROPERTIES, omitted=frozenset({"NO_SUCH"}))
@@ -798,6 +863,8 @@ def test_station_address_literals_are_declared_once():
         "pv11gl.py",
         "pv21gl.py",
         "pv32gl.py",
+        "pv51gl.py",
+        "pv81gl.py",
         "ov51gl.py",
         "ov71gl.py",
         "ov81gl.py",
@@ -846,6 +913,8 @@ def test_property_and_action_names_exist_on_the_dreame_enums():
         MODEL_ROBOT_VACUUM_6,
         MODEL_ROBOT_VACUUM_6_MAX,
         MODEL_ROBOT_VACUUM_6_PRO,
+        MODEL_S60,
+        MODEL_S60_PLUS,
         MODEL_X20_PRO,
     ):
         family = resolve_family(model)
