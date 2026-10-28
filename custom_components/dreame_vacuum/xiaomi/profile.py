@@ -252,6 +252,10 @@ STATION_TASKS: Final[dict[int, int]] = wire_map(
 # The shell maps codes above 18 through the old state enum when new_state is off.
 # 23 is washing-paused there, so remote stays on the old remote code 19.
 _LEGACY_REMOTE_CONTROL: Final = 19
+_OUTSWING_FREQUENCY_OPTIONS: Final[tuple[tuple[int, str], ...]] = (
+    (1, "seven_sweeps"),
+    (2, "every_time"),
+)
 
 STATION_STATISTICS_PROPERTIES: Final[dict[str, dict[str, int]]] = {
     "TOTAL_CLEANED_AREA": {"siid": 2, "piid": 85},
@@ -390,10 +394,7 @@ EXTENDED_STATION_CONTROLS: Final[tuple[XiaomiControl, ...]] = (
         "xiaomi_mop_swing_frequency",
         2,
         80,
-        (
-            (1, "seven_sweeps"),
-            (2, "every_time"),
-        ),
+        _OUTSWING_FREQUENCY_OPTIONS,
     ),
     enum_select(
         "xiaomi_dust_arrest_power",
@@ -587,4 +588,64 @@ EXTENDED_STATION_CONTROLS: Final[tuple[XiaomiControl, ...]] = (
     action_button("xiaomi_stop_station_self_clean", 2, 64),
     action_button("xiaomi_calibrate_imu", 16, 1),
     action_button("xiaomi_reset_dust_bag", 19, 1),
+)
+
+HAIR_CUTTING_CONTROLS: Final[tuple[XiaomiControl, ...]] = (
+    boolean_switch("xiaomi_cut_hair", 2, 63),
+    enum_select(
+        "xiaomi_cut_hair_frequency",
+        2,
+        64,
+        (
+            (1, "every_clean"),
+            (2, "every_two_cleans"),
+            (3, "every_three_cleans"),
+            (4, "during_task"),
+        ),
+    ),
+)
+
+# Shared by the S40-class spec. H40 lacks detergent reminder 2.71, which stays
+# on the extended list so that model omits xiaomi_detergent_reminder.
+_S40_CLASS_ONLY_CONTROLS: Final[tuple[XiaomiControl, ...]] = (
+    boolean_switch("xiaomi_ai_cleaning", 2, 37),
+    boolean_switch("xiaomi_mop_auto_lift", 2, 44),
+    boolean_switch("xiaomi_sweep_ai_detection", 2, 45),
+    boolean_switch("xiaomi_dirt_detection", 2, 46),
+    boolean_switch("xiaomi_object_detection", 2, 47),
+    boolean_switch("xiaomi_room_detection", 2, 48),
+    boolean_switch("xiaomi_floor_material_detection", 2, 49),
+    boolean_switch("xiaomi_defecation_detection", 2, 50),
+    boolean_switch("xiaomi_liquid_dirt_detection", 2, 51),
+    boolean_switch("xiaomi_edge_swing_tail_sweep", 2, 55),
+    enum_select(
+        "xiaomi_edge_sweep_frequency",
+        2,
+        68,
+        _OUTSWING_FREQUENCY_OPTIONS,
+    ),
+    boolean_switch("xiaomi_ai_managed_cleaning", 2, 69),
+    boolean_switch("xiaomi_real_scene_capture", 2, 93),
+    boolean_switch("xiaomi_auto_night_fill_light", 2, 94),
+    boolean_switch("xiaomi_ai_wake_up", 2, 95),
+)
+
+S40_CLASS_CONTROLS: Final[tuple[XiaomiControl, ...]] = (
+    *HAIR_CUTTING_CONTROLS,
+    *_S40_CLASS_ONLY_CONTROLS,
+)
+
+# Extended-station controls whose addresses the S40-class spec does not publish.
+S40_CLASS_OMITTED_CONTROLS: Final[frozenset[str]] = frozenset(
+    {
+        "xiaomi_carpet_deep_cleaning",
+        "xiaomi_carpet_discriminate",
+        "xiaomi_laser_position",
+        "xiaomi_mop_outer_swing",
+        "xiaomi_mop_swing_frequency",
+        "xiaomi_mop_wash_frequency",
+        "xiaomi_mop_wash_interval",
+        "xiaomi_obstacle_crossing",
+        "xiaomi_sweep_carpet_first",
+    }
 )

@@ -15,6 +15,7 @@ from .transport import MiioPropertyTransport
 MODEL_S20_PLUS: Final = "xiaomi.vacuum.b108gl"
 MODEL_X20_MAX: Final = "xiaomi.vacuum.d109gl"
 MODEL_ROBOT_VACUUM_5: Final = "xiaomi.vacuum.ov31gl"
+MODEL_S40: Final = "xiaomi.vacuum.ov81gl"
 MODEL_S40_PRO: Final = "xiaomi.vacuum.ov71gl"
 _ONE_INDEXED_PROPERTIES: Final[frozenset[str]] = frozenset(
     {"CLEANING_MODE", "SUCTION_LEVEL"}
