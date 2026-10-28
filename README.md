@@ -1,12 +1,13 @@
 <center>
 <div align="center">
 
-# xiaomi-vacuum
+# Xiaomi Vacuum
 
-A Home Assistant integration that keeps the full Dreame, MOVA, Mijia, and TROUVER support from [Tasshack/dreame-vacuum](https://github.com/Tasshack/dreame-vacuum), and is where further Xiaomi devices will be added.
+A Home Assistant integration for Xiaomi robot vacuums, and for every Dreame, MOVA, Mijia, and TROUVER device from [Tasshack/dreame-vacuum](https://github.com/Tasshack/dreame-vacuum).
 
-Fork of [@Tasshack](https://github.com/Tasshack)'s upstream project. Not an official Dreame or Xiaomi product.
+Maintained by [@matteocelani](https://github.com/matteocelani). Fork of [@Tasshack](https://github.com/Tasshack)'s upstream project. Not an official Dreame or Xiaomi product.
 
+[![Xiaomi Vacuum](https://img.shields.io/badge/Xiaomi%20Vacuum-matteocelani%2Fxiaomi--vacuum-18bcf2?style=for-the-badge&logo=HomeAssistant&logoColor=white)](https://github.com/matteocelani/xiaomi-vacuum)
 [![Version](https://img.shields.io/github/manifest-json/v/matteocelani/xiaomi-vacuum?filename=custom_components%2Fdreame_vacuum%2Fmanifest.json&color=18bcf2&label=Version&style=for-the-badge)](https://github.com/matteocelani/xiaomi-vacuum)
 [![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg?logo=HomeAssistantCommunityStore&color=18bcf2&logoColor=white&style=for-the-badge)](https://github.com/hacs/integration)
 [![Upstream](https://img.shields.io/badge/Upstream-Tasshack%2Fdreame--vacuum-18bcf2?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Tasshack/dreame-vacuum)
@@ -27,67 +28,79 @@ Images and the map card are from the upstream project by [@Tasshack](https://git
 
 ## What this repository is
 
-[xiaomi-vacuum](https://github.com/matteocelani/xiaomi-vacuum) is both of these things:
+[Xiaomi Vacuum](https://github.com/matteocelani/xiaomi-vacuum) is both of these things:
 
-- The Dreame-family integration. It continues to track and support **all** of [Tasshack/dreame-vacuum](https://github.com/Tasshack/dreame-vacuum): Dreame, MOVA, Mijia, and TROUVER robot vacuums and mops, including the accounts and local control that project already documents.
-- The Xiaomi direction. Xiaomi Robot Vacuum S20+ and Xiaomi Robot Vacuum X20 Max are supported as a sibling family. Further Xiaomi models are added the same way, one concrete device at a time.
+- Support for every Dreame, MOVA, Mijia, and TROUVER robot vacuum and mop from [Tasshack/dreame-vacuum](https://github.com/Tasshack/dreame-vacuum), including the accounts and local control that project documents.
+- Xiaomi robot vacuums, added one model at a time. The models in this tree are listed under [Supported Xiaomi models](#supported-xiaomi-models).
 
-## Repository name and Home Assistant domain
+## Home Assistant still uses `dreame_vacuum`
 
-The GitHub repository is **xiaomi-vacuum**. Branding in this README uses that name. The Home Assistant integration domain stays **`dreame_vacuum`**.
+The project name is **Xiaomi Vacuum**. The integration shows up in Home Assistant as `dreame_vacuum`, so installed config entries, entity ids, and automations keep working. Renaming the domain needs its own council decision, recorded in [0001](.agent/council/records/0001-xiaomi-wide-rename-and-expansion.md).
 
 | | |
 | --- | --- |
 | Repository | [matteocelani/xiaomi-vacuum](https://github.com/matteocelani/xiaomi-vacuum) |
+| HACS repository | `https://github.com/matteocelani/xiaomi-vacuum` |
 | Home Assistant domain | `dreame_vacuum` |
 | Installed folder | `custom_components/dreame_vacuum` |
-| Name inside Home Assistant | Dreame Vacuum |
+| Entities and services | `dreame_vacuum.*` |
+| Config entries | stored on `dreame_vacuum` |
+| Name in HACS and Home Assistant | Dreame Vacuum (`hacs.json` and `manifest.json`) |
 
-Installed users keep their config entries on `dreame_vacuum`. The previous name of this repository, `matteocelani/dreame-vacuum`, redirects to `matteocelani/xiaomi-vacuum`. [Tasshack/dreame-vacuum](https://github.com/Tasshack/dreame-vacuum) is still the upstream project and does not redirect here. There is no `xiaomi_vacuum` domain. A domain rename would need a new council decision, recorded against [0001](.agent/council/records/0001-xiaomi-wide-rename-and-expansion.md).
+`matteocelani/dreame-vacuum` redirects to `matteocelani/xiaomi-vacuum`. [Tasshack/dreame-vacuum](https://github.com/Tasshack/dreame-vacuum) is the upstream project and stays at that address.
 
-### Install and configuration
+## Install
 
-Add `https://github.com/matteocelani/xiaomi-vacuum` in HACS as a custom integration. The [HACS default listing](https://github.com/hacs/default) for this kind of vacuum is the upstream repository [Tasshack/dreame-vacuum](https://github.com/Tasshack/dreame-vacuum), which is a different install. After this fork is installed, Home Assistant still registers it as domain `dreame_vacuum`.
+In HACS, add `https://github.com/matteocelani/xiaomi-vacuum` as a custom repository (category: Integration), then download it. HACS lists that download as Dreame Vacuum, the name in `hacs.json`. The [HACS default listing](https://github.com/hacs/default) for this kind of vacuum is the upstream repository [Tasshack/dreame-vacuum](https://github.com/Tasshack/dreame-vacuum), a different install. After Xiaomi Vacuum is installed, Home Assistant still registers the domain `dreame_vacuum`.
 
-Minimum Home Assistant version for this repository is 2024.2.0.
+Minimum Home Assistant version is 2024.2.0.
+
+### Dreame, MOVA, Mijia, and TROUVER
 
 Configure a Dreame, MOVA, Mijia, or TROUVER vacuum with the upstream guides. Those guides match the domain `dreame_vacuum` and the behavior this fork tracks:
 
 - [Installation](https://dreame-vacuum.tasshack.com/installation), including [HACS](https://dreame-vacuum.tasshack.com/installation/hacs) and [manual](https://dreame-vacuum.tasshack.com/installation/manually) steps for the upstream project
 - [Dreamehome](https://dreame-vacuum.tasshack.com/configuration/dreamehome)
-- [Xiaomi Home](https://dreame-vacuum.tasshack.com/configuration/xiaomihome) (an account type for these vacuums, not a separate Xiaomi device)
+- [Xiaomi Home](https://dreame-vacuum.tasshack.com/configuration/xiaomihome), the account type many Dreame, MOVA, Mijia, and TROUVER vacuums use
 - [MOVAhome](https://dreame-vacuum.tasshack.com/configuration/movahome)
 - [TROUVER](https://dreame-vacuum.tasshack.com/configuration/trouver)
 - [Local control](https://dreame-vacuum.tasshack.com/configuration/local) over the LAN
 - [Configuration options](https://dreame-vacuum.tasshack.com/configuration-options)
 
+### Supported Xiaomi models
+
+`resolve_family` in `custom_components/dreame_vacuum/xiaomi/` recognizes these models. Add a row when a model is registered there.
+
+| Marketing name | MIoT model |
+| --- | --- |
+| Xiaomi Robot Vacuum S20+ | `xiaomi.vacuum.b108gl` |
+| Xiaomi Robot Vacuum X20 Max | `xiaomi.vacuum.d109gl` |
+| Xiaomi Robot Vacuum 5 | `xiaomi.vacuum.ov31gl` |
+| Xiaomi Robot Vacuum S40 Pro | `xiaomi.vacuum.ov71gl` |
+| Xiaomi Robot Vacuum S40 | `xiaomi.vacuum.ov81gl` |
+| Xiaomi Robot Vacuum H40 | `xiaomi.vacuum.ov51gl` |
+| Xiaomi Robot Vacuum S40C | `xiaomi.vacuum.e101gb` |
+| Xiaomi Robot Vacuum H50 Pro | `xiaomi.vacuum.ov42gl` |
+| Xiaomi Robot Vacuum 5 Pro | `xiaomi.vacuum.ov21gl` |
+
+Map, rooms, and zones are not supported yet on Xiaomi models. These models were tested on a simulated robot, not real hardware. A manual check for a real S20+ or X20 Max is [hardware-test-s20-plus-x20-max.md](hardware-test-s20-plus-x20-max.md). That procedure does not add map, room, or zone support.
+
 ## Features
 
-What the integration does today, for the Dreame, MOVA, Mijia, and TROUVER vacuums inherited from upstream:
+What the integration does today for Dreame, MOVA, Mijia, and TROUVER vacuums inherited from upstream:
 
-- Wide range of Dreame, MOVA, Mijia and Trouver robot vacuums and mops, configurable with a DreameHome, MovaHome, Xiaomi Home account or fully locally without the cloud
-- Almost every setting and state exposed dynamically as auto generated entities
-- Live and multi-floor map support with zone, spot and room cleaning
-- Per-room suction, water volume and cleaning order for customized cleaning
+- Wide range of Dreame, MOVA, Mijia, and TROUVER robot vacuums and mops, configurable with a Dreamehome, MOVAhome, or Xiaomi Home account, or fully locally without the cloud
+- Almost every setting and state exposed dynamically as auto-generated entities
+- Live and multi-floor map support with zone, spot, and room cleaning
+- Per-room suction, water volume, and cleaning order for customized cleaning
 - Persistent notifications and events for automations
-- Cleaning/cruising history, obstacle photos, map backup & recovery and saved WiFi maps
+- Cleaning and cruising history, obstacle photos, map backup and recovery, and saved Wi-Fi maps
 - Backend translations for 40 languages
-- Complete interactive map editor via embedded [Dreame Vacuum Card](https://dreame-vacuum-card.tasshack.com/)
-
-### Xiaomi devices
-
-Two Xiaomi models are supported in addition to the Dreame, MOVA, Mijia, and TROUVER family:
-
-- Xiaomi Robot Vacuum S20+ (`xiaomi.vacuum.b108gl`)
-- Xiaomi Robot Vacuum X20 Max (`xiaomi.vacuum.d109gl`)
-
-Basic control works for these two, including state, cleaning mode, and suction conversion. Segment cleaning, zones, and map management are not mapped. Other Xiaomi models are not supported yet.
-
-The manual check for a real S20+ or X20 Max is [hardware-test-s20-plus-x20-max.md](hardware-test-s20-plus-x20-max.md). Read-only checks come first. Map commands are out of that procedure.
+- Interactive map editor via the embedded [Dreame Vacuum Card](https://dreame-vacuum-card.tasshack.com/)
 
 ## Documentation
 
-These pages are the upstream documentation for the support this fork tracks. They describe the current Dreame-family integration.
+These pages are the upstream documentation for Dreame, MOVA, Mijia, and TROUVER support.
 
 - [Documentation](https://dreame-vacuum.tasshack.com/)
 - [Supported devices](https://dreame-vacuum.tasshack.com/guide/more/supported-devices) for [Dreame](https://dreame-vacuum.tasshack.com/guide/more/supported-devices#dreame), [MOVA](https://dreame-vacuum.tasshack.com/guide/more/supported-devices#mova), [Mijia](https://dreame-vacuum.tasshack.com/guide/more/supported-devices#mijia), and [TROUVER](https://dreame-vacuum.tasshack.com/guide/more/supported-devices#trouver)
