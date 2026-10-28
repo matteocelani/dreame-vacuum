@@ -16,6 +16,7 @@ from custom_components.dreame_vacuum.xiaomi import resolve_family
 from custom_components.dreame_vacuum.xiaomi.mapping import (
     MODEL_ROBOT_VACUUM_5,
     MODEL_S20_PLUS,
+    MODEL_S40,
     MODEL_S40_PRO,
     MODEL_X20_MAX,
 )
@@ -220,11 +221,14 @@ _ACTION_TEXT = {
         "RESET_FILTER": "Reset Filter Life",
     },
 }
+_PROPERTY_TEXT[MODEL_S40] = _PROPERTY_TEXT[MODEL_ROBOT_VACUUM_5]
+_ACTION_TEXT[MODEL_S40] = _ACTION_TEXT[MODEL_ROBOT_VACUUM_5]
 _SPEC_FILES = {
     MODEL_S20_PLUS: ("b108gl.json",),
     MODEL_X20_MAX: ("d109gl.json", "d109gl_v1.json"),
     MODEL_ROBOT_VACUUM_5: ("ov31gl.json", "ov31gl_v1.json"),
     MODEL_S40_PRO: ("ov71gl.json",),
+    MODEL_S40: ("ov81gl.json",),
 }
 _ABSENT_PROPERTIES = (
     "STATUS",
@@ -302,6 +306,7 @@ def test_charging_value_three_is_not_chargeable():
         "ov31gl.json",
         "ov31gl_v1.json",
         "ov71gl.json",
+        "ov81gl.json",
     ):
         assert _charging_value(name, 3) == "Not Chargeable"
         assert _charging_value(name, 1) == "Charging"

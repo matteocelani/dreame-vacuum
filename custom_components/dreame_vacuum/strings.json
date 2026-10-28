@@ -847,6 +847,13 @@
           "every_time": "Every time"
         }
       },
+      "xiaomi_edge_sweep_frequency": {
+        "name": "Edge sweep frequency",
+        "state": {
+          "seven_sweeps": "Every 7 sweeps",
+          "every_time": "Every time"
+        }
+      },
       "xiaomi_dust_arrest_power": {
         "name": "Dust collection power",
         "state": {
@@ -2248,6 +2255,48 @@
       },
       "xiaomi_detergent_delivery": {
         "name": "Detergent delivery"
+      },
+      "xiaomi_ai_cleaning": {
+        "name": "AI cleaning"
+      },
+      "xiaomi_mop_auto_lift": {
+        "name": "Mop auto-lift"
+      },
+      "xiaomi_sweep_ai_detection": {
+        "name": "Sweep AI detection"
+      },
+      "xiaomi_dirt_detection": {
+        "name": "Dirt detection"
+      },
+      "xiaomi_object_detection": {
+        "name": "Object detection"
+      },
+      "xiaomi_room_detection": {
+        "name": "Room detection"
+      },
+      "xiaomi_floor_material_detection": {
+        "name": "Floor material detection"
+      },
+      "xiaomi_defecation_detection": {
+        "name": "Defecation detection"
+      },
+      "xiaomi_liquid_dirt_detection": {
+        "name": "Liquid dirt detection"
+      },
+      "xiaomi_edge_swing_tail_sweep": {
+        "name": "Edge swing sweep"
+      },
+      "xiaomi_ai_managed_cleaning": {
+        "name": "AI managed cleaning"
+      },
+      "xiaomi_real_scene_capture": {
+        "name": "Real scene capture"
+      },
+      "xiaomi_auto_night_fill_light": {
+        "name": "Night fill light"
+      },
+      "xiaomi_ai_wake_up": {
+        "name": "AI wake-up"
       }
     },
     "button": {

@@ -19,6 +19,7 @@ from custom_components.dreame_vacuum.xiaomi import (
 from custom_components.dreame_vacuum.xiaomi.mapping import (
     MODEL_ROBOT_VACUUM_5,
     MODEL_S20_PLUS,
+    MODEL_S40,
     MODEL_S40_PRO,
     MODEL_X20_MAX,
 )
@@ -27,6 +28,9 @@ from custom_components.dreame_vacuum.xiaomi.profile import (
     EXTENDED_STATION_CONTROLS,
     EXTENDED_STATION_STATES,
     EXTENDED_STATION_TASKS,
+    HAIR_CUTTING_CONTROLS,
+    S40_CLASS_CONTROLS,
+    S40_CLASS_OMITTED_CONTROLS,
     STATION_ACTIONS,
     STATION_PROPERTIES,
     STATION_STATISTICS_PROPERTIES,
@@ -224,6 +228,33 @@ def test_s40_pro_reuses_the_station_profile_and_omits_missing_services():
     assert "RESET_DETERGENT" not in s40.action_overrides
 
 
+def test_s40_reuses_the_vacuum_5_map_and_the_s40_class_controls():
+    s40 = resolve_family(MODEL_S40)
+    vacuum_5 = resolve_family(MODEL_ROBOT_VACUUM_5)
+    assert s40 is not None
+    assert vacuum_5 is not None
+    assert s40.property_overrides == vacuum_5.property_overrides
+    assert s40.property_overrides is not vacuum_5.property_overrides
+    assert s40.action_overrides == vacuum_5.action_overrides
+    assert s40.action_overrides is not vacuum_5.action_overrides
+    assert s40.state_by_wire == vacuum_5.state_by_wire
+    assert s40.state_by_wire is not vacuum_5.state_by_wire
+    assert s40.task_by_wire == vacuum_5.task_by_wire
+    shared = {control.key: control for control in EXTENDED_STATION_CONTROLS}
+    hair = {control.key: control for control in HAIR_CUTTING_CONTROLS}
+    added = {control.key: control for control in S40_CLASS_CONTROLS}
+    for control in s40.controls:
+        if control.key in shared:
+            assert control is shared[control.key]
+        else:
+            assert control is added[control.key]
+        if control.key in hair:
+            assert control is hair[control.key]
+    omitted = set(shared) - {control.key for control in s40.controls}
+    assert omitted == set(S40_CLASS_OMITTED_CONTROLS)
+    assert {control.key for control in s40.controls} >= set(added)
+
+
 def test_compose_rejects_an_omission_the_profile_does_not_define():
     with pytest.raises(KeyError):
         compose_addresses(STATION_PROPERTIES, omitted=frozenset({"NO_SUCH"}))
@@ -235,7 +266,7 @@ def test_station_address_literals_are_declared_once():
     """Station address dicts are written only in the shared profile."""
     root = Path("custom_components/dreame_vacuum/xiaomi")
     profile = (root / "profile.py").read_text(encoding="utf-8")
-    for name in ("d109gl.py", "ov31gl.py", "ov71gl.py"):
+    for name in ("d109gl.py", "ov31gl.py", "ov71gl.py", "ov81gl.py"):
         text = (root / name).read_text(encoding="utf-8")
         assert "siid" not in text, name
         assert "aiid" not in text, name
@@ -266,7 +297,13 @@ def test_controls_of_ignores_devices_without_a_xiaomi_codec():
 
 
 def test_property_and_action_names_exist_on_the_dreame_enums():
-    for model in (MODEL_S20_PLUS, MODEL_X20_MAX, MODEL_ROBOT_VACUUM_5, MODEL_S40_PRO):
+    for model in (
+        MODEL_S20_PLUS,
+        MODEL_X20_MAX,
+        MODEL_ROBOT_VACUUM_5,
+        MODEL_S40_PRO,
+        MODEL_S40,
+    ):
         family = resolve_family(model)
         assert family is not None
         for name in family.property_overrides:

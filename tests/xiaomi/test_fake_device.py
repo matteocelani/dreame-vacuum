@@ -11,6 +11,7 @@ from custom_components.dreame_vacuum.xiaomi import resolve_family
 from custom_components.dreame_vacuum.xiaomi.mapping import (
     MODEL_ROBOT_VACUUM_5,
     MODEL_S20_PLUS,
+    MODEL_S40,
     MODEL_S40_PRO,
     MODEL_X20_MAX,
 )
@@ -30,7 +31,13 @@ pytestmark = [
 def test_loopback_device_start_pause_resume_and_dock_send_only_mapped_actions(
     socket_enabled: None,
 ) -> None:
-    for model in (MODEL_S20_PLUS, MODEL_X20_MAX, MODEL_ROBOT_VACUUM_5, MODEL_S40_PRO):
+    for model in (
+        MODEL_S20_PLUS,
+        MODEL_X20_MAX,
+        MODEL_ROBOT_VACUUM_5,
+        MODEL_S40_PRO,
+        MODEL_S40,
+    ):
         family = resolve_family(model)
         assert family is not None
         actions = family.action_overrides
