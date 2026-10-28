@@ -766,6 +766,14 @@
           "low_frequency": "Low frequency"
         }
       },
+      "xiaomi_cleaning_mode": {
+        "name": "Cleaning mode",
+        "state": {
+          "sweeping": "Sweeping",
+          "sweeping_and_mopping": "Sweeping and mopping",
+          "mopping_after_sweeping": "Sweep then mop"
+        }
+      },
       "xiaomi_clean_times": {
         "name": "Clean times",
         "state": {
@@ -1955,7 +1963,8 @@
           "idle": "Idle",
           "emptying": "Emptying",
           "emptying_completed": "Emptying completed",
-          "emptying_failed": "Emptying failed"
+          "emptying_failed": "Emptying failed",
+          "not_installed": "Not installed"
         }
       },
       "xiaomi_download_status": {
@@ -1983,6 +1992,12 @@
       },
       "xiaomi_notice": {
         "name": "Notice"
+      },
+      "xiaomi_roller_life": {
+        "name": "Roller life"
+      },
+      "xiaomi_roller_time_left": {
+        "name": "Roller time left"
       },
       "xiaomi_self_check_results": {
         "name": "Self-check results"
@@ -2247,6 +2262,9 @@
       "xiaomi_auto_water_change": {
         "name": "Auto water change"
       },
+      "xiaomi_auto_wash_roller": {
+        "name": "Auto roller wash"
+      },
       "xiaomi_use_detergent": {
         "name": "Use detergent"
       },
@@ -2282,6 +2300,9 @@
       },
       "xiaomi_repeat_wash_mop": {
         "name": "Repeat mop wash"
+      },
+      "xiaomi_roller_outswing": {
+        "name": "Roller outswing"
       },
       "xiaomi_detergent_delivery": {
         "name": "Detergent delivery"
@@ -2453,6 +2474,9 @@
       "xiaomi_start_mop_wash": {
         "name": "Start mop wash"
       },
+      "xiaomi_start_roller_wash": {
+        "name": "Start roller wash"
+      },
       "xiaomi_start_dry": {
         "name": "Start drying"
       },
@@ -2473,6 +2497,9 @@
       },
       "xiaomi_stop_mop_wash": {
         "name": "Stop mop wash"
+      },
+      "xiaomi_stop_roller_wash": {
+        "name": "Stop roller wash"
       },
       "xiaomi_stop_dry": {
         "name": "Stop drying"
@@ -2498,6 +2525,9 @@
       "xiaomi_sweep_before_mop": {
         "name": "Sweep before mopping"
       },
+      "xiaomi_sweep_dust_arrest": {
+        "name": "Dust collection during cleaning"
+      },
       "xiaomi_stop_working": {
         "name": "Stop working"
       },
@@ -2521,6 +2551,9 @@
       },
       "xiaomi_reset_dust_bag": {
         "name": "Reset dust bag"
+      },
+      "xiaomi_reset_roller": {
+        "name": "Reset roller life"
       },
       "xiaomi_find_pet": {
         "name": "Find pet"

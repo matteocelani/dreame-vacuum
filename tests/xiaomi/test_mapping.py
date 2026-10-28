@@ -15,6 +15,7 @@ from custom_components.dreame_vacuum.xiaomi import (
     MODEL_H50,
     MODEL_H50_PRO,
     MODEL_ROBOT_VACUUM_5_PRO,
+    MODEL_ROBOT_VACUUM_6,
     control_keys,
     controls_of,
     resolve_family,
@@ -29,12 +30,15 @@ from custom_components.dreame_vacuum.xiaomi.mapping import (
     MODEL_X20_MAX,
 )
 from custom_components.dreame_vacuum.xiaomi.profile import (
+    AI_CAMERA_CONTROLS,
     DETERGENT_TIME_PROPERTIES,
     EXTENDED_STATION_CONTROLS,
     EXTENDED_STATION_STATES,
     EXTENDED_STATION_TASKS,
     HAIR_CUTTING_CONTROLS,
     LIDAR_HARDWARE_CONTROLS,
+    ROLLER_CLEANING_MODE,
+    ROLLER_CONTROLS,
     S40_CLASS_CONTROLS,
     S40_CLASS_OMITTED_CONTROLS,
     SELF_CHECK_RESULTS,
@@ -43,7 +47,9 @@ from custom_components.dreame_vacuum.xiaomi.profile import (
     STATION_PROPERTIES,
     STATION_STATISTICS_PROPERTIES,
     STREAM_CONTROLS,
+    SWEEP_DUST_ARREST,
     compose_addresses,
+    compose_codes,
     compose_controls,
     control_with_options,
 )
@@ -499,11 +505,78 @@ def test_h50_pro_publishes_the_s40_omissions_it_maps() -> None:
         assert key in present
 
 
+def test_robot_vacuum_6_keeps_shared_controls_and_adds_the_roller() -> None:
+    """The roller, camera pair, and value-list edits are the only local diff."""
+    vacuum = resolve_family(MODEL_ROBOT_VACUUM_6)
+    h50 = resolve_family(MODEL_H50)
+    assert vacuum is not None
+    assert h50 is not None
+    assert set(vacuum.property_overrides) == set(h50.property_overrides) - {
+        "CLEANING_MODE",
+        "MOP_PAD_LEFT",
+        "MOP_PAD_TIME_LEFT",
+        "DETERGENT_LEFT",
+        "DETERGENT_TIME_LEFT",
+    }
+    assert set(vacuum.action_overrides) == set(h50.action_overrides) - {
+        "RESET_MOP_PAD",
+        "RESET_DETERGENT",
+    }
+    assert set(vacuum.state_by_wire) == set(h50.state_by_wire) - {22, 23}
+    assert vacuum.task_by_wire == h50.task_by_wire
+    assert vacuum.task_by_wire is not h50.task_by_wire
+    shared = {control.key: control for control in EXTENDED_STATION_CONTROLS}
+    added = {
+        control.key: control
+        for control in (
+            ROLLER_CLEANING_MODE,
+            *AI_CAMERA_CONTROLS,
+            SELF_CHECK_RESULTS,
+            SWEEP_DUST_ARREST,
+            *ROLLER_CONTROLS,
+        )
+    }
+    for control in vacuum.controls:
+        if control.key in {"xiaomi_worry_free_mode", "xiaomi_host_tank"}:
+            assert control is not shared[control.key]
+        elif control.key in shared:
+            assert control is shared[control.key]
+        else:
+            assert control is added[control.key]
+    present = {control.key for control in vacuum.controls}
+    assert set(added) <= present
+    assert "xiaomi_start_mop" not in present
+    assert "xiaomi_solid_dirt_detection" not in present
+    assert "xiaomi_find_pet" not in present
+    worry_free = next(
+        control
+        for control in vacuum.controls
+        if control.key == "xiaomi_worry_free_mode"
+    )
+    host_tank = next(
+        control for control in vacuum.controls if control.key == "xiaomi_host_tank"
+    )
+    assert [slug for _value, slug in worry_free.options] == [
+        "silent_clean",
+        "deep_clean",
+        "general",
+        "butler",
+    ]
+    assert [value for value, _slug in host_tank.options] == [0, 1, 2, 3, 4]
+    cleaning_mode = next(
+        control for control in vacuum.controls if control.key == "xiaomi_cleaning_mode"
+    )
+    assert [value for value, _slug in cleaning_mode.options] == [1, 3, 4]
+    assert "CLEANING_MODE" not in vacuum.property_overrides
+
+
 def test_compose_rejects_an_omission_the_profile_does_not_define():
     with pytest.raises(KeyError):
         compose_addresses(STATION_PROPERTIES, omitted=frozenset({"NO_SUCH"}))
     with pytest.raises(KeyError):
         compose_controls(EXTENDED_STATION_CONTROLS, omitted=frozenset({"missing"}))
+    with pytest.raises(KeyError):
+        compose_codes(EXTENDED_STATION_STATES, omitted=(999,))
 
 
 def test_station_address_literals_are_declared_once():
@@ -517,6 +590,7 @@ def test_station_address_literals_are_declared_once():
         "ov31gl.py",
         "ov42gl.py",
         "ov43gb.py",
+        "pv32gl.py",
         "ov51gl.py",
         "ov71gl.py",
         "ov81gl.py",
@@ -562,6 +636,7 @@ def test_property_and_action_names_exist_on_the_dreame_enums():
         MODEL_H50_PRO,
         MODEL_S40C,
         MODEL_ROBOT_VACUUM_5_PRO,
+        MODEL_ROBOT_VACUUM_6,
     ):
         family = resolve_family(model)
         assert family is not None

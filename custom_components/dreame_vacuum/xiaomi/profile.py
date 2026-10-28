@@ -137,12 +137,19 @@ def compose_addresses(
 def compose_codes(
     base: Mapping[int, int],
     overrides: Mapping[int, int] | None = None,
+    omitted: Collection[int] | None = None,
 ) -> dict[int, int]:
-    """Copy a shared wire map and apply one model's overrides."""
+    """Copy a shared wire map, apply overrides, and drop codes the spec omits."""
     merged = {int(wire): int(stored) for wire, stored in base.items()}
     if overrides:
         for wire, stored in overrides.items():
             merged[int(wire)] = int(stored)
+    if omitted:
+        for wire in omitted:
+            key = int(wire)
+            if key not in merged:
+                raise KeyError(key)
+            del merged[key]
     return merged
 
 
@@ -629,10 +636,24 @@ HAIR_CUTTING_CONTROLS: Final[tuple[XiaomiControl, ...]] = (
 
 # Shared by the S40-class spec. H40 lacks detergent reminder 2.71, which stays
 # on the extended list so that model omits xiaomi_detergent_reminder.
+_SWEEP_AI_DETECTION: Final = boolean_switch("xiaomi_sweep_ai_detection", 2, 45)
+_EDGE_SWEEP_FREQUENCY: Final = enum_select(
+    "xiaomi_edge_sweep_frequency",
+    2,
+    68,
+    _OUTSWING_FREQUENCY_OPTIONS,
+)
+
+# Robot Vacuum 6 publishes only these two from the S40-class camera list.
+AI_CAMERA_CONTROLS: Final[tuple[XiaomiControl, ...]] = (
+    _SWEEP_AI_DETECTION,
+    _EDGE_SWEEP_FREQUENCY,
+)
+
 _S40_CLASS_ONLY_CONTROLS: Final[tuple[XiaomiControl, ...]] = (
     boolean_switch("xiaomi_ai_cleaning", 2, 37),
     boolean_switch("xiaomi_mop_auto_lift", 2, 44),
-    boolean_switch("xiaomi_sweep_ai_detection", 2, 45),
+    _SWEEP_AI_DETECTION,
     boolean_switch("xiaomi_dirt_detection", 2, 46),
     boolean_switch("xiaomi_object_detection", 2, 47),
     boolean_switch("xiaomi_room_detection", 2, 48),
@@ -640,12 +661,7 @@ _S40_CLASS_ONLY_CONTROLS: Final[tuple[XiaomiControl, ...]] = (
     boolean_switch("xiaomi_defecation_detection", 2, 50),
     boolean_switch("xiaomi_liquid_dirt_detection", 2, 51),
     boolean_switch("xiaomi_edge_swing_tail_sweep", 2, 55),
-    enum_select(
-        "xiaomi_edge_sweep_frequency",
-        2,
-        68,
-        _OUTSWING_FREQUENCY_OPTIONS,
-    ),
+    _EDGE_SWEEP_FREQUENCY,
     boolean_switch("xiaomi_ai_managed_cleaning", 2, 69),
     boolean_switch("xiaomi_real_scene_capture", 2, 93),
     boolean_switch("xiaomi_auto_night_fill_light", 2, 94),
@@ -720,6 +736,80 @@ SELF_CHECK_RESULTS: Final = text_sensor(
     "xiaomi_self_check_results",
     _SELF_CHECK_SERVICE,
     _SELF_CHECK_RESULTS_PROPERTY,
+)
+
+_VACUUM_SERVICE: Final = 2
+_CLEANING_MODE_PROPERTY: Final = 4
+
+# This spec has no mop-only value. The Dreame select would send wire 2.
+ROLLER_CLEANING_MODE: Final = enum_select(
+    "xiaomi_cleaning_mode",
+    _VACUUM_SERVICE,
+    _CLEANING_MODE_PROPERTY,
+    (
+        (1, "sweeping"),
+        (3, "sweeping_and_mopping"),
+        (4, "mopping_after_sweeping"),
+    ),
+)
+
+_ROLLER_SERVICE: Final = 24
+_ROLLER_LIFE_PROPERTY: Final = 1
+_ROLLER_TIME_PROPERTY: Final = 2
+_ROLLER_OUTSWING_PROPERTY: Final = 3
+_ROLLER_AUTO_WASH_PROPERTY: Final = 4
+_RESET_ROLLER_ACTION: Final = 1
+_START_ROLLER_WASH_ACTION: Final = 2
+_STOP_ROLLER_WASH_ACTION: Final = 3
+
+# Robot Vacuum 6 mops with a roller. It does not publish mop-pad life.
+ROLLER_CONTROLS: Final[tuple[XiaomiControl, ...]] = (
+    measurement(
+        "xiaomi_roller_life",
+        _ROLLER_SERVICE,
+        _ROLLER_LIFE_PROPERTY,
+        0,
+        100,
+        "%",
+    ),
+    measurement(
+        "xiaomi_roller_time_left",
+        _ROLLER_SERVICE,
+        _ROLLER_TIME_PROPERTY,
+        0,
+        9999,
+    ),
+    boolean_switch(
+        "xiaomi_roller_outswing",
+        _ROLLER_SERVICE,
+        _ROLLER_OUTSWING_PROPERTY,
+    ),
+    boolean_switch(
+        "xiaomi_auto_wash_roller",
+        _ROLLER_SERVICE,
+        _ROLLER_AUTO_WASH_PROPERTY,
+    ),
+    action_button("xiaomi_reset_roller", _ROLLER_SERVICE, _RESET_ROLLER_ACTION),
+    action_button(
+        "xiaomi_start_roller_wash",
+        _ROLLER_SERVICE,
+        _START_ROLLER_WASH_ACTION,
+    ),
+    action_button(
+        "xiaomi_stop_roller_wash",
+        _ROLLER_SERVICE,
+        _STOP_ROLLER_WASH_ACTION,
+    ),
+)
+
+_CUSTOM_SERVICE: Final = 20
+_SWEEP_DUST_ARREST_ACTION: Final = 9
+
+# Dust collection during a clean. Start-dust-arrest remains the dock empty.
+SWEEP_DUST_ARREST: Final = action_button(
+    "xiaomi_sweep_dust_arrest",
+    _CUSTOM_SERVICE,
+    _SWEEP_DUST_ARREST_ACTION,
 )
 
 # Extended-station controls whose addresses the S40-class spec does not publish.

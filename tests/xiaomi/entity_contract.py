@@ -59,6 +59,7 @@ class EntityCase:
     counter_samples: Mapping[str, tuple[object, str]]
     status_samples: Mapping[str, tuple[object, str]]
     consumable_life: tuple[str, ...]
+    omitted_legacy_selects: frozenset[str] = frozenset()
 
 
 async def exercise_home_assistant_entities(
@@ -169,13 +170,13 @@ async def _exercise_selects_switches_number_and_buttons(
 ) -> None:
     """Drive the legacy selects, switches, volume, and reset buttons."""
     entry_id = _config_entry_id(hass)
-    await _select_each(hass, entry_id, "suction_level")
-    await _select_each(hass, entry_id, "cleaning_mode")
+    await _select_legacy(hass, entry_id, case, "suction_level")
+    await _select_legacy(hass, entry_id, case, "cleaning_mode")
     tank = family.property_overrides["WATER_TANK"]
     fake.set_value(tank["siid"], tank["piid"], True)
     await _refresh(hass, entry_id)
-    await _select_each(hass, entry_id, "water_volume")
-    await _select_each(hass, entry_id, "cleaning_mode")
+    await _select_legacy(hass, entry_id, case, "water_volume")
+    await _select_legacy(hass, entry_id, case, "cleaning_mode")
     dust = family.property_overrides["AUTO_DUST_COLLECTING"]
     fake.set_value(dust["siid"], dust["piid"], 1)
     await _refresh(hass, entry_id)
@@ -244,6 +245,15 @@ async def _press_unavailable_auto_empty(
             blocking=True,
         )
     assert len(fake.actions) == before
+
+
+async def _select_legacy(
+    hass: HomeAssistant, entry_id: str, case: EntityCase, key: str
+) -> None:
+    """Select each option of a Dreame select this model still exposes."""
+    if key in case.omitted_legacy_selects:
+        return
+    await _select_each(hass, entry_id, key)
 
 
 async def _select_each(hass: HomeAssistant, entry_id: str, key: str) -> None:

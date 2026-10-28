@@ -16,6 +16,7 @@ from custom_components.dreame_vacuum.xiaomi import (
     MODEL_H50,
     MODEL_H50_PRO,
     MODEL_ROBOT_VACUUM_5_PRO,
+    MODEL_ROBOT_VACUUM_6,
     resolve_family,
 )
 from custom_components.dreame_vacuum.xiaomi.mapping import (
@@ -240,6 +241,16 @@ _PROPERTY_TEXT[MODEL_H50] = _PROPERTY_TEXT[MODEL_S40]
 _ACTION_TEXT[MODEL_H50] = _ACTION_TEXT[MODEL_S40]
 _PROPERTY_TEXT[MODEL_ROBOT_VACUUM_5_PRO] = _PROPERTY_TEXT[MODEL_S40]
 _ACTION_TEXT[MODEL_ROBOT_VACUUM_5_PRO] = _ACTION_TEXT[MODEL_S40]
+_PROPERTY_TEXT[MODEL_ROBOT_VACUUM_6] = {
+    name: text
+    for name, text in _PROPERTY_TEXT[MODEL_S40_PRO].items()
+    if name not in {"CLEANING_MODE", "MOP_PAD_LEFT", "MOP_PAD_TIME_LEFT"}
+}
+_ACTION_TEXT[MODEL_ROBOT_VACUUM_6] = {
+    name: text
+    for name, text in _ACTION_TEXT[MODEL_S40_PRO].items()
+    if name != "RESET_MOP_PAD"
+}
 _SPEC_FILES = {
     MODEL_S20_PLUS: ("b108gl.json",),
     MODEL_X20_MAX: ("d109gl.json", "d109gl_v1.json"),
@@ -251,6 +262,7 @@ _SPEC_FILES = {
     MODEL_H50_PRO: ("ov42gl.json", "ov42gl_v1.json"),
     MODEL_H50: ("ov43gb.json", "ov43gb_v1.json"),
     MODEL_ROBOT_VACUUM_5_PRO: ("ov21gl.json", "ov21gl_v1.json"),
+    MODEL_ROBOT_VACUUM_6: ("pv32gl.json", "pv32gl_v1.json"),
 }
 _ABSENT_PROPERTIES = (
     "STATUS",
@@ -337,6 +349,8 @@ def test_charging_value_three_is_not_chargeable():
         "ov43gb_v1.json",
         "ov21gl.json",
         "ov21gl_v1.json",
+        "pv32gl.json",
+        "pv32gl_v1.json",
     ):
         assert _charging_value(name, 3) == "Not Chargeable"
         assert _charging_value(name, 1) == "Charging"
