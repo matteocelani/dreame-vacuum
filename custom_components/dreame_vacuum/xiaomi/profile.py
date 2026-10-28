@@ -103,6 +103,14 @@ class ExtendedStationWireState(IntEnum):
     RETURNING_DURING_ASSIST = 24
 
 
+class SummonWireState(IntEnum):
+    """Status codes the summon specs add after the extended station list."""
+
+    SELF_CHECK = 25
+    SUMMONING = 26
+    SWEEP_SUMMONING = 27
+
+
 class ExtendedStationWireTask(IntEnum):
     """Sweep-type codes the extended station spec adds after the X20 Max list."""
 
@@ -326,6 +334,14 @@ EXTENDED_STATION_STATES: Final[dict[int, int]] = compose_codes(
         ),
     },
 )
+
+# Old code 25 is water check. Self-check has no shell state of its own.
+_UNKNOWN_SHELL_STATE: Final = -1
+
+SUMMON_STATES: Final[dict[int, int]] = {
+    int(SummonWireState.SELF_CHECK): _UNKNOWN_SHELL_STATE,
+    int(SummonWireState.SUMMONING): int(StoredState.CLEAN_SUMMON),
+}
 
 EXTENDED_STATION_TASKS: Final[dict[int, int]] = compose_codes(
     STATION_TASKS,
@@ -874,6 +890,50 @@ MOP_TEMPERATURE: Final = enum_select(
         (2, "hot"),
         (3, "smart"),
     ),
+)
+
+_CAMERA_ROLLER_DETECTION_KEYS: Final = (
+    "xiaomi_mop_auto_lift",
+    "xiaomi_sweep_ai_detection",
+    "xiaomi_dirt_detection",
+    "xiaomi_object_detection",
+    "xiaomi_room_detection",
+    "xiaomi_edge_sweep_frequency",
+    "xiaomi_real_scene_capture",
+    "xiaomi_auto_night_fill_light",
+    "xiaomi_ai_wake_up",
+)
+_CAMERA_ROLLER_STREAM_KEYS: Final = (
+    "xiaomi_flash_light",
+    "xiaomi_video_recording_warnings",
+    "xiaomi_stream_visible_to_shared_users",
+    "xiaomi_stream_enabled",
+    "xiaomi_stream_physical_lock",
+)
+
+# Robot Vacuum 6 Max and 6 Pro add this camera, stream, and roller set.
+CAMERA_ROLLER_CONTROLS: Final[tuple[XiaomiControl, ...]] = (
+    ROLLER_CLEANING_MODE,
+    *select_controls(S40_CLASS_CONTROLS, _CAMERA_ROLLER_DETECTION_KEYS),
+    SELF_CHECK_RESULTS,
+    SWEEP_DUST_ARREST,
+    *ROLLER_CONTROLS,
+    *select_controls(STREAM_CONTROLS, _CAMERA_ROLLER_STREAM_KEYS),
+    MOP_TEMPERATURE,
+    ENTER_CHECK_MODE,
+)
+
+# These shared-list addresses are absent from both of those specs.
+CAMERA_ROLLER_OMITTED_CONTROLS: Final[frozenset[str]] = frozenset(
+    {
+        "xiaomi_calibrate_imu",
+        "xiaomi_dust_arrest_power",
+        "xiaomi_start_cut_hair",
+        "xiaomi_start_mop",
+        "xiaomi_start_station_self_clean",
+        "xiaomi_stop_cut_hair",
+        "xiaomi_stop_station_self_clean",
+    }
 )
 
 # Extended-station controls whose addresses the S40-class spec does not publish.
