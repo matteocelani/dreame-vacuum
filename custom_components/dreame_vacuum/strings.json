@@ -976,7 +976,11 @@
           "remote": "Remote",
           "explore": "Explore",
           "room": "Room",
-          "floor": "Floor"
+          "floor": "Floor",
+          "corner": "Corners",
+          "manual": "Manual",
+          "room_prefer": "Room preference",
+          "material_prefer": "Material preference"
         }
       },
       "xiaomi_repeat_clean": {
