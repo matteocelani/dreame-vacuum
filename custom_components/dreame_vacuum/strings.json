@@ -865,10 +865,12 @@
       "xiaomi_worry_free_mode": {
         "name": "Worry-free mode",
         "state": {
+          "silent": "Silent",
           "silent_clean": "Silent clean",
           "deep_clean": "Deep clean",
           "deep_clean_2": "Deep clean 2",
           "general": "General",
+          "standard": "Standard",
           "butler": "Butler",
           "pet": "Pet"
         }
@@ -896,6 +898,22 @@
         "state": {
           "safe_mode": "Safe",
           "extreme_mode": "Extreme"
+        }
+      },
+      "xiaomi_flash_light": {
+        "name": "Camera light",
+        "state": {
+          "auto": "Auto",
+          "open": "On",
+          "close": "Off"
+        }
+      },
+      "xiaomi_video_recording_warnings": {
+        "name": "Video recording warning",
+        "state": {
+          "voice": "Voice",
+          "light": "Light",
+          "strong_reminder": "Strong reminder"
         }
       },
       "xiaomi_carpet_cleaning_method": {
@@ -2290,6 +2308,15 @@
       "xiaomi_solid_dirt_detection": {
         "name": "Solid dirt detection"
       },
+      "xiaomi_pet_snaps": {
+        "name": "Pet snapshots"
+      },
+      "xiaomi_stream_visible_to_shared_users": {
+        "name": "Video visible to shared users"
+      },
+      "xiaomi_stream_enabled": {
+        "name": "Video stream"
+      },
       "xiaomi_edge_swing_tail_sweep": {
         "name": "Edge swing sweep"
       },
@@ -2486,6 +2513,9 @@
       },
       "xiaomi_reset_dust_bag": {
         "name": "Reset dust bag"
+      },
+      "xiaomi_find_pet": {
+        "name": "Find pet"
       }
     },
     "camera": {
@@ -2552,6 +2582,9 @@
       },
       "xiaomi_current_dnd": {
         "name": "Do not disturb state"
+      },
+      "xiaomi_stream_physical_lock": {
+        "name": "Video control lock"
       }
     },
     "number": {
