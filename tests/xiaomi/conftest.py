@@ -8,6 +8,11 @@ import sys
 
 import pytest
 
+pytest.register_assert_rewrite(
+    "tests.xiaomi.entity_contract",
+    "tests.xiaomi.spec_helpers",
+)
+
 
 @pytest.fixture
 def integration_package() -> object:
