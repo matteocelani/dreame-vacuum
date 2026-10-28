@@ -11,6 +11,7 @@ from .model import (
     MODEL_ROBOT_VACUUM_5_PRO,
     MODEL_ROBOT_VACUUM_6,
     MODEL_ROBOT_VACUUM_6_MAX,
+    MODEL_ROBOT_VACUUM_6_PRO,
     control_keys,
     controls_of,
 )
@@ -21,6 +22,7 @@ __all__ = [
     "MODEL_ROBOT_VACUUM_5_PRO",
     "MODEL_ROBOT_VACUUM_6",
     "MODEL_ROBOT_VACUUM_6_MAX",
+    "MODEL_ROBOT_VACUUM_6_PRO",
     "XiaomiControl",
     "XiaomiControlException",
     "control_keys",

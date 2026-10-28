@@ -17,6 +17,7 @@ from custom_components.dreame_vacuum.xiaomi import (
     MODEL_ROBOT_VACUUM_5_PRO,
     MODEL_ROBOT_VACUUM_6,
     MODEL_ROBOT_VACUUM_6_MAX,
+    MODEL_ROBOT_VACUUM_6_PRO,
     control_keys,
     controls_of,
     resolve_family,
@@ -32,6 +33,8 @@ from custom_components.dreame_vacuum.xiaomi.mapping import (
 )
 from custom_components.dreame_vacuum.xiaomi.profile import (
     AI_CAMERA_CONTROLS,
+    CAMERA_ROLLER_CONTROLS,
+    CAMERA_ROLLER_OMITTED_CONTROLS,
     DETERGENT_TIME_PROPERTIES,
     ENTER_CHECK_MODE,
     EXTENDED_STATION_CONTROLS,
@@ -51,9 +54,11 @@ from custom_components.dreame_vacuum.xiaomi.profile import (
     STATION_PROPERTIES,
     STATION_STATISTICS_PROPERTIES,
     STREAM_CONTROLS,
+    SUMMON_STATES,
     SWEEP_DUST_ARREST,
     WORRY_FREE_THROUGH_BUTLER,
     StoredState,
+    SummonWireState,
     compose_addresses,
     compose_codes,
     compose_controls,
@@ -657,6 +662,68 @@ def test_robot_vacuum_6_max_reuses_the_station_profile() -> None:
         select_controls(EXTENDED_STATION_CONTROLS, ("missing",))
 
 
+def test_robot_vacuum_6_pro_reuses_the_camera_roller_profile() -> None:
+    """Only mop life, station assist, and pet mode differ from Robot Vacuum 6 Max."""
+    vacuum = resolve_family(MODEL_ROBOT_VACUUM_6_PRO)
+    vacuum_6_max = resolve_family(MODEL_ROBOT_VACUUM_6_MAX)
+    assert vacuum is not None
+    assert vacuum_6_max is not None
+    assert set(vacuum.property_overrides) == set(vacuum_6_max.property_overrides) - {
+        "MOP_PAD_LEFT",
+        "MOP_PAD_TIME_LEFT",
+    }
+    assert set(vacuum.action_overrides) == set(vacuum_6_max.action_overrides) - {
+        "RESET_MOP_PAD"
+    }
+    assert vacuum.property_overrides is not vacuum_6_max.property_overrides
+    assert vacuum.task_by_wire == vacuum_6_max.task_by_wire
+    assert vacuum.task_by_wire is not vacuum_6_max.task_by_wire
+    assert set(vacuum.state_by_wire) == (set(vacuum_6_max.state_by_wire) - {27}) | {
+        22,
+        23,
+    }
+    assert vacuum.state_by_wire[22] == int(StoredState.WASHING)
+    assert vacuum.state_by_wire[23] == int(StoredState.CHARGING_COMPLETED)
+    assert vacuum.state_by_wire[int(SummonWireState.SELF_CHECK)] == int(
+        DreameVacuumState.UNKNOWN
+    )
+    assert vacuum.state_by_wire[int(SummonWireState.SUMMONING)] == int(
+        StoredState.CLEAN_SUMMON
+    )
+    assert int(SummonWireState.SWEEP_SUMMONING) not in vacuum.state_by_wire
+    assert (
+        vacuum.state_by_wire[int(SummonWireState.SELF_CHECK)]
+        == SUMMON_STATES[int(SummonWireState.SELF_CHECK)]
+    )
+    shared_worry = next(
+        control
+        for control in EXTENDED_STATION_CONTROLS
+        if control.key == "xiaomi_worry_free_mode"
+    )
+    max_controls = {control.key: control for control in vacuum_6_max.controls}
+    present = {control.key: control for control in vacuum.controls}
+    assert set(present) == set(max_controls)
+    for key, control in present.items():
+        if key == "xiaomi_worry_free_mode":
+            assert control is shared_worry
+            assert control is not max_controls[key]
+        else:
+            assert control is max_controls[key]
+    assert present["xiaomi_host_tank"] is HOST_TANK_WITH_NOT_INSTALLED
+    assert [slug for _value, slug in present["xiaomi_worry_free_mode"].options] == [
+        "silent_clean",
+        "deep_clean",
+        "general",
+        "butler",
+        "pet",
+    ]
+    assert set(CAMERA_ROLLER_CONTROLS) <= set(vacuum.controls)
+    assert CAMERA_ROLLER_OMITTED_CONTROLS.isdisjoint(present)
+    assert "CLEANING_MODE" not in vacuum.property_overrides
+    assert "MOP_PAD_LEFT" not in vacuum.property_overrides
+    assert "RESET_MOP_PAD" not in vacuum.action_overrides
+
+
 def test_compose_rejects_an_omission_the_profile_does_not_define():
     with pytest.raises(KeyError):
         compose_addresses(STATION_PROPERTIES, omitted=frozenset({"NO_SUCH"}))
@@ -678,6 +745,7 @@ def test_station_address_literals_are_declared_once():
         "ov42gl.py",
         "ov43gb.py",
         "pv11gl.py",
+        "pv21gl.py",
         "pv32gl.py",
         "ov51gl.py",
         "ov71gl.py",
@@ -726,6 +794,7 @@ def test_property_and_action_names_exist_on_the_dreame_enums():
         MODEL_ROBOT_VACUUM_5_PRO,
         MODEL_ROBOT_VACUUM_6,
         MODEL_ROBOT_VACUUM_6_MAX,
+        MODEL_ROBOT_VACUUM_6_PRO,
     ):
         family = resolve_family(model)
         assert family is not None
