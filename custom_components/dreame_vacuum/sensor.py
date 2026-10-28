@@ -37,6 +37,7 @@ from .dreame import (
 )
 from .coordinator import DreameVacuumDataUpdateCoordinator
 from .entity import DreameVacuumEntity, DreameVacuumEntityDescription, remove_entities
+from .xiaomi_controls import add_xiaomi_controls
 
 STREAM_STATUS_TO_ICON = {
     DreameVacuumStreamStatus.IDLE: "mdi:webcam",
@@ -663,6 +664,7 @@ async def async_setup_entry(
         for description in SENSORS
         if description.exists_fn(description, coordinator.device)
     )
+    add_xiaomi_controls(coordinator, async_add_entities, "sensor")
 
 
 class DreameVacuumSensorEntity(DreameVacuumEntity, SensorEntity):

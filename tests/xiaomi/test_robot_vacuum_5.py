@@ -15,7 +15,14 @@ from custom_components.dreame_vacuum.dreame.types import (
     DreameVacuumProperty,
     DreameVacuumState,
 )
-from custom_components.dreame_vacuum.xiaomi import resolve_family
+from custom_components.dreame_vacuum.xiaomi import (
+    XiaomiControlException,
+    invoke_control,
+    read_control,
+    resolve_family,
+    write_control,
+)
+from custom_components.dreame_vacuum.xiaomi.controls import XiaomiControl
 from custom_components.dreame_vacuum.xiaomi.mapping import (
     MODEL_ROBOT_VACUUM_5,
     MODEL_X20_MAX,
@@ -28,145 +35,92 @@ _TOKEN = "00" * 16
 _MAC = "00:00:00:00:00:00"
 _SPECS = Path(__file__).parent / "specs"
 _EVENT_REASON = (
-    "The integration polls properties and does not subscribe to MIoT events."
+    "needs council: completion events need a notification design; "
+    "the integration polls and does not subscribe to MIoT events."
 )
 _SERVICE_REASONS = {
-    1: "Identity and firmware come from miIO.info, not service 1.",
-    10: "Map, room, and zone support is a separate change and stays unmapped.",
-    15: "Voice-pack download is not a Dreame voice property.",
-    16: "IMU calibration is not a cleaning control.",
-    17: "AI home images have no entity.",
-    19: "Dust-bag life has no Dreame property that can stay off dock status.",
-    20: "Unnamed plugin, self-check, and lidar fields stay off the shell.",
+    1: "identity: manufacturer, model, and firmware come from miIO.info.",
+    10: "map: map, room, and zone support stays off until its own change.",
 }
+_REASON_PREFIXES = ("identity:", "map:", "no ha meaning:", "needs council:")
+_V2_ONLY_CONTROLS = {(20, 9), (20, 11)}
 _PROPERTY_REASONS = {
-    (2, 1): "Firmware is reported by miIO.info.",
-    (2, 8): "Per-job repeat count is not the lifetime cleaning counter.",
-    (2, 12): "Zone ids are map data and stay unmapped.",
-    (2, 13): "Restricted areas are map data and stay unmapped.",
-    (2, 14): "Virtual walls are map data and stay unmapped.",
-    (2, 15): "Room ids are not readable and room cleaning stays unmapped.",
-    (2, 16): "Room information is map data and stays unmapped.",
-    (2, 17): "Last-clean time is not a separate sensor without map history.",
-    (2, 18): "Base-station status is a string blob with no wash-base flag.",
-    (2, 21): "Carpet avoidance is not the Dreame carpet-recognition encoding.",
-    (2, 22): "Carpet display is map rendering and stays unmapped.",
-    (2, 24): "Common params are not readable.",
-    (2, 25): "Sleep status has no shell entity.",
-    (2, 27): "Map-complete dialog is a map prompt and stays unmapped.",
-    (2, 28): "Mop-wash enable would expose wash actions that are not mapped.",
-    (2, 29): "Mop-wash frequency needs the wash base, which stays off.",
-    (2, 30): "Wash-water output needs the wash base, which stays off.",
-    (2, 31): "Drying time needs the wash base, which stays off.",
-    (2, 34): "Auto mop dry needs the wash base, which stays off.",
-    (2, 35): "Auto water change needs the wash base, which stays off.",
-    (2, 36): "Use-detergent is not the Dreame auto-detergent encoding.",
-    (2, 38): "Remote-dialog is not a cleaning control.",
-    (2, 39): "Remote button type is not readable and remote control stays off.",
-    (2, 41): "Hot-water wash needs the wash base, which stays off.",
-    (2, 42): "User-defined sweep config is a map program and stays unmapped.",
-    (2, 43): "User-defined sweep id is a map program and stays unmapped.",
-    (2, 53): "Water-check list is a station string and stays unmapped.",
-    (2, 54): "Water-check status needs a station flag that stays off.",
-    (2, 56): "AI objects are map data and stay unmapped.",
-    (2, 57): "Furniture is map data and stays unmapped.",
-    (2, 58): "Carpet objects are map data and stay unmapped.",
-    (2, 59): "Detergent self-delivery is not the Dreame auto-detergent encoding.",
-    (2, 60): "Tankless water output uses a different enum than water volume.",
-    (2, 61): "Tankless wash frequency needs the wash base, which stays off.",
-    (2, 62): "Auto water-change install status needs the wash base.",
-    (2, 65): "Vacuum route is not readable and is map geometry.",
-    (2, 67): "Action result is a command echo, not a property the shell polls.",
-    (2, 70): "Plugin reminders have no entity.",
-    (2, 71): "Detergent reminder is not the mapped detergent-life sensor.",
-    (2, 72): "Notice text has no entity.",
-    (2, 74): "Sweep route values do not match the Dreame cleaning-route enum.",
-    (2, 75): "Obstacle strategy is not the Dreame obstacle-avoidance bool.",
-    (2, 76): "Carpet deep cleaning has no capability flag on this base.",
-    (2, 77): "Carpet discriminate is not the Dreame carpet-recognition property.",
-    (2, 78): "Sweep-carpet-first is left off so no new flag is derived.",
-    (2, 79): "Mop swing has no capability flag on this base.",
-    (2, 80): "Mop swing frequency values differ from other Xiaomi models.",
-    (2, 81): "Wash-by-time needs the wash base, which stays off.",
-    (2, 82): "Dust-arrest power levels do not match a Dreame property.",
-    (2, 83): "Worry-free mode includes values with no Dreame cleaning mode.",
-    (2, 84): "Wash-water temperature needs the wash base, which stays off.",
-    (2, 88): "Drying progress needs the wash base, which stays off.",
-    (2, 89): "Cleaning progress is read-only and the shell would write it.",
-    (2, 90): "Dry time left needs the wash base, which stays off.",
-    (2, 91): "Brush outswing has no capability flag on this base.",
-    (2, 92): "Repeat mop wash needs the wash base, which stays off.",
-    (2, 96): "Sweep-mop status duplicates the mapped status property.",
-    (2, 97): "Sewage tank status needs dock status, which stays off.",
-    (2, 98): "Station water-tank status is not the mapped mop-status bool.",
-    (2, 99): "Sill geometry is map data and stays unmapped.",
-    (2, 100): "Base-station tank status needs dock status, which stays off.",
-    (2, 101): "Host tank status needs dock status, which stays off.",
-    (2, 102): "Automation furniture is map data and stays unmapped.",
-    (3, 3): "Battery voltage has no entity.",
-    (4, 1): "Alarm is separate from the mapped volume control.",
-    (5, 2): "Current lock is a read-only echo of the mapped child lock.",
-    (11, 2): "Do-not-disturb time is one packed integer, not a start and end.",
-    (11, 3): "Current do-not-disturb is a read-only echo of the mapped switch.",
-    (18, 2): "Detergent delivery is not the Dreame auto-detergent encoding.",
-    (18, 3): "Detergent delivery level is not a Dreame property.",
+    (2, 1): "no ha meaning: firmware is already exposed from miIO.info.",
+    (2, 12): "map: zone ids.",
+    (2, 13): "map: restricted areas.",
+    (2, 14): "map: virtual walls.",
+    (2, 15): "map: room ids are not readable.",
+    (2, 16): "map: room information.",
+    (2, 22): "map: carpet display is map rendering.",
+    (2, 24): "no ha meaning: common params are neither readable nor writable.",
+    (2, 27): "map: map-complete dialog.",
+    (2, 39): "no ha meaning: button type is neither readable nor writable.",
+    (2, 42): "needs council: user-defined sweep config needs a program editor.",
+    (2, 43): "needs council: user-defined sweep id needs a program editor.",
+    (2, 53): "needs council: water-check list is an opaque string.",
+    (2, 56): "map: AI objects.",
+    (2, 57): "map: furniture.",
+    (2, 58): "map: carpet objects.",
+    (2, 65): "map: vacuum route is not readable and is map geometry.",
+    (2, 67): "no ha meaning: action result is a command echo.",
+    (2, 70): "needs council: plugin reminder text needs a text entity.",
+    (2, 99): "map: sill geometry.",
+    (2, 102): "map: automation furniture.",
+    (11, 2): "needs council: DND time is one packed integer, not a start and end.",
+    (15, 1): "needs council: target voice id encoding is not a Dreame voice property.",
+    (15, 5): "no ha meaning: voice url is neither readable nor writable.",
+    (15, 6): "no ha meaning: voice common params are neither readable nor writable.",
+    (17, 1): "no ha meaning: picture id is neither readable nor writable.",
+    (17, 2): "needs council: unnamed picture string has no spec description.",
+    (20, 1): "no ha meaning: unnamed field is neither readable nor writable.",
+    (20, 2): "no ha meaning: unnamed field is neither readable nor writable.",
+    (20, 3): "needs council: unnamed readable string.",
+    (20, 4): "needs council: self-check values are internal component codes.",
+    (20, 5): "needs council: unnamed readable string.",
+    (20, 6): "needs council: unnamed writable field has no spec description.",
+    (20, 10): "needs council: unnamed writable field has no spec description.",
+    (20, 12): "no ha meaning: unnamed field is neither readable nor writable.",
 }
 _ACTION_REASONS = {
-    (2, 3): "Stop-and-dock duplicates the mapped stop and charge actions.",
-    (2, 4): "Start-sweep duplicates start plus the cleaning-mode property.",
-    (2, 5): "Start-mop duplicates start plus the cleaning-mode property.",
-    (2, 6): "Start sweep-mop duplicates start plus the cleaning-mode property.",
-    (2, 11): "Room config takes a room-id parameter and stays unmapped.",
-    (2, 12): "Set-zone takes a zone parameter and stays unmapped.",
-    (2, 13): "Room clean config takes a room-id parameter and stays unmapped.",
-    (2, 14): "Split room is a map edit and stays unmapped.",
-    (2, 15): "Merge rooms is a map edit and stays unmapped.",
-    (2, 16): "Room sweep takes a room-id parameter and stays unmapped.",
-    (2, 17): "Build-map is a map action and stays unmapped.",
-    (2, 19): "Start mop wash needs the wash base, which stays off.",
-    (2, 20): "Start dry needs the wash base, which stays off.",
-    (2, 21): "Eject is not a Dreame cleaning action.",
-    (2, 22): "Call-clean is not a Dreame cleaning action.",
-    (2, 23): "Add schedule takes an order blob and stays unmapped.",
-    (2, 24): "Modify schedule takes an order blob and stays unmapped.",
-    (2, 25): "Delete schedule takes an order blob and stays unmapped.",
-    (2, 26): "Remote control requires a button-type parameter.",
-    (2, 27): "Try-listen is a voice preview and stays unmapped.",
-    (2, 28): "Enter remote is not a Dreame cleaning action.",
-    (2, 29): "Exit remote is not a Dreame cleaning action.",
-    (2, 30): "System info is not a cleaning action.",
-    (2, 31): "Stop mop wash needs the wash base, which stays off.",
-    (2, 32): "Stop dry needs the wash base, which stays off.",
-    (2, 33): "Continue build-map is a map action and stays unmapped.",
-    (2, 34): "Stop build-map is a map action and stays unmapped.",
-    (2, 35): "Pause build-map is a map action and stays unmapped.",
-    (2, 36): "Back-to-wash needs the wash base, which stays off.",
-    (2, 37): "Zone sweep takes a zone parameter and stays unmapped.",
-    (2, 38): "Add user sweep takes a config parameter and stays unmapped.",
-    (2, 39): "Delete user sweep takes an id parameter and stays unmapped.",
-    (2, 40): "Modify user sweep takes a config parameter and stays unmapped.",
-    (2, 42): "Start user sweep takes an id parameter and stays unmapped.",
-    (2, 43): "Hair cut is not a Dreame cleaning action.",
-    (2, 44): "Stop hair cut is not a Dreame cleaning action.",
-    (2, 45): "Water self-check needs the wash base, which stays off.",
-    (2, 46): "Cancel water self-check needs the wash base, which stays off.",
-    (2, 47): "Vacuum route takes a parameter and is map geometry.",
-    (2, 48): "Close abnormal card takes a parameter and stays unmapped.",
-    (2, 49): "Base-station cleaning needs the wash base, which stays off.",
-    (2, 50): "Sweep-before-mop duplicates start plus the cleaning-mode property.",
-    (2, 51): "Stop working duplicates the mapped stop action.",
-    (2, 52): "Skip cleaning takes a room-id parameter and stays unmapped.",
-    (2, 53): "Final cleaning takes a room-id parameter and stays unmapped.",
-    (2, 54): "Temporary room clean takes a room-id parameter and stays unmapped.",
-    (2, 55): "Temporary zone clean takes a zone parameter and stays unmapped.",
-    (2, 56): "Furniture cleaning takes a parameter and stays unmapped.",
-    (2, 57): "Empty the station tank needs dock status, which stays off.",
-    (2, 58): "Empty the host tank needs dock status, which stays off.",
-    (2, 59): "Spot cleaning is not the mapped start action.",
-    (2, 60): "AI recognize takes a parameter and stays unmapped.",
-    (2, 62): "Common-object clean takes a parameter and stays unmapped.",
-    (2, 63): "Station self-clean needs the wash base, which stays off.",
-    (2, 64): "Stop station self-clean needs the wash base, which stays off.",
+    (2, 11): "map: room config takes a room-id parameter.",
+    (2, 12): "map: set-zone takes a zone parameter.",
+    (2, 13): "map: room clean config takes a room-id parameter.",
+    (2, 14): "map: split room is a map edit.",
+    (2, 15): "map: merge rooms is a map edit.",
+    (2, 16): "map: room sweep takes a room-id parameter.",
+    (2, 17): "map: build-map stays unmapped until map support.",
+    (2, 23): "needs council: adding a schedule takes an order blob.",
+    (2, 24): "needs council: modifying a schedule takes an order blob.",
+    (2, 25): "needs council: deleting a schedule takes an order blob.",
+    (2, 26): "needs council: remote direction requires a button-type parameter.",
+    (2, 30): "no ha meaning: system info is a diagnostic fetch, not a user control.",
+    (2, 33): "map: continue build-map stays unmapped until map support.",
+    (2, 34): "map: stop build-map stays unmapped until map support.",
+    (2, 35): "map: pause build-map stays unmapped until map support.",
+    (2, 37): "map: zone sweep takes a zone parameter.",
+    (2, 38): "needs council: adding a user sweep takes a config parameter.",
+    (2, 39): "needs council: deleting a user sweep takes an id parameter.",
+    (2, 40): "needs council: modifying a user sweep takes a config parameter.",
+    (2, 42): "needs council: starting a user sweep takes an id parameter.",
+    (2, 47): "map: the vacuum route takes a parameter and is map geometry.",
+    (2, 48): "needs council: closing an abnormal card takes an opaque parameter.",
+    (2, 52): "map: skip cleaning takes a room-id parameter.",
+    (2, 53): "map: final cleaning takes a room-id parameter.",
+    (2, 54): "map: temporary room cleaning takes a room-id parameter.",
+    (2, 55): "map: temporary zone cleaning takes a zone parameter.",
+    (2, 56): "map: furniture cleaning takes a map parameter.",
+    (2, 60): "needs council: AI recognize takes an object parameter.",
+    (2, 62): "needs council: common-object clean takes an object parameter.",
+    (15, 1): "needs council: voice download takes a pack url.",
+    (15, 2): "no ha meaning: download status is already the mapped property.",
+    (17, 1): "needs council: the picture request takes an id and returns an image.",
+    (20, 1): "map: history objects stay unmapped until map support.",
+    (20, 2): "needs council: user-defined info takes an opaque parameter.",
+    (20, 3): "map: stopping a map upload stays unmapped until map support.",
+    (
+        20,
+        7,
+    ): "needs council: lidar control takes a parameter and must not enable map support.",
 }
 _STATE_AFTER_READ = {
     1: DreameVacuumState.IDLE,
@@ -204,7 +158,10 @@ pytestmark = [
 def test_both_spec_versions_are_fully_classified() -> None:
     """Each spec item is mapped or has one explicit omission reason."""
     seen: set[tuple[str, int, int]] = set()
+    counts: dict[str, tuple[int, int]] = {}
     for filename in ("ov31gl.json", "ov31gl_v1.json"):
+        mapped_count = 0
+        omitted_count = 0
         for kind, siid, iid, _spec in _items(filename):
             seen.add((kind, siid, iid))
             mapped = (
@@ -212,10 +169,18 @@ def test_both_spec_versions_are_fully_classified() -> None:
             )
             reason = _reason(kind, siid, iid)
             assert mapped != bool(reason), (filename, kind, siid, iid, reason)
+            if reason:
+                assert reason.startswith(_REASON_PREFIXES), reason
+                omitted_count += 1
             if mapped:
                 name = _mapped_addresses(kind)[(siid, iid)]
-                assert _spec_description(filename, kind, siid, iid)
+                description = _spec_description(filename, kind, siid, iid)
+                assert description or (siid, iid) in _V2_ONLY_CONTROLS
                 assert name
+                mapped_count += 1
+        counts[filename] = (mapped_count, omitted_count)
+    assert counts["ov31gl.json"] == (132, 103)
+    assert counts["ov31gl_v1.json"] == (130, 100)
     for pair, reason in {**_PROPERTY_REASONS, **_ACTION_REASONS}.items():
         kind = "property" if pair in _PROPERTY_REASONS else "action"
         assert reason
@@ -466,6 +431,104 @@ def test_every_status_wire_reaches_the_shell_state(socket_enabled: None) -> None
         _assert_traffic_is_mapped(fake)
 
 
+def test_controls_match_the_spec() -> None:
+    """Each control's options, range, and access follow the spec that defines it."""
+    family = _family()
+    current = _spec_index("ov31gl.json")
+    previous = _spec_index("ov31gl_v1.json")
+    keys = [control.key for control in family.controls]
+    assert len(keys) == len(set(keys))
+    for control in family.controls:
+        if control.property_name:
+            spec = current[("property", *_address(family, control.property_name))]
+            _assert_options(control, spec)
+            continue
+        kind = "action" if control.aiid is not None else "property"
+        pair = (
+            control.siid,
+            control.aiid if control.aiid is not None else control.piid,
+        )
+        assert (kind, pair[0], pair[1]) in current
+        _assert_control_spec(control, current[(kind, pair[0], pair[1])])
+        if pair in _V2_ONLY_CONTROLS:
+            assert (kind, pair[0], pair[1]) not in previous
+            continue
+        _assert_control_spec(control, previous[(kind, pair[0], pair[1])])
+
+
+def test_every_control_value_is_read_or_sent(socket_enabled: None) -> None:
+    """Read every spec sample and send every writable value, including 0 through 255."""
+    del socket_enabled
+    family = _family()
+    specs = _spec_index("ov31gl.json")
+    with FakeMiio(MODEL_ROBOT_VACUUM_5) as fake:
+        device = _connect()
+        try:
+            device._request_properties()
+            for control in family.controls:
+                if control.aiid is not None:
+                    spec = specs[("action", control.siid, control.aiid)]
+                    assert not spec.get("in")
+                    invoke_control(device, control)
+                    assert fake.actions[-1] == (control.siid, control.aiid)
+                    assert fake.action_inputs[-1] == []
+                    continue
+                if control.property_name:
+                    prop = DreameVacuumProperty[control.property_name]
+                    mapping = family.property_overrides[control.property_name]
+                    for value, _slug in control.options:
+                        _force_set(device, prop, value)
+                        assert fake.writes[-1] == (
+                            mapping["siid"],
+                            mapping["piid"],
+                            value,
+                        )
+                    continue
+                spec = specs[("property", control.siid, control.piid)]
+                for sample in _property_samples(spec, every=True):
+                    fake.set_value(control.siid, control.piid, sample)
+                    family.refresh_controls(device)
+                    assert read_control(device, control) == sample
+                if not control.writable:
+                    continue
+                for sample in _property_samples(spec, every=True):
+                    write_control(device, control, sample)
+                    assert fake.writes[-1] == (control.siid, control.piid, sample)
+                    assert read_control(device, control) == sample
+        finally:
+            release_device(device)
+        _assert_traffic_is_mapped(fake)
+
+
+def test_rejected_control_traffic_is_not_stored(socket_enabled: None) -> None:
+    """A refused read or write leaves the stored value unchanged."""
+    del socket_enabled
+    family = _family()
+    alarm = next(item for item in family.controls if item.key == "xiaomi_alarm")
+    button = next(item for item in family.controls if item.aiid is not None)
+    with FakeMiio(MODEL_ROBOT_VACUUM_5) as fake:
+        device = _connect()
+        try:
+            before = read_control(device, alarm)
+            writes = len(fake.writes)
+            actions = len(fake.actions)
+            device._protocol.set_property = lambda *_args, **_kwargs: [{"code": -1}]
+            with pytest.raises(XiaomiControlException):
+                write_control(device, alarm, True)
+            assert read_control(device, alarm) == before
+            device._protocol.action = lambda *_args, **_kwargs: {"code": -1}
+            with pytest.raises(XiaomiControlException):
+                invoke_control(device, button)
+            device._protocol.get_properties = lambda *_args, **_kwargs: None
+            with pytest.raises(XiaomiControlException):
+                family.refresh_controls(device)
+            assert read_control(device, alarm) == before
+            assert len(fake.writes) == writes
+            assert len(fake.actions) == actions
+        finally:
+            release_device(device)
+
+
 def _document(filename: str) -> dict[str, object]:
     return json.loads((_SPECS / filename).read_text(encoding="utf-8"))
 
@@ -511,15 +574,84 @@ def _family() -> XiaomiModel:
 
 def _mapped_addresses(kind: str) -> dict[tuple[int, int], str]:
     family = _family()
+    found: dict[tuple[int, int], str] = {}
     if kind == "property":
-        return {
-            (item["siid"], item["piid"]): name
-            for name, item in family.property_overrides.items()
-        }
-    return {
-        (item["siid"], item["aiid"]): name
-        for name, item in family.action_overrides.items()
-    }
+        for name, item in family.property_overrides.items():
+            found[(item["siid"], item["piid"])] = name
+        for control in family.controls:
+            if control.piid is None or control.siid is None:
+                continue
+            pair = (control.siid, control.piid)
+            assert pair not in found
+            found[pair] = control.key
+        return found
+    for name, item in family.action_overrides.items():
+        found[(item["siid"], item["aiid"])] = name
+    for control in family.controls:
+        if control.aiid is None or control.siid is None:
+            continue
+        pair = (control.siid, control.aiid)
+        assert pair not in found
+        found[pair] = control.key
+    return found
+
+
+def _spec_index(filename: str) -> dict[tuple[str, int, int], dict[str, object]]:
+    return {(kind, siid, iid): spec for kind, siid, iid, spec in _items(filename)}
+
+
+def _address(family: XiaomiModel, name: str) -> tuple[int, int]:
+    mapping = family.property_overrides[name]
+    return mapping["siid"], mapping["piid"]
+
+
+def _assert_control_spec(control: XiaomiControl, spec: dict[str, object]) -> None:
+    if control.aiid is not None:
+        assert not spec.get("in"), control.key
+        return
+    access = spec.get("access")
+    assert isinstance(access, list)
+    assert control.writable is ("write" in access)
+    if control.options:
+        _assert_options(control, spec)
+        return
+    if control.value_kind == "bool":
+        assert spec.get("format") == "bool"
+        return
+    if control.value_kind == "string":
+        assert spec.get("format") == "string"
+        return
+    bounds = spec.get("value-range")
+    assert bounds == [control.minimum, control.maximum, control.step]
+
+
+def _assert_options(control: XiaomiControl, spec: dict[str, object]) -> None:
+    listed = spec.get("value-list")
+    assert isinstance(listed, list)
+    values = [item["value"] for item in listed if isinstance(item, dict)]
+    assert [value for value, _slug in control.options] == values
+
+
+def _property_samples(spec: dict[str, object], *, every: bool) -> list[object]:
+    if spec.get("format") == "bool":
+        return [False, True]
+    listed = spec.get("value-list")
+    if isinstance(listed, list):
+        return [item["value"] for item in listed if isinstance(item, dict)]
+    bounds = spec.get("value-range")
+    if isinstance(bounds, list) and len(bounds) == 3:
+        start, end, step = bounds
+        assert isinstance(start, int)
+        assert isinstance(end, int)
+        assert isinstance(step, int)
+        if every and (end - start) // step <= 255:
+            return list(range(start, end + 1, step))
+        middle = start + ((end - start) // 2)
+        middle -= (middle - start) % step
+        return list(dict.fromkeys((start, middle, end)))
+    if spec.get("format") == "string":
+        return ["", "sample"]
+    return [0, 1]
 
 
 def _samples(spec: dict[str, object]) -> list[object]:

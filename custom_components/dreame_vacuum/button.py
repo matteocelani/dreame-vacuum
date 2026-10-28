@@ -23,6 +23,7 @@ from .const import DOMAIN
 
 from .coordinator import DreameVacuumDataUpdateCoordinator
 from .entity import DreameVacuumEntity, DreameVacuumEntityDescription, remove_entities
+from .xiaomi_controls import add_xiaomi_controls
 from .dreame import DreameVacuumAction, DreameVacuumProperty, EntityUnavailableException
 
 
@@ -331,6 +332,7 @@ async def async_setup_entry(
         for description in BUTTONS
         if description.exists_fn(description, coordinator.device)
     )
+    add_xiaomi_controls(coordinator, async_add_entities, "button")
 
     if coordinator.device.capability.shortcuts:
         update_buttons = partial(async_update_buttons, coordinator, {}, async_add_entities)

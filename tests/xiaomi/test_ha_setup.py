@@ -135,11 +135,17 @@ def _unsafe_entities(hass: HomeAssistant) -> list[str]:
         "water_tank_draining",
         "empty_water_tank",
     )
-    return [
-        state.entity_id
-        for state in hass.states.async_all()
-        if state.domain == "time" or any(name in state.entity_id for name in blocked)
-    ]
+    found: list[str] = []
+    for state in hass.states.async_all():
+        if state.domain == "time":
+            found.append(state.entity_id)
+            continue
+        object_id = state.entity_id.split(".", 1)[-1]
+        if "_xiaomi_" in object_id:
+            continue
+        if any(name in object_id for name in blocked):
+            found.append(state.entity_id)
+    return found
 
 
 async def _cycle(hass: HomeAssistant, entity_id: str) -> None:

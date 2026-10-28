@@ -162,8 +162,18 @@ def test_property_reads_stay_inside_the_explicit_map():
             (mapping["siid"], mapping["piid"])
             for mapping in device.property_mapping.values()
         }
+        controls = {
+            (control.siid, control.piid)
+            for control in device._property_codec.controls
+            if control.siid is not None and control.piid is not None
+        }
         assert requested
-        assert set(requested) <= allowed
-        assert (4, 1) not in requested
-        assert (5, 2) not in requested
+        assert set(requested) <= allowed | controls
         assert (7, 2) not in requested
+        if model == MODEL_ROBOT_VACUUM_5:
+            assert (4, 1) in requested
+            assert (5, 2) in requested
+        else:
+            assert controls == set()
+            assert (4, 1) not in requested
+            assert (5, 2) not in requested

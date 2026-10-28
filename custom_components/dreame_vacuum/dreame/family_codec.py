@@ -3,10 +3,29 @@
 from __future__ import annotations
 
 import logging
+from typing import Protocol, runtime_checkable
 
 from .types import DreameVacuumAction, DreameVacuumProperty
 
 _LOGGER = logging.getLogger(__name__)
+
+
+@runtime_checkable
+class _RefreshableControls(Protocol):
+    """A codec that polls its own controls after a full property refresh."""
+
+    controls: tuple[object, ...]
+
+    def refresh_controls(self, device: object) -> bool:
+        """Poll the codec's controls and report whether a value changed."""
+
+
+@runtime_checkable
+class _PollsProperties(Protocol):
+    """A device double or vacuum that can run a property poll."""
+
+    def _request_properties(self, properties: object = None) -> object:
+        """Read properties. A missing argument reads the full set."""
 
 
 def apply_family(device: object, family: object) -> None:
@@ -33,7 +52,30 @@ def apply_family(device: object, family: object) -> None:
     capability = device.capability
     if capability.loaded:
         family.apply_capabilities(capability)
+    _install_control_refresh(device, family)
     _LOGGER.info("Applied family codec for model %s", family.model)
+
+
+def _install_control_refresh(device: object, family: object) -> None:
+    """Poll model controls after a full refresh without changing other models."""
+    # Spec doubles and non-Xiaomi codecs have no control table. Address-test
+    # devices also have no property poll, so they are not wrapped.
+    if not isinstance(family, _RefreshableControls) or not family.controls:
+        return
+    if not isinstance(device, _PollsProperties):
+        return
+    device._xiaomi_values = {}
+    original = device._request_properties
+
+    def request_properties(properties: object = None) -> object:
+        changed = original(properties)
+        if properties:
+            return changed
+        if family.refresh_controls(device):
+            return True
+        return changed
+
+    device._request_properties = request_properties
 
 
 def _property_transport(device: object, family: object) -> object | None:

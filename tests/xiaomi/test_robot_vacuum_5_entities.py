@@ -137,12 +137,18 @@ async def test_home_assistant_entities_cover_every_exposed_control(
         device = hass.data[DOMAIN][entry.entry_id].device
         try:
             keys = _registry_keys(hass, entry.entry_id)
-            assert keys == _ENTITIES
             assert not any(domain == "time" for domain, _key in keys)
+            expected = set(_ENTITIES)
+            expected.update(
+                (str(control.domain), control.key) for control in family.controls
+            )
+            assert keys == expected
+            assert not any(domain == "camera" for domain, _key in keys)
             await _exercise_selects_switches_number_and_buttons(hass, fake, family)
             await _exercise_vacuum_states(hass, entry.entry_id, fake, family)
             await _exercise_sensors(hass, entry.entry_id, fake, family)
             await _exercise_binary_sensors(hass, entry.entry_id, fake, family)
+            await _exercise_controls(hass, entry.entry_id, fake, family)
         finally:
             assert await hass.config_entries.async_unload(entry.entry_id)
             await hass.async_block_till_done()
@@ -367,10 +373,14 @@ async def _show_sensors(
 async def _exercise_sensors(
     hass: HomeAssistant, entry_id: str, fake: FakeMiio, family: XiaomiModel
 ) -> None:
-    sensor_keys = {key for domain, key in _ENTITIES if domain == "sensor"}
+    sensor_keys = {
+        key for domain, key in _registry_keys(hass, entry_id) if domain == "sensor"
+    }
     assert sensor_keys == {
         name.lower() for name in {**_COUNTER_SAMPLES, **_STATUS_SAMPLES}
-    } | {"firmware_version"}
+    } | {"firmware_version"} | {
+        control.key for control in family.controls if control.domain == "sensor"
+    }
     await _show_sensors(hass, entry_id, fake, family, _COUNTER_SAMPLES)
     # Idle clears the current-job counters, so status is applied after them.
     await _show_sensors(hass, entry_id, fake, family, _STATUS_SAMPLES)
@@ -382,8 +392,14 @@ async def _exercise_sensors(
 async def _exercise_binary_sensors(
     hass: HomeAssistant, entry_id: str, fake: FakeMiio, family: XiaomiModel
 ) -> None:
-    binary_keys = {key for domain, key in _ENTITIES if domain == "binary_sensor"}
-    assert binary_keys == {"charging_state", "problem", "maintenance"}
+    binary_keys = {
+        key
+        for domain, key in _registry_keys(hass, entry_id)
+        if domain == "binary_sensor"
+    }
+    assert binary_keys == {"charging_state", "problem", "maintenance"} | {
+        control.key for control in family.controls if control.domain == "binary_sensor"
+    }
     charging = family.property_overrides["CHARGING_STATUS"]
     battery = family.property_overrides["BATTERY_LEVEL"]
     error = family.property_overrides["ERROR"]
@@ -416,13 +432,117 @@ async def _exercise_binary_sensors(
     assert _state(hass, entry_id, "binary_sensor", "maintenance") == "on"
 
 
+async def _exercise_controls(
+    hass: HomeAssistant, entry_id: str, fake: FakeMiio, family: XiaomiModel
+) -> None:
+    for control in family.controls:
+        if control.domain == "switch":
+            await _flip_switch(hass, entry_id, control.key)
+        elif control.domain == "select":
+            await _seed_select(hass, entry_id, fake, control)
+            await _select_each(hass, entry_id, control.key)
+        elif control.domain == "number":
+            await _set_number_samples(hass, entry_id, control)
+        elif control.domain == "button":
+            await hass.services.async_call(
+                "button",
+                "press",
+                {"entity_id": _entity_id(hass, entry_id, "button", control.key)},
+                blocking=True,
+            )
+            assert fake.actions[-1] == (control.siid, control.aiid)
+            assert fake.action_inputs[-1] == []
+        elif control.domain == "sensor":
+            await _show_control_sensor(hass, entry_id, fake, control)
+        elif control.domain == "binary_sensor":
+            await _show_binary_control(hass, entry_id, fake, control)
+
+
+async def _flip_switch(hass: HomeAssistant, entry_id: str, key: str) -> None:
+    entity_id = _entity_id(hass, entry_id, "switch", key)
+    await hass.services.async_call(
+        "switch", "turn_on", {"entity_id": entity_id}, blocking=True
+    )
+    assert hass.states.get(entity_id).state == "on"
+    await hass.services.async_call(
+        "switch", "turn_off", {"entity_id": entity_id}, blocking=True
+    )
+    assert hass.states.get(entity_id).state == "off"
+
+
+async def _seed_select(
+    hass: HomeAssistant, entry_id: str, fake: FakeMiio, control: object
+) -> None:
+    value = control.options[0][0]
+    if control.siid is not None:
+        fake.set_value(control.siid, control.piid, value)
+        await _refresh(hass, entry_id)
+    state = hass.states.get(_entity_id(hass, entry_id, "select", control.key))
+    assert state is not None
+    assert state.state != "unavailable"
+
+
+async def _set_number_samples(
+    hass: HomeAssistant, entry_id: str, control: object
+) -> None:
+    entity_id = _entity_id(hass, entry_id, "number", control.key)
+    middle = control.minimum + ((control.maximum - control.minimum) // 2)
+    for value in (control.minimum, middle, control.maximum):
+        await hass.services.async_call(
+            "number",
+            "set_value",
+            {"entity_id": entity_id, "value": value},
+            blocking=True,
+        )
+        assert hass.states.get(entity_id).state == str(value)
+
+
+async def _show_control_sensor(
+    hass: HomeAssistant, entry_id: str, fake: FakeMiio, control: object
+) -> None:
+    entity_id = _entity_id(hass, entry_id, "sensor", control.key)
+    if control.options:
+        samples = [(value, slug) for value, slug in control.options]
+    elif control.value_kind == "string":
+        samples = [("sample", "sample")]
+    else:
+        middle = control.minimum + ((control.maximum - control.minimum) // 2)
+        samples = [
+            (value, str(value)) for value in (control.minimum, middle, control.maximum)
+        ]
+    for wire, expected in samples:
+        fake.set_value(control.siid, control.piid, wire)
+        await _refresh(hass, entry_id)
+        assert hass.states.get(entity_id).state == expected
+
+
+async def _show_binary_control(
+    hass: HomeAssistant, entry_id: str, fake: FakeMiio, control: object
+) -> None:
+    entity_id = _entity_id(hass, entry_id, "binary_sensor", control.key)
+    for wire, expected in ((0, "off"), (1, "on"), (False, "off"), (True, "on")):
+        fake.set_value(control.siid, control.piid, wire)
+        await _refresh(hass, entry_id)
+        assert hass.states.get(entity_id).state == expected
+
+
 def _assert_traffic_is_mapped(fake: FakeMiio, family: XiaomiModel) -> None:
     properties = {
         (item["siid"], item["piid"]) for item in family.property_overrides.values()
     }
+    properties.update(
+        (control.siid, control.piid)
+        for control in family.controls
+        if control.siid is not None and control.piid is not None
+    )
     actions = {
         (item["siid"], item["aiid"]) for item in family.action_overrides.values()
     }
+    actions.update(
+        (control.siid, control.aiid)
+        for control in family.controls
+        if control.siid is not None and control.aiid is not None
+    )
     outside_writes, outside_actions, unexpected = traffic_outside_map(
         fake.writes,
         fake.actions,

@@ -269,3 +269,40 @@ def test_apply_family_replaces_flags_when_the_capability_is_already_loaded():
     assert capability.mop_pad_lifting is False
     assert capability.self_wash_base is False
     assert tuple(capability.list) == _S20_PLUS
+
+
+def test_each_extra_mapped_name_turns_on_its_flag():
+    """Names outside the three models still derive the flag the shell expects."""
+    family = resolve_family("xiaomi.vacuum.b108gl")
+    assert family is not None
+    cases = (
+        ("DND_TASK", "property", "dnd_task"),
+        ("CARPET_RECOGNITION", "property", "carpet_recognition"),
+        ("WASHBOARD_CLEANING_STATUS", "property", "station_cleaning"),
+        ("DRAINAGE_STATUS", "property", "drainage"),
+        ("OFF_PEAK_CHARGING", "property", "off_peak_charging"),
+        ("WIFI_MAP", "property", "wifi_map"),
+        ("MAP_BACKUP_STATUS", "property", "backup_map"),
+        ("MULTI_FLOOR_MAP", "property", "multi_floor_map"),
+        ("BACKUP_MAP", "action", "backup_map"),
+        ("START_WASHING", "action", "self_wash_base"),
+    )
+    for name, kind, flag in cases:
+        if kind == "property":
+            updated = replace(
+                family,
+                property_overrides={
+                    **family.property_overrides,
+                    name: {"siid": 99, "piid": 1},
+                },
+            )
+        else:
+            updated = replace(
+                family,
+                action_overrides={
+                    **family.action_overrides,
+                    name: {"siid": 99, "aiid": 1},
+                },
+            )
+        capability = _load("xiaomi.vacuum.b108gl", updated)
+        assert getattr(capability, flag) is True, name

@@ -15,6 +15,7 @@ from homeassistant.helpers.entity import async_generate_entity_id
 
 from .coordinator import DreameVacuumDataUpdateCoordinator
 from .const import DOMAIN, LOGGER
+from .xiaomi import control_keys
 from .dreame import (
     ATTR_VALUE,
     SEGMENT_TYPE_CODE_TO_NAME,
@@ -58,6 +59,12 @@ def remove_entities(hass, entry, coordinator, domain, descriptions):
                     if key == entry.translation_key:
                         found = description.exists_fn(description, coordinator.device)
                         break
+
+                if (
+                    not found
+                    and entry.translation_key in control_keys(coordinator.device, domain)
+                ):
+                    found = True
 
                 if not found:
                     registry.async_remove(entity_id)

@@ -114,6 +114,13 @@ class FakeMiio:
         values[(state["siid"], state["piid"])] = 2
         values[(charging["siid"], charging["piid"])] = 1
         values[(battery["siid"], battery["piid"])] = 90
+        for control in self._family.controls:
+            if control.siid is None or control.piid is None:
+                continue
+            if control.value_kind == "string":
+                values[(control.siid, control.piid)] = ""
+            else:
+                values.setdefault((control.siid, control.piid), 0)
         return values
 
     def _state_pair(self) -> tuple[int, int]:

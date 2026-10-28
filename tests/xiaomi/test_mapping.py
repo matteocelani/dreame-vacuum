@@ -2,17 +2,29 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+import re
+from types import SimpleNamespace
+
 from custom_components.dreame_vacuum.dreame.types import (
     DreameVacuumAction,
     DreameVacuumProperty,
     DreameVacuumState,
     DreameVacuumTaskStatus,
 )
-from custom_components.dreame_vacuum.xiaomi import resolve_family
+from custom_components.dreame_vacuum.xiaomi import (
+    control_keys,
+    controls_of,
+    resolve_family,
+)
 from custom_components.dreame_vacuum.xiaomi.mapping import (
     MODEL_ROBOT_VACUUM_5,
     MODEL_S20_PLUS,
     MODEL_X20_MAX,
+)
+from custom_components.dreame_vacuum.xiaomi.profile import (
+    STATION_ACTIONS,
+    STATION_PROPERTIES,
 )
 
 _TOKEN = "00" * 16
@@ -112,7 +124,7 @@ def test_task_status_comes_from_state_when_sweep_type_would_stay_set():
     assert family.task_status_code(None, None) == int(DreameVacuumTaskStatus.COMPLETED)
 
 
-def test_robot_vacuum_5_reuses_x20_max_addresses_and_extends_status():
+def test_robot_vacuum_5_composes_the_station_profile_and_extends_status():
     vacuum_5 = resolve_family(MODEL_ROBOT_VACUUM_5)
     x20 = resolve_family(MODEL_X20_MAX)
     assert vacuum_5 is not None
@@ -144,6 +156,52 @@ def test_robot_vacuum_5_reuses_x20_max_addresses_and_extends_status():
     assert "TOTAL_CLEANED_AREA" not in x20.property_overrides
     assert "REQUEST_MAP" not in vacuum_5.action_overrides
     assert "STATUS" not in vacuum_5.property_overrides
+    assert x20.controls == ()
+    assert resolve_family(MODEL_S20_PLUS).controls == ()
+    assert vacuum_5.controls
+    assert x20.property_overrides is not STATION_PROPERTIES
+    assert x20.property_overrides["STATE"] is not STATION_PROPERTIES["STATE"]
+    assert vacuum_5.property_overrides["STATE"] is not x20.property_overrides["STATE"]
+
+
+def test_station_address_literals_are_declared_once():
+    """X20 Max declares no addresses of its own. Robot Vacuum 5 adds four."""
+    root = Path("custom_components/dreame_vacuum/xiaomi")
+    d109 = (root / "d109gl.py").read_text(encoding="utf-8")
+    ov31 = (root / "ov31gl.py").read_text(encoding="utf-8")
+    profile = (root / "profile.py").read_text(encoding="utf-8")
+    assert "siid" not in d109
+    assert "aiid" not in d109
+    additions = re.findall(r"\{\"siid\": \d+, \"piid\": \d+\}", ov31)
+    assert additions == [
+        '{"siid": 2, "piid": 85}',
+        '{"siid": 2, "piid": 86}',
+        '{"siid": 2, "piid": 87}',
+        '{"siid": 18, "piid": 4}',
+    ]
+    assert "aiid" not in ov31
+    for mapping in STATION_PROPERTIES.values():
+        needle = f'{{"siid": {mapping["siid"]}, "piid": {mapping["piid"]}}}'
+        assert needle in profile
+        assert needle not in ov31
+        assert needle not in d109
+    for mapping in STATION_ACTIONS.values():
+        needle = f'{{"siid": {mapping["siid"]}, "aiid": {mapping["aiid"]}}}'
+        assert needle in profile
+        assert needle not in ov31
+        assert needle not in d109
+
+
+def test_controls_of_ignores_devices_without_a_xiaomi_codec():
+    assert controls_of(object()) == ()
+    assert controls_of(SimpleNamespace(_property_codec=object())) == ()
+    family = resolve_family(MODEL_ROBOT_VACUUM_5)
+    assert family is not None
+    device = SimpleNamespace(_property_codec=family)
+    assert controls_of(device) == family.controls
+    assert "xiaomi_alarm" in control_keys(device, "switch")
+    assert control_keys(device, "vacuum") == frozenset()
+    assert control_keys(SimpleNamespace(), "switch") == frozenset()
 
 
 def test_property_and_action_names_exist_on_the_dreame_enums():
