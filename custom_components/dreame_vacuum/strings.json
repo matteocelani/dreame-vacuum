@@ -1958,6 +1958,9 @@
       "xiaomi_notice": {
         "name": "Notice"
       },
+      "xiaomi_self_check_results": {
+        "name": "Self-check results"
+      },
       "xiaomi_current_voice": {
         "name": "Current voice"
       }
@@ -2283,6 +2286,9 @@
       },
       "xiaomi_liquid_dirt_detection": {
         "name": "Liquid dirt detection"
+      },
+      "xiaomi_solid_dirt_detection": {
+        "name": "Solid dirt detection"
       },
       "xiaomi_edge_swing_tail_sweep": {
         "name": "Edge swing sweep"

@@ -12,7 +12,7 @@ from custom_components.dreame_vacuum.dreame.types import (
     DreameVacuumProperty,
     DreameVacuumPropertyMapping,
 )
-from custom_components.dreame_vacuum.xiaomi import resolve_family
+from custom_components.dreame_vacuum.xiaomi import MODEL_H50_PRO, resolve_family
 from custom_components.dreame_vacuum.xiaomi.mapping import (
     MODEL_H40,
     MODEL_ROBOT_VACUUM_5,
@@ -229,6 +229,8 @@ _PROPERTY_TEXT[MODEL_H40] = _PROPERTY_TEXT[MODEL_S40]
 _ACTION_TEXT[MODEL_H40] = _ACTION_TEXT[MODEL_S40]
 _PROPERTY_TEXT[MODEL_S40C] = _PROPERTY_TEXT[MODEL_S40]
 _ACTION_TEXT[MODEL_S40C] = _ACTION_TEXT[MODEL_S40]
+_PROPERTY_TEXT[MODEL_H50_PRO] = _PROPERTY_TEXT[MODEL_S40]
+_ACTION_TEXT[MODEL_H50_PRO] = _ACTION_TEXT[MODEL_S40]
 _SPEC_FILES = {
     MODEL_S20_PLUS: ("b108gl.json",),
     MODEL_X20_MAX: ("d109gl.json", "d109gl_v1.json"),
@@ -237,6 +239,7 @@ _SPEC_FILES = {
     MODEL_S40: ("ov81gl.json",),
     MODEL_H40: ("ov51gl.json",),
     MODEL_S40C: ("e101gb.json",),
+    MODEL_H50_PRO: ("ov42gl.json", "ov42gl_v1.json"),
 }
 _ABSENT_PROPERTIES = (
     "STATUS",
@@ -317,6 +320,8 @@ def test_charging_value_three_is_not_chargeable():
         "ov81gl.json",
         "ov51gl.json",
         "e101gb.json",
+        "ov42gl.json",
+        "ov42gl_v1.json",
     ):
         assert _charging_value(name, 3) == "Not Chargeable"
         assert _charging_value(name, 1) == "Charging"

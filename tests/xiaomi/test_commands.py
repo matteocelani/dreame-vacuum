@@ -13,7 +13,7 @@ from custom_components.dreame_vacuum.dreame.types import (
     DreameVacuumProperty,
     DreameVacuumState,
 )
-from custom_components.dreame_vacuum.xiaomi import resolve_family
+from custom_components.dreame_vacuum.xiaomi import MODEL_H50_PRO, resolve_family
 from custom_components.dreame_vacuum.xiaomi.mapping import (
     MODEL_H40,
     MODEL_ROBOT_VACUUM_5,
@@ -106,6 +106,12 @@ def test_paused_start_uses_continue_sweep_and_skips_unmapped_actions():
             "pause": (2, 7),
             "charge": (3, 1),
         },
+        MODEL_H50_PRO: {
+            "resume": (2, 8),
+            "start": (2, 1),
+            "pause": (2, 7),
+            "charge": (3, 1),
+        },
         MODEL_S40C: {
             "resume": (2, 8),
             "start": (2, 1),
@@ -168,6 +174,7 @@ def test_property_reads_stay_inside_the_explicit_map():
         MODEL_S40_PRO,
         MODEL_S40,
         MODEL_H40,
+        MODEL_H50_PRO,
         MODEL_S40C,
     ):
         device, _sent = _device(model)
@@ -211,6 +218,7 @@ def test_property_reads_stay_inside_the_explicit_map():
             MODEL_S40_PRO,
             MODEL_S40,
             MODEL_H40,
+            MODEL_H50_PRO,
             MODEL_S40C,
         ):
             assert (4, 1) in requested
@@ -218,7 +226,7 @@ def test_property_reads_stay_inside_the_explicit_map():
         if model == MODEL_S40_PRO:
             assert (18, 1) not in requested
             assert (19, 1) not in requested
-        if model in (MODEL_S40, MODEL_H40, MODEL_S40C):
+        if model in (MODEL_S40, MODEL_H40, MODEL_H50_PRO, MODEL_S40C):
             assert (18, 1) in requested
             assert (19, 1) in requested
         if model not in (
@@ -226,6 +234,7 @@ def test_property_reads_stay_inside_the_explicit_map():
             MODEL_S40_PRO,
             MODEL_S40,
             MODEL_H40,
+            MODEL_H50_PRO,
             MODEL_S40C,
         ):
             assert controls == set()
