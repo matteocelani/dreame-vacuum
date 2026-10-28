@@ -26,6 +26,7 @@ from custom_components.dreame_vacuum.xiaomi import (
     MODEL_ROBOT_VACUUM_6,
     MODEL_ROBOT_VACUUM_6_MAX,
     MODEL_ROBOT_VACUUM_6_PRO,
+    MODEL_S20,
     MODEL_S60,
     MODEL_S60_PLUS,
     MODEL_X20_PRO,
@@ -267,6 +268,7 @@ def test_property_reads_stay_inside_the_explicit_map():
         MODEL_E12,
         MODEL_E10C,
         MODEL_E5,
+        MODEL_S20,
     ):
         device, _sent = _device(model)
         requested: list[tuple[int, int]] = []
@@ -382,6 +384,20 @@ def test_property_reads_stay_inside_the_explicit_map():
             assert (7, 5) in requested
             assert (12, 1) in requested
             assert (2, 9) not in requested
+        if model == MODEL_S20:
+            assert (4, 1) in requested
+            assert (4, 2) in requested
+            assert (2, 8) in requested
+            assert (2, 11) in requested
+            assert (7, 5) in requested
+            assert (7, 35) in requested
+            assert (7, 48) in requested
+            assert (7, 50) in requested
+            assert (12, 1) in requested
+            assert (2, 9) not in requested
+            assert (15, 1) not in requested
+            assert (16, 1) not in requested
+            assert (18, 1) not in requested
         if model == MODEL_E5:
             assert (2, 4) in requested
             assert (2, 5) in requested
@@ -422,6 +438,7 @@ def test_property_reads_stay_inside_the_explicit_map():
             MODEL_E12,
             MODEL_E10C,
             MODEL_E5,
+            MODEL_S20,
         ):
             assert controls == set()
             assert (4, 1) not in requested
@@ -430,7 +447,7 @@ def test_property_reads_stay_inside_the_explicit_map():
 
 def test_sweep_family_commands_stay_on_start_stop_and_charge():
     """Pause and locate are not in the spec, so they are not sent."""
-    for model in (MODEL_E10, MODEL_E12, MODEL_E10C):
+    for model in (MODEL_E10, MODEL_E12, MODEL_E10C, MODEL_S20):
         device, sent = _device(model)
         try:
             device.data[DreameVacuumProperty.STATE.value] = int(

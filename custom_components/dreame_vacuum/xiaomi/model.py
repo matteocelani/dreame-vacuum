@@ -33,6 +33,7 @@ MODEL_E10: Final = "xiaomi.vacuum.b112"
 MODEL_E12: Final = "xiaomi.vacuum.b112gl"
 MODEL_E10C: Final = "xiaomi.vacuum.b112bk"
 MODEL_E5: Final = "xiaomi.vacuum.c108"
+MODEL_S20: Final = "xiaomi.vacuum.d106gl"
 
 
 class StoredState(IntEnum):

@@ -25,6 +25,7 @@ from custom_components.dreame_vacuum.xiaomi import (
     MODEL_ROBOT_VACUUM_6,
     MODEL_ROBOT_VACUUM_6_MAX,
     MODEL_ROBOT_VACUUM_6_PRO,
+    MODEL_S20,
     MODEL_S60,
     MODEL_S60_PLUS,
     resolve_family,
@@ -325,6 +326,8 @@ _SWEEP_ACTION_TEXT = {
 _ACTION_TEXT[MODEL_E10] = _SWEEP_ACTION_TEXT
 _ACTION_TEXT[MODEL_E12] = _SWEEP_ACTION_TEXT
 _ACTION_TEXT[MODEL_E10C] = _SWEEP_ACTION_TEXT
+_PROPERTY_TEXT[MODEL_S20] = _SWEEP_PROPERTY_TEXT
+_ACTION_TEXT[MODEL_S20] = _SWEEP_ACTION_TEXT
 _PROPERTY_TEXT[MODEL_E5] = {
     "STATE": "Status",
     "ERROR": "Device Fault",
@@ -367,6 +370,7 @@ _SPEC_FILES = {
     MODEL_E12: ("b112gl.json",),
     MODEL_E10C: ("b112bk.json",),
     MODEL_E5: ("c108.json",),
+    MODEL_S20: ("d106gl.json",),
 }
 _ABSENT_PROPERTIES = (
     "STATUS",

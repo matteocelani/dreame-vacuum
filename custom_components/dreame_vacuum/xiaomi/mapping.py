@@ -10,6 +10,7 @@ from .b112bk import E10C
 from .b112gl import E12
 from .c108 import E5
 from .d102gl import X20_PRO
+from .d106gl import S20
 from .d109gl import X20_MAX
 from .e101gb import S40C
 from .model import (
@@ -27,6 +28,7 @@ from .model import (
     MODEL_ROBOT_VACUUM_6,
     MODEL_ROBOT_VACUUM_6_MAX,
     MODEL_ROBOT_VACUUM_6_PRO,
+    MODEL_S20,
     MODEL_S20_PLUS,
     MODEL_S40,
     MODEL_S40_PRO,
@@ -75,6 +77,7 @@ _FAMILIES: Final[dict[str, XiaomiModel]] = {
     MODEL_E12: E12,
     MODEL_E10C: E10C,
     MODEL_E5: E5,
+    MODEL_S20: S20,
 }
 
 

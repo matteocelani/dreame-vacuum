@@ -961,22 +961,29 @@
         "state": {
           "sweep": "Sweep",
           "sweep_and_mop": "Sweep and mop",
-          "mop": "Mop"
+          "mop": "Mop",
+          "sweep_then_mop": "Sweep then mop"
         }
       },
       "xiaomi_sweep_type": {
         "name": "Sweep type",
         "state": {
           "global": "Whole home",
+          "mop": "Mop",
           "edge": "Edges",
+          "area": "Area",
           "point": "Spot",
-          "remote": "Remote"
+          "remote": "Remote",
+          "explore": "Explore",
+          "room": "Room",
+          "floor": "Floor"
         }
       },
       "xiaomi_repeat_clean": {
         "name": "Repeat clean",
         "state": {
-          "close": "Off"
+          "close": "Off",
+          "open": "On"
         }
       },
       "xiaomi_suction": {
@@ -986,7 +993,70 @@
           "one": "One",
           "two": "Two",
           "three": "Three",
-          "forth": "Four"
+          "forth": "Four",
+          "silent": "Silent",
+          "standard": "Standard",
+          "medium": "Medium",
+          "turbo": "Turbo"
+        }
+      },
+      "xiaomi_suction_level": {
+        "name": "Suction level",
+        "state": {
+          "silent": "Silent",
+          "basic": "Standard",
+          "strong": "Strong",
+          "full_speed": "Full speed"
+        }
+      },
+      "xiaomi_dirt_recognition": {
+        "name": "Dirt recognition",
+        "state": {
+          "close": "Off",
+          "open": "On"
+        }
+      },
+      "xiaomi_pet_recognition": {
+        "name": "Pet recognition",
+        "state": {
+          "close": "Off",
+          "open": "On"
+        }
+      },
+      "xiaomi_ai_recognition": {
+        "name": "AI recognition",
+        "state": {
+          "close": "Off",
+          "open": "On"
+        }
+      },
+      "xiaomi_carpet_boost": {
+        "name": "Carpet boost",
+        "state": {
+          "close": "Off",
+          "open": "On"
+        }
+      },
+      "xiaomi_tank_shake": {
+        "name": "Tank shake",
+        "state": {
+          "close": "Off",
+          "open": "On"
+        }
+      },
+      "xiaomi_electrolysis": {
+        "name": "Electrolysis",
+        "state": {
+          "close": "Off",
+          "open": "On"
+        }
+      },
+      "xiaomi_mop_shake": {
+        "name": "Mop shake",
+        "state": {
+          "low": "Low",
+          "mid": "Medium",
+          "high": "High"
         }
       },
       "xiaomi_basic_suction": {
@@ -1003,13 +1073,18 @@
           "close": "Off",
           "one": "One",
           "two": "Two",
-          "three": "Three"
+          "three": "Three",
+          "low": "Low",
+          "mid": "Medium",
+          "high": "High"
         }
       },
       "xiaomi_mop_route": {
         "name": "Mop route",
         "state": {
-          "bowtype": "Bow"
+          "bowtype": "Bow",
+          "s_shape": "S-shape",
+          "y_shape": "Y-shape"
         }
       }
     },
