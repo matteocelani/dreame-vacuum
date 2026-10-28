@@ -19,6 +19,7 @@ from custom_components.dreame_vacuum.xiaomi.mapping import (
     MODEL_S20_PLUS,
     MODEL_S40,
     MODEL_S40_PRO,
+    MODEL_S40C,
     MODEL_X20_MAX,
 )
 
@@ -226,6 +227,8 @@ _PROPERTY_TEXT[MODEL_S40] = _PROPERTY_TEXT[MODEL_ROBOT_VACUUM_5]
 _ACTION_TEXT[MODEL_S40] = _ACTION_TEXT[MODEL_ROBOT_VACUUM_5]
 _PROPERTY_TEXT[MODEL_H40] = _PROPERTY_TEXT[MODEL_S40]
 _ACTION_TEXT[MODEL_H40] = _ACTION_TEXT[MODEL_S40]
+_PROPERTY_TEXT[MODEL_S40C] = _PROPERTY_TEXT[MODEL_S40]
+_ACTION_TEXT[MODEL_S40C] = _ACTION_TEXT[MODEL_S40]
 _SPEC_FILES = {
     MODEL_S20_PLUS: ("b108gl.json",),
     MODEL_X20_MAX: ("d109gl.json", "d109gl_v1.json"),
@@ -233,6 +236,7 @@ _SPEC_FILES = {
     MODEL_S40_PRO: ("ov71gl.json",),
     MODEL_S40: ("ov81gl.json",),
     MODEL_H40: ("ov51gl.json",),
+    MODEL_S40C: ("e101gb.json",),
 }
 _ABSENT_PROPERTIES = (
     "STATUS",
@@ -312,6 +316,7 @@ def test_charging_value_three_is_not_chargeable():
         "ov71gl.json",
         "ov81gl.json",
         "ov51gl.json",
+        "e101gb.json",
     ):
         assert _charging_value(name, 3) == "Not Chargeable"
         assert _charging_value(name, 1) == "Charging"

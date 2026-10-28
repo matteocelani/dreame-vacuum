@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Collection, Mapping
+from dataclasses import replace
 from enum import IntEnum
 from typing import Final
 
@@ -149,15 +150,36 @@ def compose_controls(
     base: tuple[XiaomiControl, ...],
     additions: tuple[XiaomiControl, ...] = (),
     omitted: Collection[str] | None = None,
+    replaced: Mapping[str, XiaomiControl] | None = None,
 ) -> tuple[XiaomiControl, ...]:
-    """Copy a shared control list, drop omitted keys, and append additions."""
+    """Copy a control list, drop keys, swap replacements, and append additions."""
     skipped = set(omitted) if omitted else set()
+    swaps = dict(replaced) if replaced else {}
+    overlap = skipped & set(swaps)
+    if overlap:
+        raise KeyError(next(iter(overlap)))
     present = {control.key for control in base}
-    for name in skipped:
+    for name in skipped | set(swaps):
         if name not in present:
             raise KeyError(name)
-    kept = tuple(control for control in base if control.key not in skipped)
+    kept = tuple(
+        swaps.get(control.key, control)
+        for control in base
+        if control.key not in skipped
+    )
     return kept + additions
+
+
+def control_with_options(
+    controls: tuple[XiaomiControl, ...],
+    key: str,
+    options: tuple[tuple[int, str], ...],
+) -> XiaomiControl:
+    """Copy one shared control with the value-list a single model publishes."""
+    for control in controls:
+        if control.key == key:
+            return replace(control, options=options)
+    raise KeyError(key)
 
 
 STATION_PROPERTIES: Final[dict[str, dict[str, int]]] = {

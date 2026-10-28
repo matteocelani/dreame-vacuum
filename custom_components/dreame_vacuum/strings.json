@@ -867,6 +867,7 @@
         "state": {
           "silent_clean": "Silent clean",
           "deep_clean": "Deep clean",
+          "deep_clean_2": "Deep clean 2",
           "general": "General",
           "butler": "Butler",
           "pet": "Pet"

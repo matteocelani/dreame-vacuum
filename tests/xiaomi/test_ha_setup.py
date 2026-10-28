@@ -16,6 +16,7 @@ from custom_components.dreame_vacuum.xiaomi.mapping import (
     MODEL_S20_PLUS,
     MODEL_S40,
     MODEL_S40_PRO,
+    MODEL_S40C,
     MODEL_X20_MAX,
 )
 import pytest
@@ -54,6 +55,7 @@ async def test_setup_creates_vacuum_and_safe_commands_for_both_models(
         (MODEL_S40_PRO, "S40 Pro Sim"),
         (MODEL_S40, "S40 Sim"),
         (MODEL_H40, "H40 Sim"),
+        (MODEL_S40C, "S40C Sim"),
     ):
         family = resolve_family(model)
         assert family is not None

@@ -6,12 +6,14 @@ from typing import Final
 
 from .b108gl import S20_PLUS
 from .d109gl import X20_MAX
+from .e101gb import S40C
 from .model import (
     MODEL_H40,
     MODEL_ROBOT_VACUUM_5,
     MODEL_S20_PLUS,
     MODEL_S40,
     MODEL_S40_PRO,
+    MODEL_S40C,
     MODEL_X20_MAX,
     XiaomiModel,
 )
@@ -26,6 +28,7 @@ _FAMILIES: Final[dict[str, XiaomiModel]] = {
     MODEL_ROBOT_VACUUM_5: ROBOT_VACUUM_5,
     MODEL_S40: S40,
     MODEL_S40_PRO: S40_PRO,
+    MODEL_S40C: S40C,
     MODEL_H40: H40,
 }
 
