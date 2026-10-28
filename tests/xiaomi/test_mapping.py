@@ -12,6 +12,7 @@ from custom_components.dreame_vacuum.dreame.types import (
     DreameVacuumTaskStatus,
 )
 from custom_components.dreame_vacuum.xiaomi import (
+    MODEL_H50,
     MODEL_H50_PRO,
     MODEL_ROBOT_VACUUM_5_PRO,
     control_keys,
@@ -33,12 +34,15 @@ from custom_components.dreame_vacuum.xiaomi.profile import (
     EXTENDED_STATION_STATES,
     EXTENDED_STATION_TASKS,
     HAIR_CUTTING_CONTROLS,
+    LIDAR_HARDWARE_CONTROLS,
     S40_CLASS_CONTROLS,
     S40_CLASS_OMITTED_CONTROLS,
+    SELF_CHECK_RESULTS,
     SOLID_DIRT_DETECTION,
     STATION_ACTIONS,
     STATION_PROPERTIES,
     STATION_STATISTICS_PROPERTIES,
+    STREAM_CONTROLS,
     compose_addresses,
     compose_controls,
     control_with_options,
@@ -359,15 +363,7 @@ def test_robot_vacuum_5_pro_reuses_the_station_profile_and_adds_stream() -> None
     assert pro.task_by_wire is not h50.task_by_wire
     shared = {control.key: control for control in EXTENDED_STATION_CONTROLS}
     added = {control.key: control for control in S40_CLASS_CONTROLS}
-    stream = {
-        "xiaomi_find_pet",
-        "xiaomi_flash_light",
-        "xiaomi_pet_snaps",
-        "xiaomi_stream_enabled",
-        "xiaomi_stream_physical_lock",
-        "xiaomi_stream_visible_to_shared_users",
-        "xiaomi_video_recording_warnings",
-    }
+    stream = {control.key: control for control in STREAM_CONTROLS}
     for control in pro.controls:
         if control.key == "xiaomi_worry_free_mode":
             assert control is not shared[control.key]
@@ -381,13 +377,13 @@ def test_robot_vacuum_5_pro_reuses_the_station_profile_and_adds_stream() -> None
         elif control.key == "xiaomi_solid_dirt_detection":
             assert control is SOLID_DIRT_DETECTION
         elif control.key in stream:
-            assert control.siid == 21
+            assert control is stream[control.key]
         elif control.key in shared:
             assert control is shared[control.key]
         else:
             assert control is added[control.key]
     present = {control.key for control in pro.controls}
-    assert stream <= present
+    assert set(stream) <= present
     assert "xiaomi_self_check_results" not in present
     assert "xiaomi_laser_position" in present
     assert "xiaomi_obstacle_crossing" in present
@@ -420,13 +416,68 @@ def test_h50_pro_reuses_the_s40_map_and_restores_published_controls() -> None:
         elif control.key == "xiaomi_solid_dirt_detection":
             assert control is SOLID_DIRT_DETECTION
         else:
-            assert control.key == "xiaomi_self_check_results"
+            assert control is SELF_CHECK_RESULTS
     omitted = set(shared) - {control.key for control in h50.controls}
-    assert omitted == {"xiaomi_laser_position", "xiaomi_obstacle_crossing"}
+    assert omitted == set(LIDAR_HARDWARE_CONTROLS)
     restored = set(S40_CLASS_OMITTED_CONTROLS) - omitted
     assert {control.key for control in h50.controls} == (
         {control.key for control in s40.controls} | restored | extra
     )
+
+
+def test_h50_reuses_the_station_profile_and_adds_stream_and_self_check() -> None:
+    """Property and action maps stay shared. Drying time is the value-list diff."""
+    h50 = resolve_family(MODEL_H50)
+    pro = resolve_family(MODEL_ROBOT_VACUUM_5_PRO)
+    h50_pro = resolve_family(MODEL_H50_PRO)
+    assert h50 is not None
+    assert pro is not None
+    assert h50_pro is not None
+    assert h50.property_overrides == pro.property_overrides
+    assert h50.property_overrides is not pro.property_overrides
+    assert h50.action_overrides == pro.action_overrides
+    assert h50.action_overrides is not pro.action_overrides
+    assert h50.state_by_wire == pro.state_by_wire
+    assert h50.state_by_wire is not pro.state_by_wire
+    assert h50.task_by_wire == pro.task_by_wire
+    assert h50.task_by_wire is not pro.task_by_wire
+    shared = {control.key: control for control in EXTENDED_STATION_CONTROLS}
+    added = {control.key: control for control in S40_CLASS_CONTROLS}
+    stream = {control.key: control for control in STREAM_CONTROLS}
+    for control in h50.controls:
+        if control.key == "xiaomi_drying_time":
+            assert control is not shared[control.key]
+            assert [slug for _value, slug in control.options] == [
+                "hours_2",
+                "hours_3",
+                "hours_4",
+                "hours_5",
+                "hours_6",
+                "hours_7",
+                "hours_8",
+                "hours_9",
+                "hours_10",
+                "hours_11",
+                "hours_12",
+            ]
+        elif control.key == "xiaomi_solid_dirt_detection":
+            assert control is SOLID_DIRT_DETECTION
+        elif control.key == "xiaomi_self_check_results":
+            assert control is SELF_CHECK_RESULTS
+        elif control.key in stream:
+            assert control is stream[control.key]
+        elif control.key in shared:
+            assert control is shared[control.key]
+        else:
+            assert control is added[control.key]
+    present = {control.key for control in h50.controls}
+    assert set(stream) <= present
+    assert LIDAR_HARDWARE_CONTROLS.isdisjoint(present)
+    pro_keys = {control.key for control in pro.controls}
+    h50_pro_keys = {control.key for control in h50_pro.controls}
+    assert pro_keys - present == set(LIDAR_HARDWARE_CONTROLS)
+    assert present - pro_keys == {"xiaomi_self_check_results"}
+    assert present - h50_pro_keys == set(stream)
 
 
 def test_h50_pro_publishes_the_s40_omissions_it_maps() -> None:
@@ -465,6 +516,7 @@ def test_station_address_literals_are_declared_once():
         "ov21gl.py",
         "ov31gl.py",
         "ov42gl.py",
+        "ov43gb.py",
         "ov51gl.py",
         "ov71gl.py",
         "ov81gl.py",
@@ -506,6 +558,7 @@ def test_property_and_action_names_exist_on_the_dreame_enums():
         MODEL_S40_PRO,
         MODEL_S40,
         MODEL_H40,
+        MODEL_H50,
         MODEL_H50_PRO,
         MODEL_S40C,
         MODEL_ROBOT_VACUUM_5_PRO,

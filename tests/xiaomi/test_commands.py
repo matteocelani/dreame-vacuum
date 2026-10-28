@@ -14,6 +14,7 @@ from custom_components.dreame_vacuum.dreame.types import (
     DreameVacuumState,
 )
 from custom_components.dreame_vacuum.xiaomi import (
+    MODEL_H50,
     MODEL_H50_PRO,
     MODEL_ROBOT_VACUUM_5_PRO,
     resolve_family,
@@ -116,6 +117,12 @@ def test_paused_start_uses_continue_sweep_and_skips_unmapped_actions():
             "pause": (2, 7),
             "charge": (3, 1),
         },
+        MODEL_H50: {
+            "resume": (2, 8),
+            "start": (2, 1),
+            "pause": (2, 7),
+            "charge": (3, 1),
+        },
         MODEL_S40C: {
             "resume": (2, 8),
             "start": (2, 1),
@@ -184,6 +191,7 @@ def test_property_reads_stay_inside_the_explicit_map():
         MODEL_S40_PRO,
         MODEL_S40,
         MODEL_H40,
+        MODEL_H50,
         MODEL_H50_PRO,
         MODEL_S40C,
         MODEL_ROBOT_VACUUM_5_PRO,
@@ -229,6 +237,7 @@ def test_property_reads_stay_inside_the_explicit_map():
             MODEL_S40_PRO,
             MODEL_S40,
             MODEL_H40,
+            MODEL_H50,
             MODEL_H50_PRO,
             MODEL_S40C,
             MODEL_ROBOT_VACUUM_5_PRO,
@@ -241,6 +250,7 @@ def test_property_reads_stay_inside_the_explicit_map():
         if model in (
             MODEL_S40,
             MODEL_H40,
+            MODEL_H50,
             MODEL_H50_PRO,
             MODEL_S40C,
             MODEL_ROBOT_VACUUM_5_PRO,
@@ -252,6 +262,7 @@ def test_property_reads_stay_inside_the_explicit_map():
             MODEL_S40_PRO,
             MODEL_S40,
             MODEL_H40,
+            MODEL_H50,
             MODEL_H50_PRO,
             MODEL_S40C,
             MODEL_ROBOT_VACUUM_5_PRO,

@@ -4,14 +4,15 @@ from __future__ import annotations
 
 from typing import Final
 
-from .controls import text_sensor
 from .model import MODEL_H50_PRO, XiaomiModel
 from .profile import (
     DETERGENT_TIME_PROPERTIES,
     EXTENDED_STATION_CONTROLS,
     EXTENDED_STATION_STATES,
     EXTENDED_STATION_TASKS,
+    LIDAR_HARDWARE_CONTROLS,
     S40_CLASS_CONTROLS,
+    SELF_CHECK_RESULTS,
     SOLID_DIRT_DETECTION,
     STATION_ACTIONS,
     STATION_PROPERTIES,
@@ -21,25 +22,9 @@ from .profile import (
     compose_controls,
 )
 
-_SELF_CHECK_SERVICE: Final = 22
-_SELF_CHECK_RESULTS_PROPERTY: Final = 2
-
-# Published by this spec and absent from the S40-class spec.
 _ADDED_CONTROLS: Final = (
     SOLID_DIRT_DETECTION,
-    text_sensor(
-        "xiaomi_self_check_results",
-        _SELF_CHECK_SERVICE,
-        _SELF_CHECK_RESULTS_PROPERTY,
-    ),
-)
-
-# Laser position and obstacle crossing are not in this spec.
-_OMITTED_CONTROLS: Final = frozenset(
-    {
-        "xiaomi_laser_position",
-        "xiaomi_obstacle_crossing",
-    }
+    SELF_CHECK_RESULTS,
 )
 
 H50_PRO: Final = XiaomiModel(
@@ -54,6 +39,6 @@ H50_PRO: Final = XiaomiModel(
     controls=compose_controls(
         EXTENDED_STATION_CONTROLS,
         S40_CLASS_CONTROLS + _ADDED_CONTROLS,
-        omitted=_OMITTED_CONTROLS,
+        omitted=LIDAR_HARDWARE_CONTROLS,
     ),
 )

@@ -657,8 +657,70 @@ S40_CLASS_CONTROLS: Final[tuple[XiaomiControl, ...]] = (
     *_S40_CLASS_ONLY_CONTROLS,
 )
 
-# H50 Pro and Robot Vacuum 5 Pro both publish this. The S40 spec does not.
+# H50, H50 Pro, and Robot Vacuum 5 Pro publish this. The S40 spec does not.
 SOLID_DIRT_DETECTION: Final = boolean_switch("xiaomi_solid_dirt_detection", 2, 52)
+
+# Robot Vacuum 5 Pro publishes these. H50 and H50 Pro leave them unmapped.
+LIDAR_HARDWARE_CONTROLS: Final[frozenset[str]] = frozenset(
+    {
+        "xiaomi_laser_position",
+        "xiaomi_obstacle_crossing",
+    }
+)
+
+_STREAM_SERVICE: Final = 21
+_FLASH_LIGHT_PROPERTY: Final = 2
+_PET_SNAPS_PROPERTY: Final = 3
+_VIDEO_WARNING_PROPERTY: Final = 4
+_SHARED_USERS_PROPERTY: Final = 5
+_STREAM_ENABLED_PROPERTY: Final = 6
+_STREAM_LOCK_PROPERTY: Final = 8
+_FIND_PET_ACTION: Final = 3
+
+# Robot Vacuum 5 Pro and H50 publish camera cruise and pet finding.
+STREAM_CONTROLS: Final[tuple[XiaomiControl, ...]] = (
+    enum_select(
+        "xiaomi_flash_light",
+        _STREAM_SERVICE,
+        _FLASH_LIGHT_PROPERTY,
+        (
+            (0, "auto"),
+            (1, "open"),
+            (2, "close"),
+        ),
+    ),
+    boolean_switch("xiaomi_pet_snaps", _STREAM_SERVICE, _PET_SNAPS_PROPERTY),
+    enum_select(
+        "xiaomi_video_recording_warnings",
+        _STREAM_SERVICE,
+        _VIDEO_WARNING_PROPERTY,
+        (
+            (0, "voice"),
+            (1, "light"),
+            (2, "strong_reminder"),
+        ),
+    ),
+    boolean_switch(
+        "xiaomi_stream_visible_to_shared_users",
+        _STREAM_SERVICE,
+        _SHARED_USERS_PROPERTY,
+    ),
+    boolean_switch("xiaomi_stream_enabled", _STREAM_SERVICE, _STREAM_ENABLED_PROPERTY),
+    binary_reading(
+        "xiaomi_stream_physical_lock", _STREAM_SERVICE, _STREAM_LOCK_PROPERTY
+    ),
+    action_button("xiaomi_find_pet", _STREAM_SERVICE, _FIND_PET_ACTION),
+)
+
+_SELF_CHECK_SERVICE: Final = 22
+_SELF_CHECK_RESULTS_PROPERTY: Final = 2
+
+# H50 Pro and H50 publish this readable string in spec version 2.
+SELF_CHECK_RESULTS: Final = text_sensor(
+    "xiaomi_self_check_results",
+    _SELF_CHECK_SERVICE,
+    _SELF_CHECK_RESULTS_PROPERTY,
+)
 
 # Extended-station controls whose addresses the S40-class spec does not publish.
 S40_CLASS_OMITTED_CONTROLS: Final[frozenset[str]] = frozenset(

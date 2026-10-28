@@ -13,6 +13,7 @@ from custom_components.dreame_vacuum.dreame.types import (
     DreameVacuumPropertyMapping,
 )
 from custom_components.dreame_vacuum.xiaomi import (
+    MODEL_H50,
     MODEL_H50_PRO,
     MODEL_ROBOT_VACUUM_5_PRO,
     resolve_family,
@@ -235,6 +236,8 @@ _PROPERTY_TEXT[MODEL_S40C] = _PROPERTY_TEXT[MODEL_S40]
 _ACTION_TEXT[MODEL_S40C] = _ACTION_TEXT[MODEL_S40]
 _PROPERTY_TEXT[MODEL_H50_PRO] = _PROPERTY_TEXT[MODEL_S40]
 _ACTION_TEXT[MODEL_H50_PRO] = _ACTION_TEXT[MODEL_S40]
+_PROPERTY_TEXT[MODEL_H50] = _PROPERTY_TEXT[MODEL_S40]
+_ACTION_TEXT[MODEL_H50] = _ACTION_TEXT[MODEL_S40]
 _PROPERTY_TEXT[MODEL_ROBOT_VACUUM_5_PRO] = _PROPERTY_TEXT[MODEL_S40]
 _ACTION_TEXT[MODEL_ROBOT_VACUUM_5_PRO] = _ACTION_TEXT[MODEL_S40]
 _SPEC_FILES = {
@@ -246,6 +249,7 @@ _SPEC_FILES = {
     MODEL_H40: ("ov51gl.json",),
     MODEL_S40C: ("e101gb.json",),
     MODEL_H50_PRO: ("ov42gl.json", "ov42gl_v1.json"),
+    MODEL_H50: ("ov43gb.json", "ov43gb_v1.json"),
     MODEL_ROBOT_VACUUM_5_PRO: ("ov21gl.json", "ov21gl_v1.json"),
 }
 _ABSENT_PROPERTIES = (
@@ -329,6 +333,8 @@ def test_charging_value_three_is_not_chargeable():
         "e101gb.json",
         "ov42gl.json",
         "ov42gl_v1.json",
+        "ov43gb.json",
+        "ov43gb_v1.json",
         "ov21gl.json",
         "ov21gl_v1.json",
     ):
