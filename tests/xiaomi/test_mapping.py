@@ -256,7 +256,7 @@ def test_s40_reuses_the_vacuum_5_map_and_the_s40_class_controls():
     assert {control.key for control in s40.controls} >= set(added)
 
 
-def test_h40_reuses_the_s40_map_and_omits_detergent_reminder():
+def test_h40_reuses_the_s40_map_and_omits_detergent_reminder() -> None:
     h40 = resolve_family(MODEL_H40)
     s40 = resolve_family(MODEL_S40)
     assert h40 is not None

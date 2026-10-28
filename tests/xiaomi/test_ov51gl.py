@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Final
 
 from custom_components.dreame_vacuum.dreame.device import DreameVacuumDevice
 from custom_components.dreame_vacuum.dreame.exceptions import (
@@ -36,19 +37,19 @@ from custom_components.dreame_vacuum.xiaomi.profile import (
 import pytest
 from tests.xiaomi.helpers import FakeMiio, release_device, traffic_outside_map
 
-_TOKEN = "00" * 16
-_MAC = "00:00:00:00:00:00"
-_SPECS = Path(__file__).parent / "specs"
-_EVENT_REASON = (
+_TOKEN: Final = "00" * 16
+_MAC: Final = "00:00:00:00:00:00"
+_SPECS: Final = Path(__file__).parent / "specs"
+_EVENT_REASON: Final = (
     "needs council: completion events need a notification design; "
     "the integration polls and does not subscribe to MIoT events."
 )
-_SERVICE_REASONS = {
+_SERVICE_REASONS: Final = {
     1: "identity: manufacturer, model, and firmware come from miIO.info.",
     10: "map: map, room, and zone support stays off until its own change.",
 }
-_REASON_PREFIXES = ("identity:", "map:", "no ha meaning:", "needs council:")
-_PROPERTY_REASONS = {
+_REASON_PREFIXES: Final = ("identity:", "map:", "no ha meaning:", "needs council:")
+_PROPERTY_REASONS: Final = {
     (2, 1): "no ha meaning: firmware is already exposed from miIO.info.",
     (2, 12): "map: zone ids.",
     (2, 13): "map: restricted areas.",
@@ -80,7 +81,7 @@ _PROPERTY_REASONS = {
     (17, 1): "no ha meaning: unnamed field is neither readable nor writable.",
     (17, 2): "needs council: unnamed readable string.",
 }
-_ACTION_REASONS = {
+_ACTION_REASONS: Final = {
     (2, 10): "map: zone config takes a zone-id parameter.",
     (2, 11): "map: room config takes a room-id parameter.",
     (2, 12): "map: set-zone takes a zone parameter.",
@@ -121,7 +122,7 @@ _ACTION_REASONS = {
     (2, 61): "map: AI picture objects stay unmapped until map support.",
     (17, 1): "map: AI pictures stay unmapped until map support.",
 }
-_STATE_AFTER_READ = {
+_STATE_AFTER_READ: Final = {
     1: DreameVacuumState.IDLE,
     2: DreameVacuumState.CHARGING,
     3: DreameVacuumState.CHARGING,

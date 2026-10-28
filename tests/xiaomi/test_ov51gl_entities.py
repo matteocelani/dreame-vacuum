@@ -15,6 +15,7 @@ from custom_components.dreame_vacuum.const import (
     DOMAIN,
 )
 from custom_components.dreame_vacuum.xiaomi import resolve_family
+from custom_components.dreame_vacuum.xiaomi.controls import XiaomiControl
 from custom_components.dreame_vacuum.xiaomi.mapping import (
     MODEL_H40,
     XiaomiModel,
@@ -471,7 +472,7 @@ async def _flip_switch(hass: HomeAssistant, entry_id: str, key: str) -> None:
 
 
 async def _seed_select(
-    hass: HomeAssistant, entry_id: str, fake: FakeMiio, control: object
+    hass: HomeAssistant, entry_id: str, fake: FakeMiio, control: XiaomiControl
 ) -> None:
     value = control.options[0][0]
     if control.siid is not None:
@@ -483,7 +484,7 @@ async def _seed_select(
 
 
 async def _set_number_samples(
-    hass: HomeAssistant, entry_id: str, control: object
+    hass: HomeAssistant, entry_id: str, control: XiaomiControl
 ) -> None:
     entity_id = _entity_id(hass, entry_id, "number", control.key)
     middle = control.minimum + ((control.maximum - control.minimum) // 2)
@@ -498,7 +499,7 @@ async def _set_number_samples(
 
 
 async def _show_control_sensor(
-    hass: HomeAssistant, entry_id: str, fake: FakeMiio, control: object
+    hass: HomeAssistant, entry_id: str, fake: FakeMiio, control: XiaomiControl
 ) -> None:
     entity_id = _entity_id(hass, entry_id, "sensor", control.key)
     if control.options:
@@ -517,7 +518,7 @@ async def _show_control_sensor(
 
 
 async def _show_binary_control(
-    hass: HomeAssistant, entry_id: str, fake: FakeMiio, control: object
+    hass: HomeAssistant, entry_id: str, fake: FakeMiio, control: XiaomiControl
 ) -> None:
     entity_id = _entity_id(hass, entry_id, "binary_sensor", control.key)
     for wire, expected in ((0, "off"), (1, "on"), (False, "off"), (True, "on")):
