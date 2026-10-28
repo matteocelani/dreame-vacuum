@@ -12,6 +12,7 @@ from .exceptions import XiaomiTransportException
 from .transport import MiioPropertyTransport
 
 MODEL_S20_PLUS: Final = "xiaomi.vacuum.b108gl"
+MODEL_X20: Final = "xiaomi.vacuum.c101eu"
 MODEL_X20_MAX: Final = "xiaomi.vacuum.d109gl"
 MODEL_X20_PRO: Final = "xiaomi.vacuum.d102gl"
 MODEL_ROBOT_VACUUM_5: Final = "xiaomi.vacuum.ov31gl"

@@ -24,6 +24,7 @@ from custom_components.dreame_vacuum.xiaomi import (
     MODEL_S20,
     MODEL_S60,
     MODEL_S60_PLUS,
+    MODEL_X20,
     MODEL_X20_PRO,
     resolve_family,
 )
@@ -116,7 +117,7 @@ def test_loopback_device_start_pause_resume_and_dock_send_only_mapped_actions(
 def test_sweep_family_starts_and_returns_without_pause(socket_enabled: None) -> None:
     """E10 has no pause action, so a pause press is not sent."""
     del socket_enabled
-    for model in (MODEL_E10, MODEL_E12, MODEL_E10C, MODEL_S20):
+    for model in (MODEL_E10, MODEL_E12, MODEL_E10C, MODEL_S20, MODEL_X20):
         family = resolve_family(model)
         assert family is not None
         actions = family.action_overrides
