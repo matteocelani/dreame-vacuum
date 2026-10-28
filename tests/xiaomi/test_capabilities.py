@@ -185,6 +185,7 @@ def test_catalog_row_stays_until_the_xiaomi_codec_is_installed():
     for model in (
         "xiaomi.vacuum.b108gl",
         "xiaomi.vacuum.d109gl",
+        "xiaomi.vacuum.d102gl",
         "xiaomi.vacuum.ov31gl",
         "xiaomi.vacuum.ov71gl",
         "xiaomi.vacuum.ov81gl",
@@ -206,6 +207,7 @@ def test_catalog_row_stays_until_the_xiaomi_codec_is_installed():
 def test_s20_plus_and_x20_max_use_the_xiaomi_base():
     s20 = _load("xiaomi.vacuum.b108gl", resolve_family("xiaomi.vacuum.b108gl"))
     x20 = _load("xiaomi.vacuum.d109gl", resolve_family("xiaomi.vacuum.d109gl"))
+    x20_pro = _load("xiaomi.vacuum.d102gl", resolve_family("xiaomi.vacuum.d102gl"))
     vacuum_5 = _load("xiaomi.vacuum.ov31gl", resolve_family("xiaomi.vacuum.ov31gl"))
     s40_pro = _load("xiaomi.vacuum.ov71gl", resolve_family("xiaomi.vacuum.ov71gl"))
     s40 = _load("xiaomi.vacuum.ov81gl", resolve_family("xiaomi.vacuum.ov81gl"))
@@ -219,6 +221,7 @@ def test_s20_plus_and_x20_max_use_the_xiaomi_base():
     vacuum_6_pro = _load("xiaomi.vacuum.pv21gl", resolve_family("xiaomi.vacuum.pv21gl"))
     assert tuple(s20.list) == _S20_PLUS
     assert tuple(x20.list) == _X20_MAX
+    assert tuple(x20_pro.list) == _X20_MAX
     assert tuple(vacuum_5.list) == _X20_MAX
     assert tuple(s40_pro.list) == _S40_PRO
     assert tuple(s40.list) == _X20_MAX
@@ -228,6 +231,7 @@ def test_s20_plus_and_x20_max_use_the_xiaomi_base():
     for capability in (
         s20,
         x20,
+        x20_pro,
         vacuum_5,
         s40_pro,
         s40,
@@ -260,6 +264,12 @@ def test_s20_plus_and_x20_max_use_the_xiaomi_base():
     assert x20.auto_emptying is True
     assert x20.auto_empty_mode is False
     assert x20.detergent is True
+    assert x20_pro.auto_empty_base is True
+    assert x20_pro.auto_emptying is True
+    assert x20_pro.auto_empty_mode is False
+    assert x20_pro.detergent is True
+    assert x20_pro.self_wash_base is False
+    assert x20_pro.station_cleaning is False
     assert vacuum_5.auto_empty_base is True
     assert vacuum_5.auto_emptying is True
     assert vacuum_5.detergent is True

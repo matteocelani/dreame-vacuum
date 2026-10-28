@@ -18,6 +18,7 @@ from custom_components.dreame_vacuum.xiaomi import (
     MODEL_ROBOT_VACUUM_6,
     MODEL_ROBOT_VACUUM_6_MAX,
     MODEL_ROBOT_VACUUM_6_PRO,
+    MODEL_X20_PRO,
     control_keys,
     controls_of,
     resolve_family,
@@ -724,6 +725,55 @@ def test_robot_vacuum_6_pro_reuses_the_camera_roller_profile() -> None:
     assert "RESET_MOP_PAD" not in vacuum.action_overrides
 
 
+def test_x20_pro_reuses_the_x20_max_map_and_omits_unpublished_controls() -> None:
+    """Dreame addresses match X20 Max. Remote uses the old code, not 23."""
+    vacuum = resolve_family(MODEL_X20_PRO)
+    x20 = resolve_family(MODEL_X20_MAX)
+    assert vacuum is not None
+    assert x20 is not None
+    assert vacuum.property_overrides == x20.property_overrides
+    assert vacuum.property_overrides is not x20.property_overrides
+    assert vacuum.action_overrides == x20.action_overrides
+    assert vacuum.action_overrides is not x20.action_overrides
+    assert vacuum.task_by_wire == x20.task_by_wire
+    assert vacuum.task_by_wire is not x20.task_by_wire
+    assert set(vacuum.state_by_wire) == set(x20.state_by_wire)
+    assert vacuum.state_by_wire[8] == 19
+    assert x20.state_by_wire[8] == int(DreameVacuumState.REMOTE_CONTROL)
+    assert 22 not in vacuum.state_by_wire
+    assert 23 not in vacuum.state_by_wire
+    assert 24 not in vacuum.state_by_wire
+    shared = {control.key: control for control in EXTENDED_STATION_CONTROLS}
+    present = {control.key: control for control in vacuum.controls}
+    swing = next(
+        control
+        for control in S40_CLASS_CONTROLS
+        if control.key == "xiaomi_edge_sweep_frequency"
+    )
+    tail = next(
+        control
+        for control in S40_CLASS_CONTROLS
+        if control.key == "xiaomi_edge_swing_tail_sweep"
+    )
+    assert present["xiaomi_edge_sweep_frequency"] is not swing
+    assert present["xiaomi_mop_wash_area"] is not shared["xiaomi_mop_wash_area"]
+    assert present["xiaomi_edge_swing_tail_sweep"] is tail
+    for key, control in present.items():
+        if key in {"xiaomi_mop_wash_area", "xiaomi_edge_sweep_frequency"}:
+            continue
+        if key in shared:
+            assert control is shared[key]
+    assert set(present) - set(shared) == {
+        "xiaomi_edge_sweep_frequency",
+        "xiaomi_edge_swing_tail_sweep",
+    }
+    assert "xiaomi_worry_free_mode" not in present
+    assert "xiaomi_mop_outer_swing" not in present
+    assert "TOTAL_CLEANED_AREA" not in vacuum.property_overrides
+    assert "DETERGENT_TIME_LEFT" not in vacuum.property_overrides
+    assert "REQUEST_MAP" not in vacuum.action_overrides
+
+
 def test_compose_rejects_an_omission_the_profile_does_not_define():
     with pytest.raises(KeyError):
         compose_addresses(STATION_PROPERTIES, omitted=frozenset({"NO_SUCH"}))
@@ -738,6 +788,7 @@ def test_station_address_literals_are_declared_once():
     root = Path("custom_components/dreame_vacuum/xiaomi")
     profile = (root / "profile.py").read_text(encoding="utf-8")
     for name in (
+        "d102gl.py",
         "d109gl.py",
         "e101gb.py",
         "ov21gl.py",
@@ -795,6 +846,7 @@ def test_property_and_action_names_exist_on_the_dreame_enums():
         MODEL_ROBOT_VACUUM_6,
         MODEL_ROBOT_VACUUM_6_MAX,
         MODEL_ROBOT_VACUUM_6_PRO,
+        MODEL_X20_PRO,
     ):
         family = resolve_family(model)
         assert family is not None

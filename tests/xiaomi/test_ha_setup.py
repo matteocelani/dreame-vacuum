@@ -17,6 +17,7 @@ from custom_components.dreame_vacuum.xiaomi import (
     MODEL_ROBOT_VACUUM_6,
     MODEL_ROBOT_VACUUM_6_MAX,
     MODEL_ROBOT_VACUUM_6_PRO,
+    MODEL_X20_PRO,
 )
 from custom_components.dreame_vacuum.xiaomi.mapping import (
     MODEL_H40,
@@ -59,6 +60,7 @@ async def test_setup_creates_vacuum_and_safe_commands_for_both_models(
     for model, name in (
         (MODEL_S20_PLUS, "S20 Sim"),
         (MODEL_X20_MAX, "X20 Sim"),
+        (MODEL_X20_PRO, "X20 Pro Sim"),
         (MODEL_ROBOT_VACUUM_5, "Vacuum 5 Sim"),
         (MODEL_S40_PRO, "S40 Pro Sim"),
         (MODEL_S40, "S40 Sim"),
