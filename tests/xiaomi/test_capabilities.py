@@ -207,6 +207,8 @@ def test_catalog_row_stays_until_the_xiaomi_codec_is_installed():
         "xiaomi.vacuum.c108",
         "xiaomi.vacuum.d106gl",
         "xiaomi.vacuum.c101eu",
+        "xiaomi.vacuum.b106eu",
+        "xiaomi.vacuum.b106bk",
     ):
         copied = _load(model, None)
         assert tuple(copied.list) == _COPIED_XIAOMI_ROW
@@ -241,6 +243,8 @@ def test_s20_plus_and_x20_max_use_the_xiaomi_base():
     e5 = _load("xiaomi.vacuum.c108", resolve_family("xiaomi.vacuum.c108"))
     vacuum_s20 = _load("xiaomi.vacuum.d106gl", resolve_family("xiaomi.vacuum.d106gl"))
     vacuum_x20 = _load("xiaomi.vacuum.c101eu", resolve_family("xiaomi.vacuum.c101eu"))
+    vacuum_s12 = _load("xiaomi.vacuum.b106eu", resolve_family("xiaomi.vacuum.b106eu"))
+    vacuum_t12 = _load("xiaomi.vacuum.b106bk", resolve_family("xiaomi.vacuum.b106bk"))
     assert tuple(s20.list) == _S20_PLUS
     assert tuple(e10.list) == ("disable_sensor_cleaning", "mijia")
     assert tuple(e12.list) == tuple(e10.list)
@@ -248,6 +252,8 @@ def test_s20_plus_and_x20_max_use_the_xiaomi_base():
     assert tuple(e5.list) == tuple(e10.list)
     assert tuple(vacuum_s20.list) == tuple(e10.list)
     assert tuple(vacuum_x20.list) == tuple(e10.list)
+    assert tuple(vacuum_s12.list) == tuple(e10.list)
+    assert tuple(vacuum_t12.list) == tuple(e10.list)
     assert e5.dnd is False
     assert e5.self_wash_base is False
     assert e5.lidar_navigation is False
@@ -263,6 +269,14 @@ def test_s20_plus_and_x20_max_use_the_xiaomi_base():
     assert vacuum_x20.self_wash_base is False
     assert vacuum_x20.station_cleaning is False
     assert vacuum_x20.lidar_navigation is False
+    assert vacuum_s12.dnd is False
+    assert vacuum_s12.auto_empty_base is False
+    assert vacuum_s12.self_wash_base is False
+    assert vacuum_s12.lidar_navigation is False
+    assert vacuum_t12.dnd is False
+    assert vacuum_t12.auto_empty_base is False
+    assert vacuum_t12.self_wash_base is False
+    assert vacuum_t12.lidar_navigation is False
     assert tuple(x20.list) == _X20_MAX
     assert tuple(x20_pro.list) == _X20_MAX
     assert tuple(vacuum_5.list) == _X20_MAX

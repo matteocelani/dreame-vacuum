@@ -48,6 +48,8 @@ def test_s20_plus_and_x20_max_load_from_the_current_catalog():
     assert models["xiaomi.vacuum.c108"] == 1
     assert models["xiaomi.vacuum.d106gl"] == 1
     assert models["xiaomi.vacuum.c101eu"] == 1
+    assert models["xiaomi.vacuum.b106eu"] == 1
+    assert models["xiaomi.vacuum.b106bk"] == 1
     assert models["xiaomi.vacuum.c102gl"] == 1
     assert catalog_supports_model(DEVICE_INFO, "xiaomi.vacuum.b108gl") is True
     assert catalog_supports_model(DEVICE_INFO, "xiaomi.vacuum.d109gl") is True
@@ -73,6 +75,8 @@ def test_s20_plus_and_x20_max_load_from_the_current_catalog():
     assert catalog_supports_model(DEVICE_INFO, "xiaomi.vacuum.c108") is True
     assert catalog_supports_model(DEVICE_INFO, "xiaomi.vacuum.d106gl") is True
     assert catalog_supports_model(DEVICE_INFO, "xiaomi.vacuum.c101eu") is True
+    assert catalog_supports_model(DEVICE_INFO, "xiaomi.vacuum.b106eu") is True
+    assert catalog_supports_model(DEVICE_INFO, "xiaomi.vacuum.b106bk") is True
     assert catalog_supports_model(DEVICE_INFO, "xiaomi.vacuum.c102gl") is True
     assert catalog_supports_model(DEVICE_INFO, "xiaomi.vacuum.notreal") is False
 

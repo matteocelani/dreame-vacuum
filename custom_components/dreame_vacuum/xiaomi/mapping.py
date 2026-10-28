@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Final
 
+from .b106eu import S12, T12
 from .b108gl import S20_PLUS
 from .b112 import E10
 from .b112bk import E10C
@@ -29,6 +30,7 @@ from .model import (
     MODEL_ROBOT_VACUUM_6,
     MODEL_ROBOT_VACUUM_6_MAX,
     MODEL_ROBOT_VACUUM_6_PRO,
+    MODEL_S12,
     MODEL_S20,
     MODEL_S20_PLUS,
     MODEL_S40,
@@ -36,6 +38,7 @@ from .model import (
     MODEL_S40C,
     MODEL_S60,
     MODEL_S60_PLUS,
+    MODEL_T12,
     MODEL_X20,
     MODEL_X20_MAX,
     MODEL_X20_PRO,
@@ -81,6 +84,8 @@ _FAMILIES: Final[dict[str, XiaomiModel]] = {
     MODEL_E5: E5,
     MODEL_S20: S20,
     MODEL_X20: X20,
+    MODEL_S12: S12,
+    MODEL_T12: T12,
 }
 
 
