@@ -17,10 +17,15 @@ from custom_components.dreame_vacuum.xiaomi import (
     MODEL_H50_PRO,
     MODEL_H50_PRO_ROLLER,
     MODEL_H50_ROLLER,
+    MODEL_MIJIA_3C,
     MODEL_MIJIA_5_PRO,
     MODEL_MIJIA_5C,
+    MODEL_MIJIA_6_MAX,
+    MODEL_MIJIA_6_PRO,
     MODEL_MIJIA_7C,
+    MODEL_MIJIA_M30,
     MODEL_MIJIA_ROBOT_VACUUM_6,
+    MODEL_MIJIA_SWEEP_MOP_2,
     MODEL_ROBOT_VACUUM_5_PRO,
     MODEL_ROBOT_VACUUM_6,
     MODEL_ROBOT_VACUUM_6_MAX,
@@ -85,6 +90,9 @@ def test_loopback_device_start_pause_resume_and_dock_send_only_mapped_actions(
         MODEL_MIJIA_M40_S,
         MODEL_MIJIA_5_PRO,
         MODEL_MIJIA_5C,
+        MODEL_MIJIA_M30,
+        MODEL_MIJIA_6_MAX,
+        MODEL_MIJIA_6_PRO,
     ):
         family = resolve_family(model)
         assert family is not None
@@ -137,6 +145,8 @@ def test_sweep_family_starts_and_returns_without_pause(socket_enabled: None) -> 
         MODEL_X20,
         MODEL_S12,
         MODEL_T12,
+        MODEL_MIJIA_SWEEP_MOP_2,
+        MODEL_MIJIA_3C,
     ):
         family = resolve_family(model)
         assert family is not None

@@ -42,6 +42,11 @@ MODEL_MIJIA_7C: Final = "xiaomi.vacuum.qv41cn"
 MODEL_MIJIA_M40_S: Final = "xiaomi.vacuum.ov31cn"
 MODEL_MIJIA_5_PRO: Final = "xiaomi.vacuum.ov21cn"
 MODEL_MIJIA_5C: Final = "xiaomi.vacuum.ov42cn"
+MODEL_MIJIA_SWEEP_MOP_2: Final = "xiaomi.vacuum.c101"
+MODEL_MIJIA_3C: Final = "xiaomi.vacuum.c103"
+MODEL_MIJIA_M30: Final = "xiaomi.vacuum.d102ev"
+MODEL_MIJIA_6_MAX: Final = "xiaomi.vacuum.pv11cn"
+MODEL_MIJIA_6_PRO: Final = "xiaomi.vacuum.pv21cn"
 
 
 class StoredState(IntEnum):
@@ -312,6 +317,8 @@ def regional_variant(
     control_replaced: Mapping[str, XiaomiControl] | None = None,
     state_overrides: Mapping[int, int] | None = None,
     state_omitted: Collection[int] | None = None,
+    task_overrides: Mapping[int, int] | None = None,
+    task_omitted: Collection[int] | None = None,
 ) -> XiaomiModel:
     """Copy one record and apply only the addresses a regional spec changes."""
     return replace(
@@ -324,7 +331,7 @@ def regional_variant(
             base.action_overrides, action_additions, action_omitted
         ),
         state_by_wire=compose_codes(base.state_by_wire, state_overrides, state_omitted),
-        task_by_wire=compose_codes(base.task_by_wire),
+        task_by_wire=compose_codes(base.task_by_wire, task_overrides, task_omitted),
         controls=compose_controls(
             base.controls,
             control_additions,

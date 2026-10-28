@@ -9,9 +9,9 @@ from custom_components.dreame_vacuum.xiaomi.profile import STATION_PROPERTIES
 from custom_components.dreame_vacuum.xiaomi.sweep import SWEEP_CONTROLS, SWEEP_STATES
 import pytest
 from tests.xiaomi.spec_helpers import (
-    SWEEP_ACTION_REASONS,
-    SWEEP_PROPERTY_REASONS,
-    SWEEP_STATE_AFTER_READ,
+    S20_ACTION_REASONS as _ACTION_REASONS,
+    S20_PROPERTY_REASONS as _PROPERTY_REASONS,
+    S20_STATE_AFTER_READ as _STATE_AFTER_READ,
     SpecCase,
     assert_controls_have_english_names,
     assert_controls_match_spec,
@@ -28,95 +28,6 @@ from tests.xiaomi.spec_helpers import (
     spec_items,
 )
 
-_CHANGED_PROPERTY_REASONS = {(7, 48), (7, 49)}
-_ABSENT_SWEEP_ACTIONS = {(14, 3), (14, 4)}
-_PROPERTY_REASONS = {
-    key: reason
-    for key, reason in SWEEP_PROPERTY_REASONS.items()
-    if key not in _CHANGED_PROPERTY_REASONS
-}
-_PROPERTY_REASONS.update(
-    {
-        (2, 9): "needs council: switch status is a string, not a boolean.",
-        (2, 10): "map: room ids stay unmapped until map support.",
-        (7, 38): "no ha meaning: clean preference type is an action parameter.",
-        (7, 39): "no ha meaning: clean preference switch is an action parameter.",
-        (7, 40): "no ha meaning: clean preference is neither readable nor writable.",
-        (
-            7,
-            41,
-        ): "no ha meaning: clean preference switch is an action parameter.",
-        (7, 46): "no ha meaning: the sd flag is neither readable nor writable.",
-        (7, 47): "needs council: write-only carpet avoid has no readable state.",
-        (7, 52): "map: carpet display is map rendering.",
-        (7, 55): "map: map encryption stays unmapped until map support.",
-        (7, 57): "needs council: write-only sweep avoid has no readable state.",
-        (7, 58): "needs council: write-only mop avoid has no readable state.",
-        (
-            15,
-            1,
-        ): "needs council: standard filter life repeats the named sweep filter.",
-        (
-            15,
-            2,
-        ): "needs council: standard filter time repeats the named sweep filter.",
-        (
-            16,
-            1,
-        ): "needs council: the two brush services are identical, so neither is mapped.",
-        (
-            16,
-            2,
-        ): "needs council: the two brush services are identical, so neither is mapped.",
-        (
-            17,
-            1,
-        ): "needs council: the two brush services are identical, so neither is mapped.",
-        (
-            17,
-            2,
-        ): "needs council: the two brush services are identical, so neither is mapped.",
-        (18, 1): "needs council: standard mop life repeats the named sweep mop.",
-        (18, 2): "needs council: standard mop time repeats the named sweep mop.",
-    }
-)
-_ACTION_REASONS = {
-    key: reason
-    for key, reason in SWEEP_ACTION_REASONS.items()
-    if key not in _ABSENT_SWEEP_ACTIONS
-}
-_ACTION_REASONS.update(
-    {
-        (2, 7): "map: room sweep takes a room-id parameter.",
-        (2, 11): "map: room sweep takes a room-id parameter.",
-        (7, 4): "needs council: setting a clean preference takes an opaque parameter.",
-        (7, 5): "needs council: reading a clean preference takes an opaque parameter.",
-        (7, 6): "needs council: setting a preference type takes an opaque parameter.",
-        (7, 8): "needs council: erasing a preference takes an opaque parameter.",
-        (7, 9): "needs council: setting a clean preference takes an opaque parameter.",
-        (7, 10): "needs council: reading a clean preference takes an opaque parameter.",
-        (7, 11): "needs council: listening voice has no published effect.",
-        (9, 9): "map: point clean stays unmapped until map support.",
-        (
-            15,
-            1,
-        ): "needs council: filter reset stays on the sweep consumable action.",
-        (
-            16,
-            1,
-        ): "needs council: the two brush resets cannot be told apart.",
-        (
-            17,
-            1,
-        ): "needs council: the two brush resets cannot be told apart.",
-        (18, 1): "needs council: mop reset stays on the sweep consumable action.",
-    }
-)
-_STATE_AFTER_READ = {
-    **SWEEP_STATE_AFTER_READ,
-    9: DreameVacuumState.BUILDING,
-    10: DreameVacuumState.CHARGING,
-}
 _CASE = SpecCase(
     model=MODEL_S20,
     device_name="Robot Vacuum S20",
