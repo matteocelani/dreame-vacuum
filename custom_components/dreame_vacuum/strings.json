@@ -1958,6 +1958,9 @@
       "xiaomi_notice": {
         "name": "Notice"
       },
+      "xiaomi_self_check_results": {
+        "name": "Self-check results"
+      },
       "xiaomi_current_voice": {
         "name": "Current voice"
       }

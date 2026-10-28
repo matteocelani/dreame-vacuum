@@ -12,13 +12,13 @@ from custom_components.dreame_vacuum.dreame.types import (
     DreameVacuumTaskStatus,
 )
 from custom_components.dreame_vacuum.xiaomi import (
+    MODEL_H50_PRO,
     control_keys,
     controls_of,
     resolve_family,
 )
 from custom_components.dreame_vacuum.xiaomi.mapping import (
     MODEL_H40,
-    MODEL_H50_PRO,
     MODEL_ROBOT_VACUUM_5,
     MODEL_S20_PLUS,
     MODEL_S40,
@@ -34,7 +34,6 @@ from custom_components.dreame_vacuum.xiaomi.profile import (
     HAIR_CUTTING_CONTROLS,
     S40_CLASS_CONTROLS,
     S40_CLASS_OMITTED_CONTROLS,
-    SOLID_DIRT_CONTROLS,
     STATION_ACTIONS,
     STATION_PROPERTIES,
     STATION_STATISTICS_PROPERTIES,
@@ -43,6 +42,7 @@ from custom_components.dreame_vacuum.xiaomi.profile import (
     control_with_options,
 )
 import pytest
+from tests.xiaomi.spec_helpers import spec_index
 
 _TOKEN = "00" * 16
 
@@ -356,20 +356,39 @@ def test_h50_pro_reuses_the_s40_map_and_restores_published_controls() -> None:
     assert h50.task_by_wire is not s40.task_by_wire
     shared = {control.key: control for control in EXTENDED_STATION_CONTROLS}
     added = {control.key: control for control in S40_CLASS_CONTROLS}
-    solid = {control.key: control for control in SOLID_DIRT_CONTROLS}
+    extra = {"xiaomi_self_check_results", "xiaomi_solid_dirt_detection"}
     for control in h50.controls:
         if control.key in shared:
             assert control is shared[control.key]
         elif control.key in added:
             assert control is added[control.key]
         else:
-            assert control is solid[control.key]
+            assert control.key in extra
     omitted = set(shared) - {control.key for control in h50.controls}
     assert omitted == {"xiaomi_laser_position", "xiaomi_obstacle_crossing"}
     restored = set(S40_CLASS_OMITTED_CONTROLS) - omitted
     assert {control.key for control in h50.controls} == (
-        {control.key for control in s40.controls} | restored | set(solid)
+        {control.key for control in s40.controls} | restored | extra
     )
+
+
+def test_h50_pro_publishes_the_s40_omissions_it_maps() -> None:
+    """Controls the S40 spec skips are mapped when this spec publishes them."""
+    specs = spec_index("ov42gl.json")
+    by_key = {control.key: control for control in EXTENDED_STATION_CONTROLS}
+    still_absent = frozenset({"xiaomi_laser_position", "xiaomi_obstacle_crossing"})
+    h50 = resolve_family(MODEL_H50_PRO)
+    assert h50 is not None
+    present = {control.key for control in h50.controls}
+    assert still_absent.isdisjoint(present)
+    for key in S40_CLASS_OMITTED_CONTROLS:
+        control = by_key[key]
+        address = ("property", control.siid, control.piid)
+        if key in still_absent:
+            assert address not in specs
+            continue
+        assert address in specs
+        assert key in present
 
 
 def test_compose_rejects_an_omission_the_profile_does_not_define():

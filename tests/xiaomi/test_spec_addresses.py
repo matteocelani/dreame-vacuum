@@ -12,10 +12,9 @@ from custom_components.dreame_vacuum.dreame.types import (
     DreameVacuumProperty,
     DreameVacuumPropertyMapping,
 )
-from custom_components.dreame_vacuum.xiaomi import resolve_family
+from custom_components.dreame_vacuum.xiaomi import MODEL_H50_PRO, resolve_family
 from custom_components.dreame_vacuum.xiaomi.mapping import (
     MODEL_H40,
-    MODEL_H50_PRO,
     MODEL_ROBOT_VACUUM_5,
     MODEL_S20_PLUS,
     MODEL_S40,

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Final
 
-from custom_components.dreame_vacuum.xiaomi.mapping import MODEL_H50_PRO
+from custom_components.dreame_vacuum.xiaomi import MODEL_H50_PRO
 import pytest
 from tests.xiaomi.entity_contract import EntityCase, exercise_home_assistant_entities
 

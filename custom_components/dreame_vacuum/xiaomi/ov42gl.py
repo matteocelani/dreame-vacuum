@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Final
 
+from .controls import boolean_switch, text_sensor
 from .model import MODEL_H50_PRO, XiaomiModel
 from .profile import (
     DETERGENT_TIME_PROPERTIES,
@@ -11,13 +12,29 @@ from .profile import (
     EXTENDED_STATION_STATES,
     EXTENDED_STATION_TASKS,
     S40_CLASS_CONTROLS,
-    SOLID_DIRT_CONTROLS,
     STATION_ACTIONS,
     STATION_PROPERTIES,
     STATION_STATISTICS_PROPERTIES,
     compose_addresses,
     compose_codes,
     compose_controls,
+)
+
+_VACUUM_SERVICE: Final = 2
+_SOLID_DIRT_PROPERTY: Final = 52
+_SELF_CHECK_SERVICE: Final = 22
+_SELF_CHECK_RESULTS_PROPERTY: Final = 2
+
+# Published by this spec and absent from the S40-class spec.
+_ADDED_CONTROLS: Final = (
+    boolean_switch(
+        "xiaomi_solid_dirt_detection", _VACUUM_SERVICE, _SOLID_DIRT_PROPERTY
+    ),
+    text_sensor(
+        "xiaomi_self_check_results",
+        _SELF_CHECK_SERVICE,
+        _SELF_CHECK_RESULTS_PROPERTY,
+    ),
 )
 
 # Laser position and obstacle crossing are not in this spec.
@@ -39,7 +56,7 @@ H50_PRO: Final = XiaomiModel(
     task_by_wire=compose_codes(EXTENDED_STATION_TASKS),
     controls=compose_controls(
         EXTENDED_STATION_CONTROLS,
-        S40_CLASS_CONTROLS + SOLID_DIRT_CONTROLS,
+        S40_CLASS_CONTROLS + _ADDED_CONTROLS,
         omitted=_OMITTED_CONTROLS,
     ),
 )

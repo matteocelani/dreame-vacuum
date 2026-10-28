@@ -5,11 +5,7 @@ from __future__ import annotations
 from typing import Final
 
 from custom_components.dreame_vacuum.dreame.types import DreameVacuumState
-from custom_components.dreame_vacuum.xiaomi.mapping import MODEL_H50_PRO
-from custom_components.dreame_vacuum.xiaomi.profile import (
-    EXTENDED_STATION_CONTROLS,
-    S40_CLASS_OMITTED_CONTROLS,
-)
+from custom_components.dreame_vacuum.xiaomi import MODEL_H50_PRO
 import pytest
 from tests.xiaomi.spec_helpers import (
     SpecCase,
@@ -23,7 +19,6 @@ from tests.xiaomi.spec_helpers import (
     exercise_status_wires,
     exercise_writable_values,
     normalize_spec,
-    require_family,
     spec_index,
 )
 
@@ -61,7 +56,6 @@ _PROPERTY_REASONS: Final[dict[tuple[int, int], str]] = {
     (20, 6): "needs council: unnamed writable field has no published meaning.",
     (20, 13): "needs council: unnamed writable field has no published meaning.",
     (22, 1): "no ha meaning: self-check items are neither readable nor writable.",
-    (22, 2): "needs council: self-check results are an opaque string.",
 }
 
 _ACTION_REASONS: Final[dict[tuple[int, int], str]] = {
@@ -142,16 +136,17 @@ _CASE = SpecCase(
     action_reasons=_ACTION_REASONS,
     state_after_read=_STATE_AFTER_READ,
     classification_counts={
-        "ov42gl.json": (148, 113),
+        "ov42gl.json": (149, 112),
         "ov42gl_v1.json": (148, 109),
     },
     spec_type="urn:miot-spec-v2:device:vacuum:0000A006:xiaomi-ov42gl:2",
     reason_prefix_counts={
         "identity": 10,
         "map": 116,
-        "needs council": 73,
+        "needs council": 72,
         "no ha meaning": 23,
     },
+    version_only_controls=frozenset({(22, 2)}),
     absent_items=(
         ("property", 20, 9),
         ("property", 20, 11),
@@ -283,22 +278,3 @@ def test_version_2_adds_only_custom_fields_and_self_check() -> None:
         assert normalize_spec(current[key], codes) == normalize_spec(
             previous[key], codes
         ), key
-
-
-def test_s40_omissions_are_restored_except_laser_and_obstacle_crossing() -> None:
-    """Controls the S40 spec skips are mapped here when this spec publishes them."""
-    specs = spec_index("ov42gl.json")
-    by_key = {control.key: control for control in EXTENDED_STATION_CONTROLS}
-    still_absent = frozenset({"xiaomi_laser_position", "xiaomi_obstacle_crossing"})
-    assert set(by_key) >= set(S40_CLASS_OMITTED_CONTROLS)
-    assert still_absent <= set(S40_CLASS_OMITTED_CONTROLS)
-    present = {control.key for control in require_family(MODEL_H50_PRO).controls}
-    assert still_absent.isdisjoint(present)
-    for key in S40_CLASS_OMITTED_CONTROLS:
-        control = by_key[key]
-        address = ("property", control.siid, control.piid)
-        if key in still_absent:
-            assert address not in specs
-            continue
-        assert address in specs
-        assert key in present

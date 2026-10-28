@@ -10,9 +10,9 @@ from custom_components.dreame_vacuum.const import (
     CONF_VERSION,
     DOMAIN,
 )
+from custom_components.dreame_vacuum.xiaomi import MODEL_H50_PRO
 from custom_components.dreame_vacuum.xiaomi.mapping import (
     MODEL_H40,
-    MODEL_H50_PRO,
     MODEL_ROBOT_VACUUM_5,
     MODEL_S20_PLUS,
     MODEL_S40,
