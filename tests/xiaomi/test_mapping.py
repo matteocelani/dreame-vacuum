@@ -13,6 +13,7 @@ from custom_components.dreame_vacuum.dreame.types import (
 )
 from custom_components.dreame_vacuum.xiaomi import (
     MODEL_H50_PRO,
+    MODEL_ROBOT_VACUUM_5_PRO,
     control_keys,
     controls_of,
     resolve_family,
@@ -34,6 +35,7 @@ from custom_components.dreame_vacuum.xiaomi.profile import (
     HAIR_CUTTING_CONTROLS,
     S40_CLASS_CONTROLS,
     S40_CLASS_OMITTED_CONTROLS,
+    SOLID_DIRT_DETECTION,
     STATION_ACTIONS,
     STATION_PROPERTIES,
     STATION_STATISTICS_PROPERTIES,
@@ -341,6 +343,59 @@ def test_s40c_reuses_the_s40_map_and_replaces_worry_free_mode() -> None:
         )
 
 
+def test_robot_vacuum_5_pro_reuses_the_station_profile_and_adds_stream() -> None:
+    """Property and action maps stay shared. Stream and worry-free are the diff."""
+    pro = resolve_family(MODEL_ROBOT_VACUUM_5_PRO)
+    h50 = resolve_family(MODEL_H50_PRO)
+    assert pro is not None
+    assert h50 is not None
+    assert pro.property_overrides == h50.property_overrides
+    assert pro.property_overrides is not h50.property_overrides
+    assert pro.action_overrides == h50.action_overrides
+    assert pro.action_overrides is not h50.action_overrides
+    assert pro.state_by_wire == h50.state_by_wire
+    assert pro.state_by_wire is not h50.state_by_wire
+    assert pro.task_by_wire == h50.task_by_wire
+    assert pro.task_by_wire is not h50.task_by_wire
+    shared = {control.key: control for control in EXTENDED_STATION_CONTROLS}
+    added = {control.key: control for control in S40_CLASS_CONTROLS}
+    stream = {
+        "xiaomi_find_pet",
+        "xiaomi_flash_light",
+        "xiaomi_pet_snaps",
+        "xiaomi_stream_enabled",
+        "xiaomi_stream_physical_lock",
+        "xiaomi_stream_visible_to_shared_users",
+        "xiaomi_video_recording_warnings",
+    }
+    for control in pro.controls:
+        if control.key == "xiaomi_worry_free_mode":
+            assert control is not shared[control.key]
+            assert [slug for _value, slug in control.options] == [
+                "silent",
+                "deep_clean",
+                "standard",
+                "butler",
+                "pet",
+            ]
+        elif control.key == "xiaomi_solid_dirt_detection":
+            assert control is SOLID_DIRT_DETECTION
+        elif control.key in stream:
+            assert control.siid == 21
+        elif control.key in shared:
+            assert control is shared[control.key]
+        else:
+            assert control is added[control.key]
+    present = {control.key for control in pro.controls}
+    assert stream <= present
+    assert "xiaomi_self_check_results" not in present
+    assert "xiaomi_laser_position" in present
+    assert "xiaomi_obstacle_crossing" in present
+    assert {control.key for control in h50.controls} - present == {
+        "xiaomi_self_check_results"
+    }
+
+
 def test_h50_pro_reuses_the_s40_map_and_restores_published_controls() -> None:
     h50 = resolve_family(MODEL_H50_PRO)
     s40 = resolve_family(MODEL_S40)
@@ -362,8 +417,10 @@ def test_h50_pro_reuses_the_s40_map_and_restores_published_controls() -> None:
             assert control is shared[control.key]
         elif control.key in added:
             assert control is added[control.key]
+        elif control.key == "xiaomi_solid_dirt_detection":
+            assert control is SOLID_DIRT_DETECTION
         else:
-            assert control.key in extra
+            assert control.key == "xiaomi_self_check_results"
     omitted = set(shared) - {control.key for control in h50.controls}
     assert omitted == {"xiaomi_laser_position", "xiaomi_obstacle_crossing"}
     restored = set(S40_CLASS_OMITTED_CONTROLS) - omitted
@@ -405,6 +462,7 @@ def test_station_address_literals_are_declared_once():
     for name in (
         "d109gl.py",
         "e101gb.py",
+        "ov21gl.py",
         "ov31gl.py",
         "ov42gl.py",
         "ov51gl.py",
@@ -450,6 +508,7 @@ def test_property_and_action_names_exist_on_the_dreame_enums():
         MODEL_H40,
         MODEL_H50_PRO,
         MODEL_S40C,
+        MODEL_ROBOT_VACUUM_5_PRO,
     ):
         family = resolve_family(model)
         assert family is not None

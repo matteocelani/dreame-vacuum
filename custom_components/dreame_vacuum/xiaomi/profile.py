@@ -657,6 +657,9 @@ S40_CLASS_CONTROLS: Final[tuple[XiaomiControl, ...]] = (
     *_S40_CLASS_ONLY_CONTROLS,
 )
 
+# H50 Pro and Robot Vacuum 5 Pro both publish this. The S40 spec does not.
+SOLID_DIRT_DETECTION: Final = boolean_switch("xiaomi_solid_dirt_detection", 2, 52)
+
 # Extended-station controls whose addresses the S40-class spec does not publish.
 S40_CLASS_OMITTED_CONTROLS: Final[frozenset[str]] = frozenset(
     {

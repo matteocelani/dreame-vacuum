@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Final
 
-from .controls import boolean_switch, text_sensor
+from .controls import text_sensor
 from .model import MODEL_H50_PRO, XiaomiModel
 from .profile import (
     DETERGENT_TIME_PROPERTIES,
@@ -12,6 +12,7 @@ from .profile import (
     EXTENDED_STATION_STATES,
     EXTENDED_STATION_TASKS,
     S40_CLASS_CONTROLS,
+    SOLID_DIRT_DETECTION,
     STATION_ACTIONS,
     STATION_PROPERTIES,
     STATION_STATISTICS_PROPERTIES,
@@ -20,16 +21,12 @@ from .profile import (
     compose_controls,
 )
 
-_VACUUM_SERVICE: Final = 2
-_SOLID_DIRT_PROPERTY: Final = 52
 _SELF_CHECK_SERVICE: Final = 22
 _SELF_CHECK_RESULTS_PROPERTY: Final = 2
 
 # Published by this spec and absent from the S40-class spec.
 _ADDED_CONTROLS: Final = (
-    boolean_switch(
-        "xiaomi_solid_dirt_detection", _VACUUM_SERVICE, _SOLID_DIRT_PROPERTY
-    ),
+    SOLID_DIRT_DETECTION,
     text_sensor(
         "xiaomi_self_check_results",
         _SELF_CHECK_SERVICE,

@@ -521,11 +521,23 @@ def _classify_file(
             omitted_count += 1
         if mapped:
             name = mapped_addresses(family, kind)[(siid, iid)]
-            description = spec_description(filename, kind, siid, iid)
-            assert description or (siid, iid) in case.version_only_controls
+            published = _has_published_name(_spec)
+            version_only = (siid, iid) in case.version_only_controls
+            assert published or version_only
             assert name
             mapped_count += 1
     return mapped_count, omitted_count
+
+
+def _has_published_name(spec: Mapping[str, object]) -> bool:
+    """Return whether the item, or every value it lists, has a description."""
+    if spec.get("description"):
+        return True
+    # Custom services name each value and leave the property description empty.
+    listed = spec.get("value-list")
+    if not isinstance(listed, list) or not listed:
+        return False
+    return all(isinstance(item, dict) and item.get("description") for item in listed)
 
 
 def _reason_prefix_counts(case: SpecCase) -> dict[str, int]:

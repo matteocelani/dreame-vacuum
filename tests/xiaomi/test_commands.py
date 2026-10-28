@@ -13,7 +13,11 @@ from custom_components.dreame_vacuum.dreame.types import (
     DreameVacuumProperty,
     DreameVacuumState,
 )
-from custom_components.dreame_vacuum.xiaomi import MODEL_H50_PRO, resolve_family
+from custom_components.dreame_vacuum.xiaomi import (
+    MODEL_H50_PRO,
+    MODEL_ROBOT_VACUUM_5_PRO,
+    resolve_family,
+)
 from custom_components.dreame_vacuum.xiaomi.mapping import (
     MODEL_H40,
     MODEL_ROBOT_VACUUM_5,
@@ -118,6 +122,12 @@ def test_paused_start_uses_continue_sweep_and_skips_unmapped_actions():
             "pause": (2, 7),
             "charge": (3, 1),
         },
+        MODEL_ROBOT_VACUUM_5_PRO: {
+            "resume": (2, 8),
+            "start": (2, 1),
+            "pause": (2, 7),
+            "charge": (3, 1),
+        },
     }
     for model, addresses in expected.items():
         device, sent = _device(model)
@@ -176,6 +186,7 @@ def test_property_reads_stay_inside_the_explicit_map():
         MODEL_H40,
         MODEL_H50_PRO,
         MODEL_S40C,
+        MODEL_ROBOT_VACUUM_5_PRO,
     ):
         device, _sent = _device(model)
         requested: list[tuple[int, int]] = []
@@ -220,13 +231,20 @@ def test_property_reads_stay_inside_the_explicit_map():
             MODEL_H40,
             MODEL_H50_PRO,
             MODEL_S40C,
+            MODEL_ROBOT_VACUUM_5_PRO,
         ):
             assert (4, 1) in requested
             assert (5, 2) in requested
         if model == MODEL_S40_PRO:
             assert (18, 1) not in requested
             assert (19, 1) not in requested
-        if model in (MODEL_S40, MODEL_H40, MODEL_H50_PRO, MODEL_S40C):
+        if model in (
+            MODEL_S40,
+            MODEL_H40,
+            MODEL_H50_PRO,
+            MODEL_S40C,
+            MODEL_ROBOT_VACUUM_5_PRO,
+        ):
             assert (18, 1) in requested
             assert (19, 1) in requested
         if model not in (
@@ -236,6 +254,7 @@ def test_property_reads_stay_inside_the_explicit_map():
             MODEL_H40,
             MODEL_H50_PRO,
             MODEL_S40C,
+            MODEL_ROBOT_VACUUM_5_PRO,
         ):
             assert controls == set()
             assert (4, 1) not in requested
