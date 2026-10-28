@@ -26,6 +26,7 @@ from custom_components.dreame_vacuum.xiaomi import (
     MODEL_MIJIA_5C,
     MODEL_MIJIA_6_MAX,
     MODEL_MIJIA_6_PRO,
+    MODEL_MIJIA_7_MAX,
     MODEL_MIJIA_7C,
     MODEL_MIJIA_M30,
     MODEL_MIJIA_ROBOT_VACUUM_6,
@@ -324,6 +325,16 @@ _PROPERTY_TEXT[MODEL_MIJIA_6_MAX] = _PROPERTY_TEXT[MODEL_ROBOT_VACUUM_6_MAX]
 _ACTION_TEXT[MODEL_MIJIA_6_MAX] = _ACTION_TEXT[MODEL_ROBOT_VACUUM_6_MAX]
 _PROPERTY_TEXT[MODEL_MIJIA_6_PRO] = _PROPERTY_TEXT[MODEL_ROBOT_VACUUM_6_PRO]
 _ACTION_TEXT[MODEL_MIJIA_6_PRO] = _ACTION_TEXT[MODEL_ROBOT_VACUUM_6_PRO]
+_PROPERTY_TEXT[MODEL_MIJIA_7_MAX] = {
+    name: text
+    for name, text in _PROPERTY_TEXT[MODEL_ROBOT_VACUUM_6_MAX].items()
+    if name != "DETERGENT_TIME_LEFT"
+}
+_ACTION_TEXT[MODEL_MIJIA_7_MAX] = {
+    name: text
+    for name, text in _ACTION_TEXT[MODEL_ROBOT_VACUUM_6_MAX].items()
+    if name != "START_CUSTOM"
+}
 _PROPERTY_TEXT[MODEL_H50_ROLLER] = {
     **_PROPERTY_TEXT[MODEL_ROBOT_VACUUM_6],
     "CLEANING_MODE": "Sweep Mop Type",
@@ -423,6 +434,7 @@ _SPEC_FILES = {
     MODEL_MIJIA_M30: ("d102ev.json",),
     MODEL_MIJIA_6_MAX: ("pv11cn.json", "pv11cn_v1.json"),
     MODEL_MIJIA_6_PRO: ("pv21cn.json", "pv21cn_v1.json"),
+    MODEL_MIJIA_7_MAX: ("qv12cn.json",),
 }
 _ABSENT_PROPERTIES = (
     "STATUS",
@@ -532,6 +544,7 @@ def test_charging_value_three_is_not_chargeable():
         "pv11cn_v1.json",
         "pv21cn.json",
         "pv21cn_v1.json",
+        "qv12cn.json",
     ):
         assert _charging_value(name, 3) == "Not Chargeable"
         assert _charging_value(name, 1) == "Charging"

@@ -24,6 +24,7 @@ from custom_components.dreame_vacuum.xiaomi import (
     MODEL_MIJIA_5C,
     MODEL_MIJIA_6_MAX,
     MODEL_MIJIA_6_PRO,
+    MODEL_MIJIA_7_MAX,
     MODEL_MIJIA_7C,
     MODEL_MIJIA_M30,
     MODEL_MIJIA_ROBOT_VACUUM_6,
@@ -107,6 +108,7 @@ async def test_setup_creates_vacuum_and_safe_commands_for_both_models(
         (MODEL_MIJIA_M30, "Mijia M30 Sim"),
         (MODEL_MIJIA_6_MAX, "Mijia 6 Max Sim"),
         (MODEL_MIJIA_6_PRO, "Mijia 6 Pro Sim"),
+        (MODEL_MIJIA_7_MAX, "Mijia 7 Max Sim"),
     ):
         family = resolve_family(model)
         assert family is not None

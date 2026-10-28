@@ -22,6 +22,7 @@ from custom_components.dreame_vacuum.xiaomi import (
     MODEL_MIJIA_5C,
     MODEL_MIJIA_6_MAX,
     MODEL_MIJIA_6_PRO,
+    MODEL_MIJIA_7_MAX,
     MODEL_MIJIA_7C,
     MODEL_MIJIA_M30,
     MODEL_MIJIA_ROBOT_VACUUM_6,
@@ -93,6 +94,7 @@ def test_loopback_device_start_pause_resume_and_dock_send_only_mapped_actions(
         MODEL_MIJIA_M30,
         MODEL_MIJIA_6_MAX,
         MODEL_MIJIA_6_PRO,
+        MODEL_MIJIA_7_MAX,
     ):
         family = resolve_family(model)
         assert family is not None

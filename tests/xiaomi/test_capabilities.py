@@ -219,6 +219,7 @@ def test_catalog_row_stays_until_the_xiaomi_codec_is_installed():
         "xiaomi.vacuum.d102ev",
         "xiaomi.vacuum.pv11cn",
         "xiaomi.vacuum.pv21cn",
+        "xiaomi.vacuum.qv12cn",
     ):
         copied = _load(model, None)
         assert tuple(copied.list) == _COPIED_XIAOMI_ROW
@@ -503,6 +504,20 @@ def test_apply_family_replaces_flags_when_the_capability_is_already_loaded():
     assert capability.mop_pad_lifting is False
     assert capability.self_wash_base is False
     assert tuple(capability.list) == _S20_PLUS
+
+
+def test_mijia_7_max_derives_the_station_flags():
+    """Detergent and auto-empty stay on. Wash base and lidar stay off."""
+    capability = _load("xiaomi.vacuum.qv12cn", resolve_family("xiaomi.vacuum.qv12cn"))
+    assert tuple(capability.list) == _X20_MAX
+    assert capability.auto_empty_base is True
+    assert capability.auto_emptying is True
+    assert capability.detergent is True
+    assert capability.dnd is True
+    assert capability.self_wash_base is False
+    assert capability.station_cleaning is False
+    assert capability.lidar_navigation is False
+    assert capability.robot_type is RobotType.LIDAR
 
 
 def test_each_extra_mapped_name_turns_on_its_flag():

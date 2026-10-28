@@ -33,6 +33,7 @@ from .model import (
     MODEL_MIJIA_5C,
     MODEL_MIJIA_6_MAX,
     MODEL_MIJIA_6_PRO,
+    MODEL_MIJIA_7_MAX,
     MODEL_MIJIA_7C,
     MODEL_MIJIA_M30,
     MODEL_MIJIA_M40_S,
@@ -75,6 +76,7 @@ from .pv32cn import MIJIA_ROBOT_VACUUM_6
 from .pv32gl import ROBOT_VACUUM_6
 from .pv51gl import S60_PLUS
 from .pv81gl import S60
+from .qv12cn import MIJIA_7_MAX
 from .qv41cn import MIJIA_7C
 from .qv41gl import H50_PRO_ROLLER
 from .qv42gl import H50_ROLLER
@@ -116,6 +118,7 @@ _FAMILIES: Final[dict[str, XiaomiModel]] = {
     MODEL_MIJIA_M30: MIJIA_M30,
     MODEL_MIJIA_6_MAX: MIJIA_6_MAX,
     MODEL_MIJIA_6_PRO: MIJIA_6_PRO,
+    MODEL_MIJIA_7_MAX: MIJIA_7_MAX,
 }
 
 

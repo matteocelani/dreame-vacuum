@@ -47,6 +47,7 @@ MODEL_MIJIA_3C: Final = "xiaomi.vacuum.c103"
 MODEL_MIJIA_M30: Final = "xiaomi.vacuum.d102ev"
 MODEL_MIJIA_6_MAX: Final = "xiaomi.vacuum.pv11cn"
 MODEL_MIJIA_6_PRO: Final = "xiaomi.vacuum.pv21cn"
+MODEL_MIJIA_7_MAX: Final = "xiaomi.vacuum.qv12cn"
 
 
 class StoredState(IntEnum):
