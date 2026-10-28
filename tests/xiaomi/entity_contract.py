@@ -41,6 +41,7 @@ _LEGACY_SWITCHES: Final = (
     "dnd",
     "auto_dust_collecting",
 )
+_PROPERTY_BY_ENTITY: Final = {"charging_state": "CHARGING_STATUS"}
 _LEGACY_RESET_BUTTONS: Final = (
     "reset_main_brush",
     "reset_side_brush",
@@ -105,7 +106,8 @@ async def assert_entities_read_or_write(hass: HomeAssistant, case: EntityCase) -
         device = hass.data[DOMAIN][entry.entry_id].device
         try:
             keys = _registry_keys(hass, entry.entry_id)
-            assert ("switch", "dnd") not in keys
+            if ("switch", "dnd") not in case.entities:
+                assert ("switch", "dnd") not in keys
             for domain, key in keys:
                 if key.startswith("reset_"):
                     assert domain == "button"
@@ -156,6 +158,31 @@ async def assert_entities_read_or_write(hass: HomeAssistant, case: EntityCase) -
                     continue
                 control = controls.get(key)
                 if control is not None and str(control.domain) == domain:
+                    if control.property_name:
+                        address = properties[control.property_name]
+                        assert address in seen
+                        if control.writable and control.domain == "select":
+                            fake.set_value(
+                                address[0], address[1], control.options[-1][0]
+                            )
+                            await _refresh(hass, entry.entry_id)
+                            await hass.services.async_call(
+                                "select",
+                                "select_option",
+                                {
+                                    "entity_id": _entity_id(
+                                        hass, entry.entry_id, "select", key
+                                    ),
+                                    "option": control.options[0][1],
+                                },
+                                blocking=True,
+                            )
+                            assert fake.writes[-1] == (
+                                address[0],
+                                address[1],
+                                control.options[0][0],
+                            )
+                        continue
                     if control.aiid is not None:
                         await hass.services.async_call(
                             "button",
@@ -211,16 +238,21 @@ async def assert_entities_read_or_write(hass: HomeAssistant, case: EntityCase) -
                     continue
                 action_name = key.upper()
                 if domain == "button" and action_name in family.action_overrides:
+                    entity_id = _entity_id(hass, entry.entry_id, "button", key)
+                    state = hass.states.get(entity_id)
+                    assert state is not None
+                    action = family.action_overrides[action_name]
+                    if state.state == "unavailable":
+                        continue
                     await hass.services.async_call(
                         "button",
                         "press",
-                        {"entity_id": _entity_id(hass, entry.entry_id, "button", key)},
+                        {"entity_id": entity_id},
                         blocking=True,
                     )
-                    action = family.action_overrides[action_name]
                     assert fake.actions[-1] == (action["siid"], action["aiid"])
                     continue
-                prop = key.upper()
+                prop = _PROPERTY_BY_ENTITY.get(key, key.upper())
                 assert prop in properties, (domain, key)
                 assert properties[prop] in seen
         finally:

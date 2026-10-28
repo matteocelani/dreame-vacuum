@@ -2529,6 +2529,9 @@
       "xiaomi_hot_water_wash": {
         "name": "Hot water mop wash"
       },
+      "xiaomi_precise_diagnosis": {
+        "name": "Precise diagnosis"
+      },
       "xiaomi_detergent_self_delivery": {
         "name": "Detergent self-delivery"
       },

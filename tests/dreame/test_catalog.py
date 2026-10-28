@@ -50,6 +50,11 @@ def test_s20_plus_and_x20_max_load_from_the_current_catalog():
     assert models["xiaomi.vacuum.c101eu"] == 1
     assert models["xiaomi.vacuum.b106eu"] == 1
     assert models["xiaomi.vacuum.b106bk"] == 1
+    assert models["xiaomi.vacuum.pv32cn"] == 1
+    assert models["xiaomi.vacuum.qv41cn"] == 1
+    assert models["xiaomi.vacuum.ov31cn"] == 1
+    assert models["xiaomi.vacuum.ov21cn"] == 1
+    assert models["xiaomi.vacuum.ov42cn"] == 1
     assert models["xiaomi.vacuum.c102gl"] == 1
     assert catalog_supports_model(DEVICE_INFO, "xiaomi.vacuum.b108gl") is True
     assert catalog_supports_model(DEVICE_INFO, "xiaomi.vacuum.d109gl") is True
@@ -77,6 +82,11 @@ def test_s20_plus_and_x20_max_load_from_the_current_catalog():
     assert catalog_supports_model(DEVICE_INFO, "xiaomi.vacuum.c101eu") is True
     assert catalog_supports_model(DEVICE_INFO, "xiaomi.vacuum.b106eu") is True
     assert catalog_supports_model(DEVICE_INFO, "xiaomi.vacuum.b106bk") is True
+    assert catalog_supports_model(DEVICE_INFO, "xiaomi.vacuum.pv32cn") is True
+    assert catalog_supports_model(DEVICE_INFO, "xiaomi.vacuum.qv41cn") is True
+    assert catalog_supports_model(DEVICE_INFO, "xiaomi.vacuum.ov31cn") is True
+    assert catalog_supports_model(DEVICE_INFO, "xiaomi.vacuum.ov21cn") is True
+    assert catalog_supports_model(DEVICE_INFO, "xiaomi.vacuum.ov42cn") is True
     assert catalog_supports_model(DEVICE_INFO, "xiaomi.vacuum.c102gl") is True
     assert catalog_supports_model(DEVICE_INFO, "xiaomi.vacuum.notreal") is False
 

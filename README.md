@@ -81,16 +81,21 @@ Configure a Dreame, MOVA, Mijia, or TROUVER vacuum with the upstream guides. Tho
 | Xiaomi Robot Vacuum X20 Max | `xiaomi.vacuum.d109gl` |
 | Xiaomi Robot Vacuum X20 Pro | `xiaomi.vacuum.d102gl` |
 | Xiaomi Robot Vacuum 5 | `xiaomi.vacuum.ov31gl` |
+| Mijia M40 S | `xiaomi.vacuum.ov31cn` |
 | Xiaomi Robot Vacuum S40 Pro | `xiaomi.vacuum.ov71gl` |
 | Xiaomi Robot Vacuum S40 | `xiaomi.vacuum.ov81gl` |
 | Xiaomi Robot Vacuum H40 | `xiaomi.vacuum.ov51gl` |
 | Xiaomi Robot Vacuum S40C | `xiaomi.vacuum.e101gb` |
 | Xiaomi Robot Vacuum H50 Pro | `xiaomi.vacuum.ov42gl` |
+| Mijia 5C | `xiaomi.vacuum.ov42cn` |
 | Xiaomi Robot Vacuum 5 Pro | `xiaomi.vacuum.ov21gl` |
+| Mijia 5 Pro | `xiaomi.vacuum.ov21cn` |
 | Xiaomi Robot Vacuum H50 | `xiaomi.vacuum.ov43gb` |
 | Xiaomi Robot Vacuum H50 Pro Roller | `xiaomi.vacuum.qv41gl` |
+| Mijia 7C | `xiaomi.vacuum.qv41cn` |
 | Xiaomi Robot Vacuum H50 Roller | `xiaomi.vacuum.qv42gl` |
 | Xiaomi Robot Vacuum 6 | `xiaomi.vacuum.pv32gl` |
+| Mijia Robot Vacuum 6 | `xiaomi.vacuum.pv32cn` |
 | Xiaomi Robot Vacuum 6 Max | `xiaomi.vacuum.pv11gl` |
 | Xiaomi Robot Vacuum 6 Pro | `xiaomi.vacuum.pv21gl` |
 | Xiaomi Robot Vacuum S60+ | `xiaomi.vacuum.pv51gl` |

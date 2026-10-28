@@ -83,6 +83,7 @@ class SpecCase:
     checked_events: tuple[tuple[int, int], ...] = ()
     service_reasons: Mapping[int, str] | None = None
     version_only_controls: frozenset[tuple[int, int]] = frozenset()
+    version_only_items: frozenset[tuple[str, int, int]] = frozenset()
     action_spec_filenames: tuple[str, ...] = ()
     previous_spec_filename: str | None = None
     state_wire_eight: int | None = 19
@@ -284,6 +285,273 @@ ROBOT_VACUUM_6_ACTION_REASONS: Final[dict[tuple[int, int], str]] = {
     (20, 16): "needs council: reading OTA info takes an opaque parameter.",
 }
 
+ROBOT_VACUUM_5_PROPERTY_REASONS: Final[dict[tuple[int, int], str]] = {
+    (2, 1): "no ha meaning: firmware is already exposed from miIO.info.",
+    (2, 12): "map: zone ids.",
+    (2, 13): "map: restricted areas.",
+    (2, 14): "map: virtual walls.",
+    (2, 15): "map: room ids are not readable.",
+    (2, 16): "map: room information.",
+    (2, 22): "map: carpet display is map rendering.",
+    (2, 24): "no ha meaning: common params are neither readable nor writable.",
+    (2, 27): "map: map-complete dialog.",
+    (2, 39): "no ha meaning: button type is neither readable nor writable.",
+    (2, 42): "needs council: user-defined sweep config needs a program editor.",
+    (2, 43): "needs council: user-defined sweep id needs a program editor.",
+    (2, 53): "needs council: water-check list is an opaque string.",
+    (2, 56): "map: AI objects.",
+    (2, 57): "map: furniture.",
+    (2, 58): "map: carpet objects.",
+    (2, 65): "map: vacuum route is not readable and is map geometry.",
+    (2, 67): "no ha meaning: action result is a command echo.",
+    (2, 70): "needs council: plugin reminder text needs a text entity.",
+    (2, 99): "map: sill geometry.",
+    (2, 102): "map: automation furniture.",
+    (11, 2): "needs council: DND time is one packed integer, not a start and end.",
+    (15, 1): "needs council: target voice id encoding is not a Dreame voice property.",
+    (15, 5): "no ha meaning: voice url is neither readable nor writable.",
+    (15, 6): "no ha meaning: voice common params are neither readable nor writable.",
+    (17, 1): "no ha meaning: picture id is neither readable nor writable.",
+    (17, 2): "needs council: unnamed picture string has no spec description.",
+    (20, 1): "no ha meaning: unnamed field is neither readable nor writable.",
+    (20, 2): "no ha meaning: unnamed field is neither readable nor writable.",
+    (20, 3): "needs council: unnamed readable string.",
+    (20, 4): "needs council: self-check values are internal component codes.",
+    (20, 5): "needs council: unnamed readable string.",
+    (20, 6): "needs council: unnamed writable field has no spec description.",
+    (20, 10): "needs council: unnamed writable field has no spec description.",
+    (20, 12): "no ha meaning: unnamed field is neither readable nor writable.",
+}
+
+ROBOT_VACUUM_5_ACTION_REASONS: Final[dict[tuple[int, int], str]] = {
+    (2, 11): "map: room config takes a room-id parameter.",
+    (2, 12): "map: set-zone takes a zone parameter.",
+    (2, 13): "map: room clean config takes a room-id parameter.",
+    (2, 14): "map: split room is a map edit.",
+    (2, 15): "map: merge rooms is a map edit.",
+    (2, 16): "map: room sweep takes a room-id parameter.",
+    (2, 17): "map: build-map stays unmapped until map support.",
+    (2, 23): "needs council: adding a schedule takes an order blob.",
+    (2, 24): "needs council: modifying a schedule takes an order blob.",
+    (2, 25): "needs council: deleting a schedule takes an order blob.",
+    (2, 26): "needs council: remote direction requires a button-type parameter.",
+    (2, 30): "no ha meaning: system info is a diagnostic fetch, not a user control.",
+    (2, 33): "map: continue build-map stays unmapped until map support.",
+    (2, 34): "map: stop build-map stays unmapped until map support.",
+    (2, 35): "map: pause build-map stays unmapped until map support.",
+    (2, 37): "map: zone sweep takes a zone parameter.",
+    (2, 38): "needs council: adding a user sweep takes a config parameter.",
+    (2, 39): "needs council: deleting a user sweep takes an id parameter.",
+    (2, 40): "needs council: modifying a user sweep takes a config parameter.",
+    (2, 42): "needs council: starting a user sweep takes an id parameter.",
+    (2, 47): "map: the vacuum route takes a parameter and is map geometry.",
+    (2, 48): "needs council: closing an abnormal card takes an opaque parameter.",
+    (2, 52): "map: skip cleaning takes a room-id parameter.",
+    (2, 53): "map: final cleaning takes a room-id parameter.",
+    (2, 54): "map: temporary room cleaning takes a room-id parameter.",
+    (2, 55): "map: temporary zone cleaning takes a zone parameter.",
+    (2, 56): "map: furniture cleaning takes a map parameter.",
+    (2, 60): "needs council: AI recognize takes an object parameter.",
+    (2, 62): "needs council: common-object clean takes an object parameter.",
+    (15, 1): "needs council: voice download takes a pack url.",
+    (15, 2): "no ha meaning: download status is already the mapped property.",
+    (17, 1): "needs council: the picture request takes an id and returns an image.",
+    (20, 1): "map: history objects stay unmapped until map support.",
+    (20, 2): "needs council: user-defined info takes an opaque parameter.",
+    (20, 3): "map: stopping a map upload stays unmapped until map support.",
+    (
+        20,
+        7,
+    ): "needs council: lidar control takes a parameter and must not enable map support.",
+}
+
+
+ROBOT_VACUUM_5_PRO_PROPERTY_REASONS: Final[dict[tuple[int, int], str]] = {
+    (2, 1): "no ha meaning: firmware is already exposed from miIO.info.",
+    (2, 12): "map: zone ids.",
+    (2, 13): "map: restricted areas.",
+    (2, 14): "map: virtual walls.",
+    (2, 15): "map: room ids are not readable.",
+    (2, 16): "map: room information.",
+    (2, 22): "map: carpet display is map rendering.",
+    (2, 24): "no ha meaning: common params are neither readable nor writable.",
+    (2, 27): "map: map-complete dialog.",
+    (2, 39): "no ha meaning: button type is neither readable nor writable.",
+    (2, 42): "needs council: user-defined sweep config needs a program editor.",
+    (2, 43): "needs council: user-defined sweep id needs a program editor.",
+    (2, 53): "needs council: water-check list is an opaque string.",
+    (2, 56): "map: AI objects.",
+    (2, 57): "map: furniture.",
+    (2, 58): "map: carpet objects.",
+    (2, 65): "map: vacuum route is not readable and is map geometry.",
+    (2, 67): "no ha meaning: action result is a command echo.",
+    (2, 70): "needs council: plugin reminder text needs a text entity.",
+    (2, 99): "map: sill geometry.",
+    (2, 102): "map: automation furniture.",
+    (2, 103): "map: hidden zone geometry.",
+    (11, 2): "needs council: DND time is one packed integer, not a start and end.",
+    (15, 1): "needs council: target voice id encoding is not a Dreame voice property.",
+    (15, 5): "no ha meaning: voice url is neither readable nor writable.",
+    (15, 6): "no ha meaning: voice common params are neither readable nor writable.",
+    (20, 1): "no ha meaning: unnamed field is neither readable nor writable.",
+    (20, 2): "no ha meaning: unnamed field is neither readable nor writable.",
+    (20, 3): "needs council: unnamed readable string.",
+    (17, 1): "no ha meaning: unnamed field is neither readable nor writable.",
+    (17, 2): "needs council: unnamed readable string.",
+    (20, 4): "no ha meaning: self-check items are neither readable nor writable.",
+    (20, 5): "needs council: self-check result has no published description.",
+    (20, 6): "needs council: unnamed writable field has no published meaning.",
+    (20, 12): "no ha meaning: lidar button type is neither readable nor writable.",
+    (21, 1): "map: cruise position is map geometry.",
+    (21, 7): "no ha meaning: stream common params are neither readable nor writable.",
+}
+
+ROBOT_VACUUM_5_PRO_ACTION_REASONS: Final[dict[tuple[int, int], str]] = {
+    (2, 10): "map: zone config takes a zone-id parameter.",
+    (2, 11): "map: room config takes a room-id parameter.",
+    (2, 12): "map: set-zone takes a zone parameter.",
+    (2, 13): "map: room clean config takes a room-id parameter.",
+    (2, 14): "map: split room is a map edit.",
+    (2, 15): "map: merge rooms is a map edit.",
+    (2, 16): "map: room sweep takes a room-id parameter.",
+    (2, 17): "map: build-map stays unmapped until map support.",
+    (2, 23): "needs council: adding a schedule takes an order blob.",
+    (2, 24): "needs council: modifying a schedule takes an order blob.",
+    (2, 25): "needs council: deleting a schedule takes an order blob.",
+    (2, 26): "needs council: remote direction requires a button-type parameter.",
+    (2, 30): "no ha meaning: system info is a diagnostic fetch, not a user control.",
+    (2, 33): "map: continue build-map stays unmapped until map support.",
+    (2, 34): "map: stop build-map stays unmapped until map support.",
+    (2, 35): "map: pause build-map stays unmapped until map support.",
+    (2, 37): "map: zone sweep takes a zone parameter.",
+    (2, 38): "needs council: adding a user sweep takes a config parameter.",
+    (2, 39): "needs council: deleting a user sweep takes an id parameter.",
+    (2, 40): "needs council: modifying a user sweep takes a config parameter.",
+    (2, 41): "needs council: setting a user sweep takes a config parameter.",
+    (2, 42): "needs council: starting a user sweep takes an id parameter.",
+    (2, 47): "map: the vacuum route takes a parameter and is map geometry.",
+    (2, 48): "needs council: closing an abnormal card takes an opaque parameter.",
+    (2, 52): "map: skip cleaning takes a room-id parameter.",
+    (2, 53): "map: final cleaning takes a room-id parameter.",
+    (2, 54): "map: temporary room cleaning takes a room-id parameter.",
+    (2, 55): "map: temporary zone cleaning takes a zone parameter.",
+    (2, 56): "map: furniture cleaning takes a map parameter.",
+    (2, 60): "needs council: operating an AI object takes an opaque parameter.",
+    (2, 61): "map: AI picture objects stay unmapped until map support.",
+    (2, 62): "needs council: common-object clean takes an object parameter.",
+    (2, 65): "map: rotating the map takes a parameter and is map geometry.",
+    (15, 1): "needs council: voice download takes a pack url.",
+    (15, 2): "no ha meaning: download status is already the mapped property.",
+    (20, 1): "map: history objects stay unmapped until map support.",
+    (20, 2): "needs council: user-defined info takes an opaque parameter.",
+    (20, 3): "map: stopping a map upload stays unmapped until map support.",
+    (20, 5): "needs council: reading a schedule takes an opaque parameter.",
+    (20, 6): "needs council: switching a schedule takes an opaque parameter.",
+    (
+        20,
+        7,
+    ): "needs council: lidar control takes a parameter and must not enable map support.",
+    (20, 8): "needs council: starting a patrol takes an opaque parameter.",
+    (17, 1): "map: AI pictures stay unmapped until map support.",
+    (21, 1): "needs council: auto cruise takes an opaque parameter.",
+    (21, 2): "needs council: arriving at a place takes an opaque parameter.",
+    (21, 4): "needs council: entering the video page takes an opaque parameter.",
+    (21, 5): "no ha meaning: video status is a diagnostic fetch, not a user control.",
+    (
+        21,
+        6,
+    ): "needs council: setting a video password must not be sent as a raw action.",
+    (
+        21,
+        7,
+    ): "needs council: verifying a video password must not be sent as a raw action.",
+    (
+        21,
+        8,
+    ): "needs council: forgot-password changes a video credential and has no confirmation flow.",
+}
+
+
+H50_PRO_PROPERTY_REASONS: Final[dict[tuple[int, int], str]] = {
+    (2, 1): "no ha meaning: firmware is already exposed from miIO.info.",
+    (2, 12): "map: zone ids.",
+    (2, 13): "map: restricted areas.",
+    (2, 14): "map: virtual walls.",
+    (2, 15): "map: room ids are not readable.",
+    (2, 16): "map: room information.",
+    (2, 22): "map: carpet display is map rendering.",
+    (2, 24): "no ha meaning: common params are neither readable nor writable.",
+    (2, 27): "map: map-complete dialog.",
+    (2, 39): "no ha meaning: button type is neither readable nor writable.",
+    (2, 42): "needs council: user-defined sweep config needs a program editor.",
+    (2, 43): "needs council: user-defined sweep id needs a program editor.",
+    (2, 53): "needs council: water-check list is an opaque string.",
+    (2, 56): "map: AI objects.",
+    (2, 57): "map: furniture.",
+    (2, 58): "map: carpet objects.",
+    (2, 65): "map: vacuum route is not readable and is map geometry.",
+    (2, 67): "no ha meaning: action result is a command echo.",
+    (2, 70): "needs council: plugin reminder text needs a text entity.",
+    (2, 99): "map: sill geometry.",
+    (2, 102): "map: automation furniture.",
+    (11, 2): "needs council: DND time is one packed integer, not a start and end.",
+    (15, 1): "needs council: target voice id encoding is not a Dreame voice property.",
+    (15, 5): "no ha meaning: voice url is neither readable nor writable.",
+    (15, 6): "no ha meaning: voice common params are neither readable nor writable.",
+    (20, 1): "no ha meaning: unnamed field is neither readable nor writable.",
+    (20, 2): "no ha meaning: unnamed field is neither readable nor writable.",
+    (20, 3): "needs council: unnamed readable string.",
+    (17, 1): "no ha meaning: unnamed field is neither readable nor writable.",
+    (17, 2): "needs council: unnamed readable string.",
+    (20, 6): "needs council: unnamed writable field has no published meaning.",
+    (20, 13): "needs council: unnamed writable field has no published meaning.",
+    (22, 1): "no ha meaning: self-check items are neither readable nor writable.",
+}
+
+H50_PRO_ACTION_REASONS: Final[dict[tuple[int, int], str]] = {
+    (2, 10): "map: zone config takes a zone-id parameter.",
+    (2, 11): "map: room config takes a room-id parameter.",
+    (2, 12): "map: set-zone takes a zone parameter.",
+    (2, 13): "map: room clean config takes a room-id parameter.",
+    (2, 14): "map: split room is a map edit.",
+    (2, 15): "map: merge rooms is a map edit.",
+    (2, 16): "map: room sweep takes a room-id parameter.",
+    (2, 17): "map: build-map stays unmapped until map support.",
+    (2, 23): "needs council: adding a schedule takes an order blob.",
+    (2, 24): "needs council: modifying a schedule takes an order blob.",
+    (2, 25): "needs council: deleting a schedule takes an order blob.",
+    (2, 26): "needs council: remote direction requires a button-type parameter.",
+    (2, 30): "no ha meaning: system info is a diagnostic fetch, not a user control.",
+    (2, 33): "map: continue build-map stays unmapped until map support.",
+    (2, 34): "map: stop build-map stays unmapped until map support.",
+    (2, 35): "map: pause build-map stays unmapped until map support.",
+    (2, 37): "map: zone sweep takes a zone parameter.",
+    (2, 38): "needs council: adding a user sweep takes a config parameter.",
+    (2, 39): "needs council: deleting a user sweep takes an id parameter.",
+    (2, 40): "needs council: modifying a user sweep takes a config parameter.",
+    (2, 41): "needs council: setting a user sweep takes a config parameter.",
+    (2, 42): "needs council: starting a user sweep takes an id parameter.",
+    (2, 47): "map: the vacuum route takes a parameter and is map geometry.",
+    (2, 48): "needs council: closing an abnormal card takes an opaque parameter.",
+    (2, 52): "map: skip cleaning takes a room-id parameter.",
+    (2, 53): "map: final cleaning takes a room-id parameter.",
+    (2, 54): "map: temporary room cleaning takes a room-id parameter.",
+    (2, 55): "map: temporary zone cleaning takes a zone parameter.",
+    (2, 56): "map: furniture cleaning takes a map parameter.",
+    (2, 62): "needs council: common-object clean takes an object parameter.",
+    (15, 1): "needs council: voice download takes a pack url.",
+    (15, 2): "no ha meaning: download status is already the mapped property.",
+    (20, 1): "map: history objects stay unmapped until map support.",
+    (20, 2): "needs council: user-defined info takes an opaque parameter.",
+    (20, 3): "map: stopping a map upload stays unmapped until map support.",
+    (20, 5): "needs council: reading a schedule takes an opaque parameter.",
+    (20, 6): "needs council: switching a schedule takes an opaque parameter.",
+    (2, 60): "needs council: operating an AI object takes an opaque parameter.",
+    (2, 61): "map: AI picture objects stay unmapped until map support.",
+    (17, 1): "map: AI pictures stay unmapped until map support.",
+}
+
+
 _SCHEDULE_REASON: Final = "needs council: schedule editing takes an order blob."
 _SWEEP_SCHEDULE_PROPERTIES: Final = tuple(range(1, 20))
 SWEEP_PROPERTY_REASONS: Final[dict[tuple[int, int], str]] = {
@@ -423,6 +691,27 @@ def spec_items(filename: str) -> list[tuple[str, int, int, dict[str, object]]]:
                 assert isinstance(iid, int)
                 found.append((kind, siid, iid, item))
     return found
+
+
+def with_reason_overrides(
+    base: Mapping[tuple[int, int], str],
+    *,
+    drop: tuple[tuple[int, int], ...] = (),
+    add: Mapping[tuple[int, int], str] | None = None,
+) -> dict[tuple[int, int], str]:
+    """Copy an omission table, drop addresses the spec lacks, and add new ones."""
+    merged = dict(base)
+    for key in drop:
+        if key not in merged:
+            raise KeyError(key)
+        del merged[key]
+    if not add:
+        return merged
+    overlap = set(add) & set(merged)
+    if overlap:
+        raise KeyError(next(iter(overlap)))
+    merged.update(add)
+    return merged
 
 
 def spec_index(filename: str) -> dict[tuple[str, int, int], dict[str, object]]:
@@ -1258,10 +1547,11 @@ def _assert_one_control(
         assert value in published
     if previous is None:
         return
-    if pair in case.version_only_controls:
-        assert (kind, pair[0], pair[1]) not in previous
+    qualified = (kind, pair[0], pair[1])
+    if qualified in case.version_only_items or pair in case.version_only_controls:
+        assert qualified not in previous
         return
-    assert_control_matches_spec(control, previous[(kind, pair[0], pair[1])])
+    assert_control_matches_spec(control, previous[qualified])
 
 
 def _exercise_one_control(

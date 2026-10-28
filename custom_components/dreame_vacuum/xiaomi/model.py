@@ -37,6 +37,11 @@ MODEL_E5: Final = "xiaomi.vacuum.c108"
 MODEL_S12: Final = "xiaomi.vacuum.b106eu"
 MODEL_S20: Final = "xiaomi.vacuum.d106gl"
 MODEL_T12: Final = "xiaomi.vacuum.b106bk"
+MODEL_MIJIA_ROBOT_VACUUM_6: Final = "xiaomi.vacuum.pv32cn"
+MODEL_MIJIA_7C: Final = "xiaomi.vacuum.qv41cn"
+MODEL_MIJIA_M40_S: Final = "xiaomi.vacuum.ov31cn"
+MODEL_MIJIA_5_PRO: Final = "xiaomi.vacuum.ov21cn"
+MODEL_MIJIA_5C: Final = "xiaomi.vacuum.ov42cn"
 
 
 class StoredState(IntEnum):
@@ -287,6 +292,46 @@ def control_with_options(
         if control.key == key:
             return replace(control, options=options)
     raise KeyError(key)
+
+
+def alias_model(base: XiaomiModel, model: str) -> XiaomiModel:
+    """Register another model code on an unchanged record."""
+    return replace(base, model=model)
+
+
+def regional_variant(
+    base: XiaomiModel,
+    model: str,
+    *,
+    property_additions: Mapping[str, Mapping[str, int]] | None = None,
+    property_omitted: Collection[str] | None = None,
+    action_additions: Mapping[str, Mapping[str, int]] | None = None,
+    action_omitted: Collection[str] | None = None,
+    control_additions: tuple[XiaomiControl, ...] = (),
+    control_omitted: Collection[str] | None = None,
+    control_replaced: Mapping[str, XiaomiControl] | None = None,
+    state_overrides: Mapping[int, int] | None = None,
+    state_omitted: Collection[int] | None = None,
+) -> XiaomiModel:
+    """Copy one record and apply only the addresses a regional spec changes."""
+    return replace(
+        base,
+        model=model,
+        property_overrides=compose_addresses(
+            base.property_overrides, property_additions, property_omitted
+        ),
+        action_overrides=compose_addresses(
+            base.action_overrides, action_additions, action_omitted
+        ),
+        state_by_wire=compose_codes(base.state_by_wire, state_overrides, state_omitted),
+        task_by_wire=compose_codes(base.task_by_wire),
+        controls=compose_controls(
+            base.controls,
+            control_additions,
+            control_omitted,
+            control_replaced,
+        ),
+    )
 
 
 def controls_of(device: object) -> tuple[XiaomiControl, ...]:
