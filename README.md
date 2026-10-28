@@ -75,6 +75,7 @@ Configure a Dreame, MOVA, Mijia, or TROUVER vacuum with the upstream guides. Tho
 | --- | --- |
 | Xiaomi Robot Vacuum S20+ | `xiaomi.vacuum.b108gl` |
 | Xiaomi Robot Vacuum S20 | `xiaomi.vacuum.d106gl` |
+| Xiaomi Robot Vacuum X20 | `xiaomi.vacuum.c101eu` |
 | Xiaomi Robot Vacuum X20 Max | `xiaomi.vacuum.d109gl` |
 | Xiaomi Robot Vacuum X20 Pro | `xiaomi.vacuum.d102gl` |
 | Xiaomi Robot Vacuum 5 | `xiaomi.vacuum.ov31gl` |

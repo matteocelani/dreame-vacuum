@@ -1059,6 +1059,27 @@
           "high": "High"
         }
       },
+      "xiaomi_air_dry": {
+        "name": "Air dry",
+        "state": {
+          "pause": "Pause",
+          "start": "Start"
+        }
+      },
+      "xiaomi_child_lock": {
+        "name": "Child lock",
+        "state": {
+          "close": "Off",
+          "open": "On"
+        }
+      },
+      "xiaomi_back_wash": {
+        "name": "Back wash",
+        "state": {
+          "close": "Off",
+          "open": "On"
+        }
+      },
       "xiaomi_basic_suction": {
         "name": "Suction",
         "state": {
