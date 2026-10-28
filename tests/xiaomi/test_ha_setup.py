@@ -19,10 +19,15 @@ from custom_components.dreame_vacuum.xiaomi import (
     MODEL_H50_PRO,
     MODEL_H50_PRO_ROLLER,
     MODEL_H50_ROLLER,
+    MODEL_MIJIA_3C,
     MODEL_MIJIA_5_PRO,
     MODEL_MIJIA_5C,
+    MODEL_MIJIA_6_MAX,
+    MODEL_MIJIA_6_PRO,
     MODEL_MIJIA_7C,
+    MODEL_MIJIA_M30,
     MODEL_MIJIA_ROBOT_VACUUM_6,
+    MODEL_MIJIA_SWEEP_MOP_2,
     MODEL_ROBOT_VACUUM_5_PRO,
     MODEL_ROBOT_VACUUM_6,
     MODEL_ROBOT_VACUUM_6_MAX,
@@ -99,6 +104,9 @@ async def test_setup_creates_vacuum_and_safe_commands_for_both_models(
         (MODEL_MIJIA_M40_S, "Mijia M40 S Sim"),
         (MODEL_MIJIA_5_PRO, "Mijia 5 Pro Sim"),
         (MODEL_MIJIA_5C, "Mijia 5C Sim"),
+        (MODEL_MIJIA_M30, "Mijia M30 Sim"),
+        (MODEL_MIJIA_6_MAX, "Mijia 6 Max Sim"),
+        (MODEL_MIJIA_6_PRO, "Mijia 6 Pro Sim"),
     ):
         family = resolve_family(model)
         assert family is not None
@@ -185,6 +193,8 @@ async def test_sweep_family_setup_starts_and_returns_without_pause(
         (MODEL_X20, "Robot Vacuum X20 Sim"),
         (MODEL_S12, "Robot Vacuum S12 Sim"),
         (MODEL_T12, "Robot Vacuum T12 Sim"),
+        (MODEL_MIJIA_SWEEP_MOP_2, "Mijia Sweep Mop 2 Sim"),
+        (MODEL_MIJIA_3C, "Mijia 3C Sim"),
     ):
         family = resolve_family(model)
         assert family is not None

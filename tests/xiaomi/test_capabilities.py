@@ -214,6 +214,11 @@ def test_catalog_row_stays_until_the_xiaomi_codec_is_installed():
         "xiaomi.vacuum.ov31cn",
         "xiaomi.vacuum.ov21cn",
         "xiaomi.vacuum.ov42cn",
+        "xiaomi.vacuum.c101",
+        "xiaomi.vacuum.c103",
+        "xiaomi.vacuum.d102ev",
+        "xiaomi.vacuum.pv11cn",
+        "xiaomi.vacuum.pv21cn",
     ):
         copied = _load(model, None)
         assert tuple(copied.list) == _COPIED_XIAOMI_ROW
@@ -229,6 +234,11 @@ def test_chinese_variants_keep_the_global_capability_list():
         ("xiaomi.vacuum.ov31gl", "xiaomi.vacuum.ov31cn"),
         ("xiaomi.vacuum.ov21gl", "xiaomi.vacuum.ov21cn"),
         ("xiaomi.vacuum.ov42gl", "xiaomi.vacuum.ov42cn"),
+        ("xiaomi.vacuum.c101eu", "xiaomi.vacuum.c101"),
+        ("xiaomi.vacuum.d106gl", "xiaomi.vacuum.c103"),
+        ("xiaomi.vacuum.d102gl", "xiaomi.vacuum.d102ev"),
+        ("xiaomi.vacuum.pv11gl", "xiaomi.vacuum.pv11cn"),
+        ("xiaomi.vacuum.pv21gl", "xiaomi.vacuum.pv21cn"),
     )
     for global_model, chinese_model in pairs:
         global_capability = _load(global_model, resolve_family(global_model))

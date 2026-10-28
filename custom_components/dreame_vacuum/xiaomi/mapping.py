@@ -9,8 +9,11 @@ from .b108gl import S20_PLUS
 from .b112 import E10
 from .b112bk import E10C
 from .b112gl import E12
+from .c101 import MIJIA_SWEEP_MOP_2
 from .c101eu import X20
+from .c103 import MIJIA_3C
 from .c108 import E5
+from .d102ev import MIJIA_M30
 from .d102gl import X20_PRO
 from .d106gl import S20
 from .d109gl import X20_MAX
@@ -25,11 +28,16 @@ from .model import (
     MODEL_H50_PRO,
     MODEL_H50_PRO_ROLLER,
     MODEL_H50_ROLLER,
+    MODEL_MIJIA_3C,
     MODEL_MIJIA_5_PRO,
     MODEL_MIJIA_5C,
+    MODEL_MIJIA_6_MAX,
+    MODEL_MIJIA_6_PRO,
     MODEL_MIJIA_7C,
+    MODEL_MIJIA_M30,
     MODEL_MIJIA_M40_S,
     MODEL_MIJIA_ROBOT_VACUUM_6,
+    MODEL_MIJIA_SWEEP_MOP_2,
     MODEL_ROBOT_VACUUM_5,
     MODEL_ROBOT_VACUUM_5_PRO,
     MODEL_ROBOT_VACUUM_6,
@@ -59,7 +67,9 @@ from .ov43gb import H50
 from .ov51gl import H40
 from .ov71gl import S40_PRO
 from .ov81gl import S40
+from .pv11cn import MIJIA_6_MAX
 from .pv11gl import ROBOT_VACUUM_6_MAX
+from .pv21cn import MIJIA_6_PRO
 from .pv21gl import ROBOT_VACUUM_6_PRO
 from .pv32cn import MIJIA_ROBOT_VACUUM_6
 from .pv32gl import ROBOT_VACUUM_6
@@ -101,6 +111,11 @@ _FAMILIES: Final[dict[str, XiaomiModel]] = {
     MODEL_MIJIA_M40_S: MIJIA_M40_S,
     MODEL_MIJIA_5_PRO: MIJIA_5_PRO,
     MODEL_MIJIA_5C: MIJIA_5C,
+    MODEL_MIJIA_SWEEP_MOP_2: MIJIA_SWEEP_MOP_2,
+    MODEL_MIJIA_3C: MIJIA_3C,
+    MODEL_MIJIA_M30: MIJIA_M30,
+    MODEL_MIJIA_6_MAX: MIJIA_6_MAX,
+    MODEL_MIJIA_6_PRO: MIJIA_6_PRO,
 }
 
 
