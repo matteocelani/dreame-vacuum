@@ -40,7 +40,7 @@ class ValueKind(StrEnum):
 
 @dataclass(frozen=True, slots=True)
 class XiaomiControl:
-    """One user-facing MIoT property or parameter-free action."""
+    """One user-facing MIoT property or action."""
 
     key: str
     domain: ControlDomain
@@ -56,6 +56,7 @@ class XiaomiControl:
     options: tuple[tuple[int, str], ...] = ()
     diagnostic: bool = False
     unit: str | None = None
+    action_parameters: tuple[tuple[int, int], ...] = ()
 
 
 def boolean_switch(key: str, siid: int, piid: int) -> XiaomiControl:
@@ -190,14 +191,20 @@ def number_control(
     )
 
 
-def action_button(key: str, siid: int, aiid: int) -> XiaomiControl:
-    """An action the spec invokes with an empty parameter list."""
+def action_button(
+    key: str,
+    siid: int,
+    aiid: int,
+    parameters: tuple[tuple[int, int], ...] = (),
+) -> XiaomiControl:
+    """An action. parameters are the spec input (piid, value) pairs."""
     return XiaomiControl(
         key=key,
         domain=ControlDomain.BUTTON,
         siid=siid,
         aiid=aiid,
         writable=True,
+        action_parameters=parameters,
     )
 
 
@@ -224,10 +231,13 @@ def write_control(device: object, control: XiaomiControl, value: object) -> None
 
 
 def invoke_control(device: object, control: XiaomiControl) -> None:
-    """Invoke a parameter-free action."""
+    """Invoke an action with the parameters declared on the control."""
     if control.siid is None or control.aiid is None:
         raise XiaomiControlException(control.key)
-    result = device._protocol.action(control.siid, control.aiid, [])
+    payload = [
+        {"piid": piid, "value": value} for piid, value in control.action_parameters
+    ]
+    result = device._protocol.action(control.siid, control.aiid, payload)
     if not isinstance(result, dict) or result.get("code") != 0:
         raise XiaomiControlException(control.key)
 

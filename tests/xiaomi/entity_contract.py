@@ -92,6 +92,129 @@ async def exercise_home_assistant_entities(
         assert_traffic_is_mapped(fake, family)
 
 
+async def assert_entities_read_or_write(hass: HomeAssistant, case: EntityCase) -> None:
+    """Assert each entity polls a mapped property or sends a mapped wire."""
+    version = sys.modules["custom_components.dreame_vacuum.dreame"].VERSION
+    family = require_family(case.model)
+    with FakeMiio(case.model) as fake:
+        entry = _entry(version, case.device_name + " Map")
+        entry.add_to_hass(hass)
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+        device = hass.data[DOMAIN][entry.entry_id].device
+        try:
+            keys = _registry_keys(hass, entry.entry_id)
+            assert ("switch", "dnd") not in keys
+            assert not any(key.startswith("reset_") for _domain, key in keys)
+            polled: list[tuple[int, int]] = []
+            original = device._protocol.get_properties
+
+            def record(
+                parameters: list[dict[str, int]],
+                retry_count: int = 1,
+                timeout: object = None,
+            ) -> list[dict[str, object]]:
+                del retry_count, timeout
+                polled.extend((item["siid"], item["piid"]) for item in parameters)
+                return original(parameters)
+
+            device._protocol.get_properties = record
+            await _refresh(hass, entry.entry_id)
+            seen = set(polled)
+            controls = {control.key: control for control in family.controls}
+            properties = {
+                name: (item["siid"], item["piid"])
+                for name, item in family.property_overrides.items()
+            }
+            for domain, key in keys:
+                if domain == "vacuum":
+                    await hass.services.async_call(
+                        "vacuum",
+                        "start",
+                        {"entity_id": _entity_id(hass, entry.entry_id, "vacuum", key)},
+                        blocking=True,
+                    )
+                    assert fake.actions[-1] == (
+                        family.action_overrides["START"]["siid"],
+                        family.action_overrides["START"]["aiid"],
+                    )
+                    assert properties["STATE"] in seen
+                    continue
+                if key == "firmware_version":
+                    assert _state(hass, entry.entry_id, "sensor", key)
+                    continue
+                if key == "problem":
+                    assert properties["ERROR"] in seen
+                    continue
+                if key == "maintenance":
+                    for name in case.consumable_life:
+                        assert properties[name] in seen
+                    continue
+                control = controls.get(key)
+                if control is not None and str(control.domain) == domain:
+                    if control.aiid is not None:
+                        await hass.services.async_call(
+                            "button",
+                            "press",
+                            {
+                                "entity_id": _entity_id(
+                                    hass, entry.entry_id, "button", key
+                                )
+                            },
+                            blocking=True,
+                        )
+                        assert fake.actions[-1] == (control.siid, control.aiid)
+                        assert fake.action_inputs[-1] == [
+                            {"piid": piid, "value": value}
+                            for piid, value in control.action_parameters
+                        ]
+                        continue
+                    assert (control.siid, control.piid) in seen
+                    if control.writable and control.domain == "number":
+                        await hass.services.async_call(
+                            "number",
+                            "set_value",
+                            {
+                                "entity_id": _entity_id(
+                                    hass, entry.entry_id, "number", key
+                                ),
+                                "value": control.minimum,
+                            },
+                            blocking=True,
+                        )
+                        assert fake.writes[-1][:2] == (control.siid, control.piid)
+                    if control.writable and control.domain == "select":
+                        fake.set_value(
+                            control.siid, control.piid, control.options[0][0]
+                        )
+                        await _refresh(hass, entry.entry_id)
+                        await hass.services.async_call(
+                            "select",
+                            "select_option",
+                            {
+                                "entity_id": _entity_id(
+                                    hass, entry.entry_id, "select", key
+                                ),
+                                "option": control.options[0][1],
+                            },
+                            blocking=True,
+                        )
+                        assert fake.writes[-1] == (
+                            control.siid,
+                            control.piid,
+                            control.options[0][0],
+                        )
+                    continue
+                prop = key.upper()
+                assert prop in properties, (domain, key)
+                assert properties[prop] in seen
+        finally:
+            assert await hass.config_entries.async_unload(entry.entry_id)
+            await hass.async_block_till_done()
+            release_device(device)
+        assert_traffic_is_mapped(fake, family)
+
+
 def _entry(version: int, device_name: str) -> MockConfigEntry:
     """Build a loopback config entry for one simulated vacuum."""
     return MockConfigEntry(
@@ -505,7 +628,10 @@ async def _exercise_binary_sensors(
         for domain, key in _registry_keys(hass, entry_id)
         if domain == "binary_sensor"
     }
-    assert binary_keys == {"charging_state", "problem", "maintenance"} | {
+    expected_binary = {"problem", "maintenance"}
+    if case.reports_charging:
+        expected_binary.add("charging_state")
+    assert binary_keys == expected_binary | {
         control.key for control in family.controls if control.domain == "binary_sensor"
     }
     battery = family.property_overrides["BATTERY_LEVEL"]
@@ -517,9 +643,6 @@ async def _exercise_binary_sensors(
         await _refresh(hass, entry_id)
         assert _state(hass, entry_id, "binary_sensor", "charging_state") == "on"
         fake.set_value(charging["siid"], charging["piid"], 2)
-        await _refresh(hass, entry_id)
-        assert _state(hass, entry_id, "binary_sensor", "charging_state") == "off"
-    else:
         await _refresh(hass, entry_id)
         assert _state(hass, entry_id, "binary_sensor", "charging_state") == "off"
     fake.set_value(error["siid"], error["piid"], 0)
@@ -574,7 +697,9 @@ async def _exercise_one_control(
             blocking=True,
         )
         assert fake.actions[-1] == (control.siid, control.aiid)
-        assert fake.action_inputs[-1] == []
+        assert fake.action_inputs[-1] == [
+            {"piid": piid, "value": value} for piid, value in control.action_parameters
+        ]
         return
     if control.domain == "sensor":
         await _show_control_sensor(hass, entry_id, fake, control)

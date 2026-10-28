@@ -20,11 +20,33 @@ def traffic_outside_map(
     action_inputs: list[object],
     properties: set[tuple[int, int]],
     action_addresses: set[tuple[int, int]],
+    allowed_payloads: set[tuple[tuple[int, int], ...]] | None = None,
 ) -> tuple[set[tuple[int, int]], set[tuple[int, int]], list[object]]:
     """Return writes, actions, and payloads that leave the model map."""
     write_pairs = {(siid, piid) for siid, piid, _value in writes}
-    unexpected = [payload for payload in action_inputs if payload not in ([], None)]
+    allowed = {()} if allowed_payloads is None else allowed_payloads
+    unexpected = [
+        payload for payload in action_inputs if _action_payload(payload) not in allowed
+    ]
     return (write_pairs - properties, set(actions) - action_addresses, unexpected)
+
+
+def _action_payload(payload: object) -> tuple[tuple[int, int], ...]:
+    """Normalize an action input list to (piid, value) pairs."""
+    if payload in (None, []):
+        return ()
+    if not isinstance(payload, list):
+        return ((-1, -1),)
+    pairs: list[tuple[int, int]] = []
+    for item in payload:
+        if not isinstance(item, dict):
+            return ((-1, -1),)
+        piid = item.get("piid")
+        value = item.get("value")
+        if not isinstance(piid, int) or not isinstance(value, int):
+            return ((-1, -1),)
+        pairs.append((piid, value))
+    return tuple(pairs)
 
 
 def _wire_for_state(family: XiaomiModel, stored: StoredState) -> int:

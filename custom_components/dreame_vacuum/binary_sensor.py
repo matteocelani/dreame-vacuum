@@ -43,6 +43,9 @@ BINARY_SENSORS: tuple[BinarySensorEntityDescription, ...] = (
             else "mdi:power-plug-off" if not device.status.docked else "mdi:power-plug"
         ),
         value_fn=lambda value, entity: entity.device.status.charging,
+        exists_fn=lambda description, device: (
+            DreameVacuumProperty.CHARGING_STATUS in device.property_mapping
+        ),
     ),
     DreameVacuumBinarySensorEntityDescription(
         property_key=DreameVacuumProperty.ROLLER_COVER_STATUS,

@@ -328,7 +328,6 @@ SWEEP_PROPERTY_REASONS: Final[dict[tuple[int, int], str]] = {
     (14, 6): "no ha meaning: voice checksum is neither readable nor writable.",
 }
 SWEEP_ACTION_REASONS: Final[dict[tuple[int, int], str]] = {
-    (7, 1): "needs council: reset-consumable takes a consumable-index parameter.",
     (7, 3): "map: room clean takes room ids.",
     (7, 7): "needs council: go-charging takes a start or stop parameter.",
     (8, 1): "needs council: adding a schedule takes an order blob.",
@@ -373,12 +372,12 @@ def sweep_case(
         property_reasons=SWEEP_PROPERTY_REASONS,
         action_reasons=SWEEP_ACTION_REASONS,
         state_after_read=SWEEP_STATE_AFTER_READ,
-        classification_counts={spec_filename: (35, 136)},
+        classification_counts={spec_filename: (36, 135)},
         spec_type=spec_type,
         reason_prefix_counts={
             "identity": 5,
             "map": 64,
-            "needs council": 48,
+            "needs council": 47,
             "no ha meaning": 19,
         },
         state_wire_eight=int(DreameVacuumState.UPGRADING),
@@ -515,7 +514,9 @@ def mapped_addresses(family: XiaomiModel, kind: str) -> dict[tuple[int, int], st
         if control.aiid is None or control.siid is None:
             continue
         pair = (control.siid, control.aiid)
-        assert pair not in found
+        if pair in found:
+            assert control.action_parameters
+            continue
         found[pair] = control.key
     return found
 
@@ -549,7 +550,9 @@ def assert_control_matches_spec(
 ) -> None:
     """Assert one control's access, options, and range follow its spec item."""
     if control.aiid is not None:
-        assert not spec.get("in"), control.key
+        assert list(spec.get("in") or []) == [
+            piid for piid, _value in control.action_parameters
+        ], control.key
         return
     access = spec.get("access")
     assert isinstance(access, list)
@@ -590,12 +593,16 @@ def connect_device(name: str) -> DreameVacuumDevice:
 
 def assert_traffic_is_mapped(fake: FakeMiio, family: XiaomiModel) -> None:
     """Assert every write and action stayed on a mapped address."""
+    allowed = {()}
+    for control in family.controls:
+        allowed.add(control.action_parameters)
     outside_writes, outside_actions, unexpected = traffic_outside_map(
         fake.writes,
         fake.actions,
         fake.action_inputs,
         set(mapped_addresses(family, "property")),
         set(mapped_addresses(family, "action")),
+        allowed,
     )
     assert not outside_writes
     assert not outside_actions
@@ -1038,11 +1045,13 @@ def _action_filenames(case: SpecCase) -> tuple[str, ...]:
 
 
 def _assert_mapped_actions_take_no_input(case: SpecCase, family: XiaomiModel) -> None:
-    """Assert every mapped action spec accepts an empty parameter list."""
-    mapped_actions = mapped_addresses(family, "action")
+    """Assert every Dreame-mapped action spec accepts an empty parameter list."""
+    dreame_actions = {
+        (item["siid"], item["aiid"]) for item in family.action_overrides.values()
+    }
     for filename in _action_filenames(case):
         for kind, siid, iid, spec in spec_items(filename):
-            if kind == "action" and (siid, iid) in mapped_actions:
+            if kind == "action" and (siid, iid) in dreame_actions:
                 assert not spec.get("in"), (filename, siid, iid)
 
 
@@ -1210,6 +1219,11 @@ def _assert_one_control(
     )
     assert (kind, pair[0], pair[1]) in current
     assert_control_matches_spec(control, current[(kind, pair[0], pair[1])])
+    for piid, value in control.action_parameters:
+        listed = current[("property", control.siid, piid)].get("value-list")
+        assert isinstance(listed, list)
+        published = {item["value"] for item in listed if isinstance(item, dict)}
+        assert value in published
     if previous is None:
         return
     if pair in case.version_only_controls:
@@ -1228,10 +1242,14 @@ def _exercise_one_control(
     """Read and, when writable, send every sample for one control."""
     if control.aiid is not None:
         spec = specs[("action", control.siid, control.aiid)]
-        assert not spec.get("in")
+        assert list(spec.get("in") or []) == [
+            piid for piid, _value in control.action_parameters
+        ]
         invoke_control(device, control)
         assert fake.actions[-1] == (control.siid, control.aiid)
-        assert fake.action_inputs[-1] == []
+        assert fake.action_inputs[-1] == [
+            {"piid": piid, "value": value} for piid, value in control.action_parameters
+        ]
         return
     if control.property_name:
         _send_named_property_options(device, fake, family, control)

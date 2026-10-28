@@ -2667,6 +2667,18 @@
       },
       "xiaomi_set_calibration": {
         "name": "Calibrate"
+      },
+      "xiaomi_reset_main_brush": {
+        "name": "Reset main brush"
+      },
+      "xiaomi_reset_side_brush": {
+        "name": "Reset side brush"
+      },
+      "xiaomi_reset_filter": {
+        "name": "Reset filter"
+      },
+      "xiaomi_reset_mop": {
+        "name": "Reset mop"
       }
     },
     "camera": {

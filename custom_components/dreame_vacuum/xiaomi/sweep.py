@@ -127,4 +127,9 @@ SWEEP_CONTROLS: Final[tuple[XiaomiControl, ...]] = (
     action_button("xiaomi_start_sweep_mop", 2, 5),
     action_button("xiaomi_start_mop", 2, 6),
     action_button("xiaomi_set_calibration", 7, 2),
+    # reset-consumable takes property 17. 1 middle, 2 side, 4 filter, 8 cloth.
+    action_button("xiaomi_reset_main_brush", 7, 1, ((17, 1),)),
+    action_button("xiaomi_reset_side_brush", 7, 1, ((17, 2),)),
+    action_button("xiaomi_reset_filter", 7, 1, ((17, 4),)),
+    action_button("xiaomi_reset_mop", 7, 1, ((17, 8),)),
 )

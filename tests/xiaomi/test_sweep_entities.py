@@ -6,19 +6,22 @@ from typing import Final
 
 from custom_components.dreame_vacuum.xiaomi import MODEL_E10, MODEL_E10C, MODEL_E12
 import pytest
-from tests.xiaomi.entity_contract import EntityCase, exercise_home_assistant_entities
+from tests.xiaomi.entity_contract import (
+    EntityCase,
+    assert_entities_read_or_write,
+    exercise_home_assistant_entities,
+)
 
 from homeassistant.core import HomeAssistant
 
 _ENTITIES: Final[frozenset[tuple[str, str]]] = frozenset(
     {
-        ("button", "reset_filter"),
-        ("button", "reset_main_brush"),
-        ("button", "reset_mop_pad"),
-        ("button", "reset_side_brush"),
-        ("binary_sensor", "charging_state"),
         ("binary_sensor", "maintenance"),
         ("binary_sensor", "problem"),
+        ("button", "xiaomi_reset_filter"),
+        ("button", "xiaomi_reset_main_brush"),
+        ("button", "xiaomi_reset_mop"),
+        ("button", "xiaomi_reset_side_brush"),
         ("button", "xiaomi_set_calibration"),
         ("button", "xiaomi_start_mop"),
         ("button", "xiaomi_start_only_sweep"),
@@ -52,7 +55,6 @@ _ENTITIES: Final[frozenset[tuple[str, str]]] = frozenset(
         ("sensor", "xiaomi_dnd_start_minute"),
         ("sensor", "xiaomi_dust_bin"),
         ("sensor", "xiaomi_mop_cloth"),
-        ("switch", "dnd"),
         ("vacuum", "dreame_vacuum"),
     }
 )
@@ -117,6 +119,34 @@ async def test_home_assistant_entities_follow_the_sweep_spec(
             omitted_legacy_selects=frozenset(
                 {"cleaning_mode", "suction_level", "water_volume"}
             ),
+            reports_charging=False,
+            station_vacuum=False,
+        ),
+    )
+
+
+@pytest.mark.parametrize(
+    ("model", "device_name"), _MODELS, ids=("b112", "b112gl", "b112bk")
+)
+async def test_every_entity_reads_or_writes_a_mapped_wire(
+    hass: HomeAssistant,
+    socket_enabled: None,
+    enable_custom_integrations: None,
+    integration_package: object,
+    model: str,
+    device_name: str,
+) -> None:
+    """A created entity polls a mapped property or sends a mapped action or write."""
+    del socket_enabled, enable_custom_integrations, integration_package
+    await assert_entities_read_or_write(
+        hass,
+        EntityCase(
+            model=model,
+            device_name=device_name,
+            entities=_ENTITIES,
+            counter_samples=_COUNTER_SAMPLES,
+            status_samples=_STATUS_SAMPLES,
+            consumable_life=_CONSUMABLE_LIFE,
             reports_charging=False,
             station_vacuum=False,
         ),
