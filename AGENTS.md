@@ -84,6 +84,7 @@ Every Python module follows the layout in `.agent/rules/modules.md`. The domain 
 | `/commit` | `.agent/commands/commit.md` |
 | `/pr` | `.agent/commands/pr.md` |
 | `/council` | `.agent/commands/council.md` |
+| `/upstream-sync` | `.agent/commands/upstream-sync.md` |
 
 Each procedure has preconditions, ordered steps, a done definition, and a NEVER list. Follow it. Do not improvise a shorter version.
 
