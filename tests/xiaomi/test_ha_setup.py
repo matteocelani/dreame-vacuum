@@ -11,6 +11,7 @@ from custom_components.dreame_vacuum.const import (
     DOMAIN,
 )
 from custom_components.dreame_vacuum.xiaomi.mapping import (
+    MODEL_H40,
     MODEL_ROBOT_VACUUM_5,
     MODEL_S20_PLUS,
     MODEL_S40,
@@ -52,6 +53,7 @@ async def test_setup_creates_vacuum_and_safe_commands_for_both_models(
         (MODEL_ROBOT_VACUUM_5, "Vacuum 5 Sim"),
         (MODEL_S40_PRO, "S40 Pro Sim"),
         (MODEL_S40, "S40 Sim"),
+        (MODEL_H40, "H40 Sim"),
     ):
         family = resolve_family(model)
         assert family is not None

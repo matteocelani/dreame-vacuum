@@ -9,6 +9,7 @@ from custom_components.dreame_vacuum.dreame.types import (
 )
 from custom_components.dreame_vacuum.xiaomi import resolve_family
 from custom_components.dreame_vacuum.xiaomi.mapping import (
+    MODEL_H40,
     MODEL_ROBOT_VACUUM_5,
     MODEL_S20_PLUS,
     MODEL_S40,
@@ -37,6 +38,7 @@ def test_loopback_device_start_pause_resume_and_dock_send_only_mapped_actions(
         MODEL_ROBOT_VACUUM_5,
         MODEL_S40_PRO,
         MODEL_S40,
+        MODEL_H40,
     ):
         family = resolve_family(model)
         assert family is not None

@@ -17,6 +17,7 @@ from custom_components.dreame_vacuum.xiaomi import (
     resolve_family,
 )
 from custom_components.dreame_vacuum.xiaomi.mapping import (
+    MODEL_H40,
     MODEL_ROBOT_VACUUM_5,
     MODEL_S20_PLUS,
     MODEL_S40,
@@ -255,6 +256,33 @@ def test_s40_reuses_the_vacuum_5_map_and_the_s40_class_controls():
     assert {control.key for control in s40.controls} >= set(added)
 
 
+def test_h40_reuses_the_s40_map_and_omits_detergent_reminder():
+    h40 = resolve_family(MODEL_H40)
+    s40 = resolve_family(MODEL_S40)
+    assert h40 is not None
+    assert s40 is not None
+    assert h40.property_overrides == s40.property_overrides
+    assert h40.property_overrides is not s40.property_overrides
+    assert h40.action_overrides == s40.action_overrides
+    assert h40.action_overrides is not s40.action_overrides
+    assert h40.state_by_wire == s40.state_by_wire
+    assert h40.state_by_wire is not s40.state_by_wire
+    assert h40.task_by_wire == s40.task_by_wire
+    assert h40.task_by_wire is not s40.task_by_wire
+    shared = {control.key: control for control in EXTENDED_STATION_CONTROLS}
+    added = {control.key: control for control in S40_CLASS_CONTROLS}
+    for control in h40.controls:
+        if control.key in shared:
+            assert control is shared[control.key]
+        else:
+            assert control is added[control.key]
+    omitted = set(shared) - {control.key for control in h40.controls}
+    assert omitted == set(S40_CLASS_OMITTED_CONTROLS) | {"xiaomi_detergent_reminder"}
+    assert {control.key for control in h40.controls} == {
+        control.key for control in s40.controls
+    } - {"xiaomi_detergent_reminder"}
+
+
 def test_compose_rejects_an_omission_the_profile_does_not_define():
     with pytest.raises(KeyError):
         compose_addresses(STATION_PROPERTIES, omitted=frozenset({"NO_SUCH"}))
@@ -266,7 +294,7 @@ def test_station_address_literals_are_declared_once():
     """Station address dicts are written only in the shared profile."""
     root = Path("custom_components/dreame_vacuum/xiaomi")
     profile = (root / "profile.py").read_text(encoding="utf-8")
-    for name in ("d109gl.py", "ov31gl.py", "ov71gl.py", "ov81gl.py"):
+    for name in ("d109gl.py", "ov31gl.py", "ov51gl.py", "ov71gl.py", "ov81gl.py"):
         text = (root / name).read_text(encoding="utf-8")
         assert "siid" not in text, name
         assert "aiid" not in text, name
@@ -303,6 +331,7 @@ def test_property_and_action_names_exist_on_the_dreame_enums():
         MODEL_ROBOT_VACUUM_5,
         MODEL_S40_PRO,
         MODEL_S40,
+        MODEL_H40,
     ):
         family = resolve_family(model)
         assert family is not None
