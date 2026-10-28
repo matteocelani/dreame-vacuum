@@ -14,6 +14,8 @@ from custom_components.dreame_vacuum.dreame.types import (
 from custom_components.dreame_vacuum.xiaomi import (
     MODEL_H50,
     MODEL_H50_PRO,
+    MODEL_H50_PRO_ROLLER,
+    MODEL_H50_ROLLER,
     MODEL_ROBOT_VACUUM_5_PRO,
     MODEL_ROBOT_VACUUM_6,
     MODEL_ROBOT_VACUUM_6_MAX,
@@ -43,6 +45,10 @@ from custom_components.dreame_vacuum.xiaomi.profile import (
     EXTENDED_STATION_CONTROLS,
     EXTENDED_STATION_STATES,
     EXTENDED_STATION_TASKS,
+    H50_ROLLER_ACTIONS,
+    H50_ROLLER_CONTROLS,
+    H50_ROLLER_PROPERTIES,
+    H50_ROLLER_STATES,
     HAIR_CUTTING_CONTROLS,
     HOST_TANK_WITH_NOT_INSTALLED,
     LIDAR_HARDWARE_CONTROLS,
@@ -839,6 +845,79 @@ def test_s60_models_reuse_the_s60_class_profile() -> None:
     )
 
 
+def test_h50_roller_models_share_the_roller_profile_and_declare_differences():
+    """H50 Pro Roller adds eject and AI detection. H50 Roller publishes mop-only."""
+    pro = resolve_family(MODEL_H50_PRO_ROLLER)
+    plain = resolve_family(MODEL_H50_ROLLER)
+    assert pro is not None
+    assert plain is not None
+    assert set(pro.property_overrides) == set(H50_ROLLER_PROPERTIES) - {"CLEANING_MODE"}
+    assert pro.property_overrides is not H50_ROLLER_PROPERTIES
+    assert plain.property_overrides == H50_ROLLER_PROPERTIES
+    assert plain.property_overrides is not H50_ROLLER_PROPERTIES
+    assert plain.property_overrides["CLEANING_MODE"]["piid"] == 4
+    assert pro.action_overrides == plain.action_overrides == H50_ROLLER_ACTIONS
+    assert pro.action_overrides is not H50_ROLLER_ACTIONS
+    assert pro.task_by_wire == plain.task_by_wire == EXTENDED_STATION_TASKS
+    assert pro.state_by_wire == H50_ROLLER_STATES
+    assert pro.state_by_wire is not H50_ROLLER_STATES
+    assert 22 not in pro.state_by_wire
+    assert 23 not in pro.state_by_wire
+    assert plain.state_by_wire == S60_CLASS_STATES
+    assert plain.state_by_wire is not S60_CLASS_STATES
+    assert plain.state_by_wire[8] == 19
+    assert plain.state_by_wire[22] == int(StoredState.WASHING)
+    assert plain.state_by_wire[26] == int(StoredState.CLEAN_SUMMON)
+    shared = {control.key: control for control in H50_ROLLER_CONTROLS}
+    pro_controls = {control.key: control for control in pro.controls}
+    plain_controls = {control.key: control for control in plain.controls}
+    assert set(shared) <= set(pro_controls)
+    for key, control in shared.items():
+        assert pro_controls[key] is control
+    assert set(pro_controls) - set(shared) == {
+        "xiaomi_start_eject",
+        "xiaomi_sweep_ai_detection",
+    }
+    assert pro_controls["xiaomi_worry_free_mode"] is WORRY_FREE_THROUGH_BUTLER
+    assert pro_controls["xiaomi_host_tank"] is HOST_TANK_WITH_NOT_INSTALLED
+    assert [value for value, _slug in pro_controls["xiaomi_cleaning_mode"].options] == [
+        1,
+        3,
+        4,
+    ]
+    assert "CLEANING_MODE" not in pro.property_overrides
+    assert "xiaomi_cleaning_mode" not in plain_controls
+    assert "CLEANING_MODE" in plain.property_overrides
+    extended = {control.key: control for control in EXTENDED_STATION_CONTROLS}
+    assert (
+        plain_controls["xiaomi_worry_free_mode"] is extended["xiaomi_worry_free_mode"]
+    )
+    assert [slug for _value, slug in plain_controls["xiaomi_worry_free_mode"].options][
+        -1
+    ] == "pet"
+    assert set(plain_controls) - set(shared) == {
+        "xiaomi_calibrate_imu",
+        "xiaomi_dust_arrest_power",
+        "xiaomi_mop_auto_lift",
+        "xiaomi_sewage_tank",
+        "xiaomi_start_mop",
+        "xiaomi_start_mop_wash",
+        "xiaomi_station_water_level",
+    }
+    for key in (
+        "xiaomi_auto_water_change",
+        "xiaomi_brush_outswing",
+        "xiaomi_hot_water_wash",
+        "xiaomi_mop_outer_swing",
+        "xiaomi_start_eject",
+        "xiaomi_sweep_ai_detection",
+    ):
+        assert key not in plain_controls
+    assert "MOP_PAD_LEFT" not in pro.property_overrides
+    assert "RESET_DETERGENT" not in pro.action_overrides
+    assert "DETERGENT_LEFT" not in plain.property_overrides
+
+
 def test_compose_rejects_an_omission_the_profile_does_not_define():
     with pytest.raises(KeyError):
         compose_addresses(STATION_PROPERTIES, omitted=frozenset({"NO_SUCH"}))
@@ -865,6 +944,8 @@ def test_station_address_literals_are_declared_once():
         "pv32gl.py",
         "pv51gl.py",
         "pv81gl.py",
+        "qv41gl.py",
+        "qv42gl.py",
         "ov51gl.py",
         "ov71gl.py",
         "ov81gl.py",
@@ -915,6 +996,8 @@ def test_property_and_action_names_exist_on_the_dreame_enums():
         MODEL_ROBOT_VACUUM_6_PRO,
         MODEL_S60,
         MODEL_S60_PLUS,
+        MODEL_H50_PRO_ROLLER,
+        MODEL_H50_ROLLER,
         MODEL_X20_PRO,
     ):
         family = resolve_family(model)

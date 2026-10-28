@@ -84,6 +84,8 @@ Configure a Dreame, MOVA, Mijia, or TROUVER vacuum with the upstream guides. Tho
 | Xiaomi Robot Vacuum H50 Pro | `xiaomi.vacuum.ov42gl` |
 | Xiaomi Robot Vacuum 5 Pro | `xiaomi.vacuum.ov21gl` |
 | Xiaomi Robot Vacuum H50 | `xiaomi.vacuum.ov43gb` |
+| Xiaomi Robot Vacuum H50 Pro Roller | `xiaomi.vacuum.qv41gl` |
+| Xiaomi Robot Vacuum H50 Roller | `xiaomi.vacuum.qv42gl` |
 | Xiaomi Robot Vacuum 6 | `xiaomi.vacuum.pv32gl` |
 | Xiaomi Robot Vacuum 6 Max | `xiaomi.vacuum.pv11gl` |
 | Xiaomi Robot Vacuum 6 Pro | `xiaomi.vacuum.pv21gl` |

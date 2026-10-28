@@ -15,6 +15,8 @@ from custom_components.dreame_vacuum.dreame.types import (
 from custom_components.dreame_vacuum.xiaomi import (
     MODEL_H50,
     MODEL_H50_PRO,
+    MODEL_H50_PRO_ROLLER,
+    MODEL_H50_ROLLER,
     MODEL_ROBOT_VACUUM_5_PRO,
     MODEL_ROBOT_VACUUM_6,
     MODEL_ROBOT_VACUUM_6_MAX,
@@ -286,6 +288,13 @@ _ACTION_TEXT[MODEL_ROBOT_VACUUM_6] = {
     for name, text in _ACTION_TEXT[MODEL_S40_PRO].items()
     if name != "RESET_MOP_PAD"
 }
+_PROPERTY_TEXT[MODEL_H50_PRO_ROLLER] = _PROPERTY_TEXT[MODEL_ROBOT_VACUUM_6]
+_ACTION_TEXT[MODEL_H50_PRO_ROLLER] = _ACTION_TEXT[MODEL_ROBOT_VACUUM_6]
+_PROPERTY_TEXT[MODEL_H50_ROLLER] = {
+    **_PROPERTY_TEXT[MODEL_ROBOT_VACUUM_6],
+    "CLEANING_MODE": "Sweep Mop Type",
+}
+_ACTION_TEXT[MODEL_H50_ROLLER] = _ACTION_TEXT[MODEL_ROBOT_VACUUM_6]
 _SPEC_FILES = {
     MODEL_S20_PLUS: ("b108gl.json",),
     MODEL_X20_MAX: ("d109gl.json", "d109gl_v1.json"),
@@ -303,6 +312,8 @@ _SPEC_FILES = {
     MODEL_ROBOT_VACUUM_6_PRO: ("pv21gl.json",),
     MODEL_S60_PLUS: ("pv51gl.json",),
     MODEL_S60: ("pv81gl.json",),
+    MODEL_H50_PRO_ROLLER: ("qv41gl.json",),
+    MODEL_H50_ROLLER: ("qv42gl.json",),
 }
 _ABSENT_PROPERTIES = (
     "STATUS",
@@ -396,6 +407,8 @@ def test_charging_value_three_is_not_chargeable():
         "pv21gl.json",
         "pv51gl.json",
         "pv81gl.json",
+        "qv41gl.json",
+        "qv42gl.json",
     ):
         assert _charging_value(name, 3) == "Not Chargeable"
         assert _charging_value(name, 1) == "Charging"
