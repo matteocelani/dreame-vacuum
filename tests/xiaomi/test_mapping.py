@@ -22,6 +22,7 @@ from custom_components.dreame_vacuum.xiaomi.mapping import (
     MODEL_S20_PLUS,
     MODEL_S40,
     MODEL_S40_PRO,
+    MODEL_S40C,
     MODEL_X20_MAX,
 )
 from custom_components.dreame_vacuum.xiaomi.profile import (
@@ -37,6 +38,7 @@ from custom_components.dreame_vacuum.xiaomi.profile import (
     STATION_STATISTICS_PROPERTIES,
     compose_addresses,
     compose_controls,
+    control_with_options,
 )
 import pytest
 
@@ -283,6 +285,60 @@ def test_h40_reuses_the_s40_map_and_omits_detergent_reminder() -> None:
     } - {"xiaomi_detergent_reminder"}
 
 
+def test_s40c_reuses_the_s40_map_and_replaces_worry_free_mode() -> None:
+    s40c = resolve_family(MODEL_S40C)
+    s40 = resolve_family(MODEL_S40)
+    assert s40c is not None
+    assert s40 is not None
+    assert s40c.property_overrides == s40.property_overrides
+    assert s40c.property_overrides is not s40.property_overrides
+    assert s40c.action_overrides == s40.action_overrides
+    assert s40c.action_overrides is not s40.action_overrides
+    assert s40c.state_by_wire == s40.state_by_wire
+    assert s40c.state_by_wire is not s40.state_by_wire
+    assert s40c.task_by_wire == s40.task_by_wire
+    assert s40c.task_by_wire is not s40.task_by_wire
+    shared = {control.key: control for control in EXTENDED_STATION_CONTROLS}
+    added = {control.key: control for control in S40_CLASS_CONTROLS}
+    dropped = {
+        "xiaomi_enable_mop_wash",
+        "xiaomi_start_cut_hair",
+        "xiaomi_stop_cut_hair",
+        "xiaomi_stop_dry",
+    }
+    for control in s40c.controls:
+        if control.key == "xiaomi_worry_free_mode":
+            assert control is not shared[control.key]
+            assert (control.siid, control.piid) == (
+                shared[control.key].siid,
+                shared[control.key].piid,
+            )
+            assert [slug for _value, slug in control.options] == [
+                "deep_clean",
+                "deep_clean_2",
+                "general",
+                "butler",
+                "pet",
+            ]
+        elif control.key in shared:
+            assert control is shared[control.key]
+        else:
+            assert control is added[control.key]
+    omitted = set(shared) - {control.key for control in s40c.controls}
+    assert omitted == set(S40_CLASS_OMITTED_CONTROLS) | dropped
+    assert {control.key for control in s40c.controls} == {
+        control.key for control in s40.controls
+    } - dropped
+    with pytest.raises(KeyError):
+        control_with_options(EXTENDED_STATION_CONTROLS, "missing", ())
+    with pytest.raises(KeyError):
+        compose_controls(
+            EXTENDED_STATION_CONTROLS,
+            omitted=frozenset({"xiaomi_alarm"}),
+            replaced={"xiaomi_alarm": shared["xiaomi_alarm"]},
+        )
+
+
 def test_compose_rejects_an_omission_the_profile_does_not_define():
     with pytest.raises(KeyError):
         compose_addresses(STATION_PROPERTIES, omitted=frozenset({"NO_SUCH"}))
@@ -294,7 +350,14 @@ def test_station_address_literals_are_declared_once():
     """Station address dicts are written only in the shared profile."""
     root = Path("custom_components/dreame_vacuum/xiaomi")
     profile = (root / "profile.py").read_text(encoding="utf-8")
-    for name in ("d109gl.py", "ov31gl.py", "ov51gl.py", "ov71gl.py", "ov81gl.py"):
+    for name in (
+        "d109gl.py",
+        "e101gb.py",
+        "ov31gl.py",
+        "ov51gl.py",
+        "ov71gl.py",
+        "ov81gl.py",
+    ):
         text = (root / name).read_text(encoding="utf-8")
         assert "siid" not in text, name
         assert "aiid" not in text, name
@@ -332,6 +395,7 @@ def test_property_and_action_names_exist_on_the_dreame_enums():
         MODEL_S40_PRO,
         MODEL_S40,
         MODEL_H40,
+        MODEL_S40C,
     ):
         family = resolve_family(model)
         assert family is not None
