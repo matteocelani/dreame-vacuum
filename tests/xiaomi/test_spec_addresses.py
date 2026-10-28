@@ -16,6 +16,7 @@ from custom_components.dreame_vacuum.xiaomi import resolve_family
 from custom_components.dreame_vacuum.xiaomi.mapping import (
     MODEL_ROBOT_VACUUM_5,
     MODEL_S20_PLUS,
+    MODEL_S40_PRO,
     MODEL_X20_MAX,
 )
 
@@ -123,6 +124,42 @@ _PROPERTY_TEXT = {
         "DETERGENT_LEFT": "Detergent Left Level",
         "DETERGENT_TIME_LEFT": "Detergent Left Time",
     },
+    MODEL_S40_PRO: {
+        "STATE": "Status",
+        "ERROR": "Device Fault",
+        "CLEANING_MODE": "Sweep Mop Type",
+        "TASK_STATUS": "Sweep Type",
+        "CLEANED_AREA": "Cleaning Area",
+        "CLEANING_TIME": "Cleaning Time",
+        "SUCTION_LEVEL": "Mode",
+        "WATER_VOLUME": "Mop Water Output Level",
+        "WATER_TANK": "Mop Status",
+        "SCHEDULE": "Order Clean",
+        "CARPET_BOOST": "Carpet Boost",
+        "RESUME_CLEANING": "Sweep Break Switch",
+        "RELOCATION_STATUS": "Location Status",
+        "AUTO_DUST_COLLECTING": "Auto Dust Arrest",
+        "AUTO_EMPTY_FREQUENCY": "Dust Arrest Frequency",
+        "CLEANING_PROPERTIES": "Current Cleaning Config",
+        "FAULTS": "Fault Ids",
+        "CARPET_CLEANING": "Carpet Cleaning Method",
+        "TOTAL_CLEANED_AREA": "Statistical Clean Area",
+        "CLEANING_COUNT": "Statistical Cleaning Times",
+        "TOTAL_CLEANING_TIME": "Statistical Cleaning Duration",
+        "BATTERY_LEVEL": "Battery Level",
+        "CHARGING_STATUS": "Charging State",
+        "VOLUME": "Volume",
+        "CHILD_LOCK": "Physical Control Locked",
+        "MOP_PAD_LEFT": "Mop Life Level",
+        "MOP_PAD_TIME_LEFT": "Mop Left Time",
+        "DND": "No Disturb",
+        "MAIN_BRUSH_LEFT": "Brush Life Level",
+        "MAIN_BRUSH_TIME_LEFT": "Brush Left Time",
+        "SIDE_BRUSH_LEFT": "Brush Life Level",
+        "SIDE_BRUSH_TIME_LEFT": "Brush Left Time",
+        "FILTER_LEFT": "Filter Life Level",
+        "FILTER_TIME_LEFT": "Filter Left Time",
+    },
 }
 _ACTION_TEXT = {
     MODEL_S20_PLUS: {
@@ -168,11 +205,26 @@ _ACTION_TEXT = {
         "RESET_FILTER": "Reset Filter Life",
         "RESET_DETERGENT": "Reset Detergent Management Level",
     },
+    MODEL_S40_PRO: {
+        "START": "Start Sweep",
+        "STOP": "Stop Sweeping",
+        "PAUSE": "Pause Sweeping",
+        "RESUME": "Continue Sweep",
+        "START_CUSTOM": "Start Custom Sweep",
+        "START_AUTO_EMPTY": "Start Dust Arrest",
+        "CHARGE": "Start Charge",
+        "LOCATE": "Identify",
+        "RESET_MOP_PAD": "Reset Mop Life",
+        "RESET_MAIN_BRUSH": "Reset Brush Life",
+        "RESET_SIDE_BRUSH": "Reset Brush Life",
+        "RESET_FILTER": "Reset Filter Life",
+    },
 }
 _SPEC_FILES = {
     MODEL_S20_PLUS: ("b108gl.json",),
     MODEL_X20_MAX: ("d109gl.json", "d109gl_v1.json"),
     MODEL_ROBOT_VACUUM_5: ("ov31gl.json", "ov31gl_v1.json"),
+    MODEL_S40_PRO: ("ov71gl.json",),
 }
 _ABSENT_PROPERTIES = (
     "STATUS",
@@ -249,6 +301,7 @@ def test_charging_value_three_is_not_chargeable():
         "d109gl_v1.json",
         "ov31gl.json",
         "ov31gl_v1.json",
+        "ov71gl.json",
     ):
         assert _charging_value(name, 3) == "Not Chargeable"
         assert _charging_value(name, 1) == "Charging"

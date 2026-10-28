@@ -17,6 +17,7 @@ from custom_components.dreame_vacuum.xiaomi import resolve_family
 from custom_components.dreame_vacuum.xiaomi.mapping import (
     MODEL_ROBOT_VACUUM_5,
     MODEL_S20_PLUS,
+    MODEL_S40_PRO,
     MODEL_X20_MAX,
 )
 import pytest
@@ -84,6 +85,12 @@ def test_paused_start_uses_continue_sweep_and_skips_unmapped_actions():
             "pause": (2, 7),
             "charge": (3, 1),
         },
+        MODEL_S40_PRO: {
+            "resume": (2, 8),
+            "start": (2, 1),
+            "pause": (2, 7),
+            "charge": (3, 1),
+        },
     }
     for model, addresses in expected.items():
         device, sent = _device(model)
@@ -133,7 +140,7 @@ def test_paused_start_uses_continue_sweep_and_skips_unmapped_actions():
 
 
 def test_property_reads_stay_inside_the_explicit_map():
-    for model in (MODEL_S20_PLUS, MODEL_X20_MAX, MODEL_ROBOT_VACUUM_5):
+    for model in (MODEL_S20_PLUS, MODEL_X20_MAX, MODEL_ROBOT_VACUUM_5, MODEL_S40_PRO):
         device, _sent = _device(model)
         requested: list[tuple[int, int]] = []
 
@@ -170,10 +177,13 @@ def test_property_reads_stay_inside_the_explicit_map():
         assert requested
         assert set(requested) <= allowed | controls
         assert (7, 2) not in requested
-        if model == MODEL_ROBOT_VACUUM_5:
+        if model in (MODEL_ROBOT_VACUUM_5, MODEL_S40_PRO):
             assert (4, 1) in requested
             assert (5, 2) in requested
-        else:
+        if model == MODEL_S40_PRO:
+            assert (18, 1) not in requested
+            assert (19, 1) not in requested
+        if model not in (MODEL_ROBOT_VACUUM_5, MODEL_S40_PRO):
             assert controls == set()
             assert (4, 1) not in requested
             assert (5, 2) not in requested
