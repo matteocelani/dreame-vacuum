@@ -381,7 +381,7 @@ def test_robot_vacuum_5_pro_reuses_the_station_profile_and_adds_stream() -> None
         elif control.key == "xiaomi_solid_dirt_detection":
             assert control is SOLID_DIRT_DETECTION
         elif control.key in stream:
-            continue
+            assert control.siid == 21
         elif control.key in shared:
             assert control is shared[control.key]
         else:
@@ -417,8 +417,10 @@ def test_h50_pro_reuses_the_s40_map_and_restores_published_controls() -> None:
             assert control is shared[control.key]
         elif control.key in added:
             assert control is added[control.key]
+        elif control.key == "xiaomi_solid_dirt_detection":
+            assert control is SOLID_DIRT_DETECTION
         else:
-            assert control.key in extra
+            assert control.key == "xiaomi_self_check_results"
     omitted = set(shared) - {control.key for control in h50.controls}
     assert omitted == {"xiaomi_laser_position", "xiaomi_obstacle_crossing"}
     restored = set(S40_CLASS_OMITTED_CONTROLS) - omitted

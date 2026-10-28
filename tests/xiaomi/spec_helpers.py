@@ -521,14 +521,9 @@ def _classify_file(
             omitted_count += 1
         if mapped:
             name = mapped_addresses(family, kind)[(siid, iid)]
-            assert (
-                _has_published_name(_spec)
-                or (
-                    siid,
-                    iid,
-                )
-                in case.version_only_controls
-            )
+            published = _has_published_name(_spec)
+            version_only = (siid, iid) in case.version_only_controls
+            assert published or version_only
             assert name
             mapped_count += 1
     return mapped_count, omitted_count
