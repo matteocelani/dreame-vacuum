@@ -32,18 +32,22 @@ _WATER_OPTIONS: Final[tuple[tuple[int, str], ...]] = (
     (1, "mid"),
     (2, "high"),
 )
-
-
-class _ExtraWireState(IntEnum):
-    """Status codes the S20 spec adds after the shared sweep list."""
-
-    BUILDING = 9
-    CHARGING = 10
-
-
 # Index 3 is the filter and 4 is the cloth. The shared buttons send 4 and 8.
-_RESET_FILTER: Final = action_button("xiaomi_reset_filter", 7, 1, ((17, 3),))
-_RESET_MOP: Final = action_button("xiaomi_reset_mop", 7, 1, ((17, 4),))
+_CONSUMABLE_INDEX: Final = 17
+_FILTER_CONSUMABLE: Final = 3
+_CLOTH_CONSUMABLE: Final = 4
+_RESET_FILTER: Final = action_button(
+    "xiaomi_reset_filter",
+    7,
+    1,
+    ((_CONSUMABLE_INDEX, _FILTER_CONSUMABLE),),
+)
+_RESET_MOP: Final = action_button(
+    "xiaomi_reset_mop",
+    7,
+    1,
+    ((_CONSUMABLE_INDEX, _CLOTH_CONSUMABLE),),
+)
 # The released alarm is a boolean. The shared list is a one-value play enum.
 _ALARM: Final = boolean_switch("xiaomi_alarm", 4, 1)
 _ADDED_CONTROLS: Final[tuple[XiaomiControl, ...]] = (
@@ -75,6 +79,14 @@ _ADDED_CONTROLS: Final[tuple[XiaomiControl, ...]] = (
         ),
     ),
 )
+
+
+class _ExtraWireState(IntEnum):
+    """Status codes the S20 spec adds after the shared sweep list."""
+
+    BUILDING = 9
+    CHARGING = 10
+
 
 S20: Final = XiaomiModel(
     model=MODEL_S20,
