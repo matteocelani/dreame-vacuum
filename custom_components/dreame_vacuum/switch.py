@@ -75,6 +75,10 @@ SWITCHES: tuple[DreameVacuumSwitchEntityDescription, ...] = (
         name="DnD",
         icon_fn=lambda value, device: "mdi:minus-circle-off-outline" if not value else "mdi:minus-circle-outline",
         entity_category=EntityCategory.CONFIG,
+        exists_fn=lambda description, device: (
+            DreameVacuumProperty.DND in device.property_mapping
+            or DreameVacuumProperty.DND_TASK in device.property_mapping
+        ),
     ),
     DreameVacuumSwitchEntityDescription(
         property_key=DreameVacuumProperty.DND_DISABLE_RESUME_CLEANING,

@@ -949,6 +949,60 @@
           "ignore": "Ignore",
           "span": "Cross"
         }
+      },
+      "xiaomi_alarm": {
+        "name": "Alarm",
+        "state": {
+          "play": "Play"
+        }
+      },
+      "xiaomi_sweep_mode": {
+        "name": "Cleaning mode",
+        "state": {
+          "sweep": "Sweep",
+          "sweep_and_mop": "Sweep and mop",
+          "mop": "Mop"
+        }
+      },
+      "xiaomi_sweep_type": {
+        "name": "Sweep type",
+        "state": {
+          "global": "Whole home",
+          "edge": "Edges",
+          "point": "Spot",
+          "remote": "Remote"
+        }
+      },
+      "xiaomi_repeat_clean": {
+        "name": "Repeat clean",
+        "state": {
+          "close": "Off"
+        }
+      },
+      "xiaomi_suction": {
+        "name": "Suction",
+        "state": {
+          "close": "Off",
+          "one": "One",
+          "two": "Two",
+          "three": "Three",
+          "forth": "Four"
+        }
+      },
+      "xiaomi_water_level": {
+        "name": "Water level",
+        "state": {
+          "close": "Off",
+          "one": "One",
+          "two": "Two",
+          "three": "Three"
+        }
+      },
+      "xiaomi_mop_route": {
+        "name": "Mop route",
+        "state": {
+          "bowtype": "Bow"
+        }
       }
     },
     "sensor": {
@@ -2013,6 +2067,41 @@
       },
       "xiaomi_current_voice": {
         "name": "Current voice"
+      },
+      "xiaomi_dust_bin": {
+        "name": "Dust bin",
+        "state": {
+          "none": "None",
+          "dust_box": "Dust box",
+          "water_box": "Water tank",
+          "two_in_one": "Dust box and water tank"
+        }
+      },
+      "xiaomi_mop_cloth": {
+        "name": "Mop cloth",
+        "state": {
+          "none": "None",
+          "exist": "Installed"
+        }
+      },
+      "xiaomi_dnd_enabled": {
+        "name": "Do not disturb",
+        "state": {
+          "close": "Off",
+          "open": "On"
+        }
+      },
+      "xiaomi_dnd_start_hour": {
+        "name": "Do not disturb start hour"
+      },
+      "xiaomi_dnd_start_minute": {
+        "name": "Do not disturb start minute"
+      },
+      "xiaomi_dnd_end_hour": {
+        "name": "Do not disturb end hour"
+      },
+      "xiaomi_dnd_end_minute": {
+        "name": "Do not disturb end minute"
       }
     },
     "switch": {
@@ -2572,6 +2661,24 @@
       },
       "xiaomi_find_pet": {
         "name": "Find pet"
+      },
+      "xiaomi_start_only_sweep": {
+        "name": "Start sweep only"
+      },
+      "xiaomi_set_calibration": {
+        "name": "Calibrate"
+      },
+      "xiaomi_reset_main_brush": {
+        "name": "Reset main brush"
+      },
+      "xiaomi_reset_side_brush": {
+        "name": "Reset side brush"
+      },
+      "xiaomi_reset_filter": {
+        "name": "Reset filter"
+      },
+      "xiaomi_reset_mop": {
+        "name": "Reset mop"
       }
     },
     "camera": {
@@ -2670,6 +2777,9 @@
       },
       "xiaomi_mop_wash_interval": {
         "name": "Mop wash interval"
+      },
+      "xiaomi_volume": {
+        "name": "Volume"
       }
     },
     "time": {

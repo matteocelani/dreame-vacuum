@@ -11,6 +11,7 @@ from typing import Final
 
 from Crypto.Cipher import AES
 from custom_components.dreame_vacuum.xiaomi import resolve_family
+from custom_components.dreame_vacuum.xiaomi.model import StoredState, XiaomiModel
 
 
 def traffic_outside_map(
@@ -19,11 +20,43 @@ def traffic_outside_map(
     action_inputs: list[object],
     properties: set[tuple[int, int]],
     action_addresses: set[tuple[int, int]],
+    allowed_payloads: set[tuple[tuple[int, int], ...]] | None = None,
 ) -> tuple[set[tuple[int, int]], set[tuple[int, int]], list[object]]:
     """Return writes, actions, and payloads that leave the model map."""
     write_pairs = {(siid, piid) for siid, piid, _value in writes}
-    unexpected = [payload for payload in action_inputs if payload not in ([], None)]
+    allowed = {()} if allowed_payloads is None else allowed_payloads
+    unexpected = [
+        payload for payload in action_inputs if _action_payload(payload) not in allowed
+    ]
     return (write_pairs - properties, set(actions) - action_addresses, unexpected)
+
+
+def _action_payload(payload: object) -> tuple[tuple[int, int], ...]:
+    """Normalize an action input list to (piid, value) pairs."""
+    if payload in (None, []):
+        return ()
+    if not isinstance(payload, list):
+        return ((-1, -1),)
+    pairs: list[tuple[int, int]] = []
+    for item in payload:
+        if not isinstance(item, dict):
+            return ((-1, -1),)
+        piid = item.get("piid")
+        value = item.get("value")
+        if not isinstance(piid, int) or not isinstance(value, int):
+            return ((-1, -1),)
+        pairs.append((piid, value))
+    return tuple(pairs)
+
+
+def _wire_for_state(family: XiaomiModel, stored: StoredState) -> int:
+    """Return the lowest wire that this family's state map stores as stored."""
+    matches = [
+        wire for wire, value in family.state_by_wire.items() if value == int(stored)
+    ]
+    if not matches:
+        raise KeyError(stored)
+    return min(matches)
 
 
 def release_device(device: object) -> None:
@@ -109,10 +142,13 @@ class FakeMiio:
         for mapping in self._family.property_overrides.values():
             values[(mapping["siid"], mapping["piid"])] = 0
         state = self._family.property_overrides["STATE"]
-        charging = self._family.property_overrides["CHARGING_STATUS"]
         battery = self._family.property_overrides["BATTERY_LEVEL"]
-        values[(state["siid"], state["piid"])] = 2
-        values[(charging["siid"], charging["piid"])] = 1
+        values[(state["siid"], state["piid"])] = _wire_for_state(
+            self._family, StoredState.CHARGING
+        )
+        charging = self._family.property_overrides.get("CHARGING_STATUS")
+        if charging is not None:
+            values[(charging["siid"], charging["piid"])] = 1
         values[(battery["siid"], battery["piid"])] = 90
         for control in self._family.controls:
             if control.siid is None or control.piid is None:
@@ -130,12 +166,11 @@ class FakeMiio:
     def _set_state(self, wire: int) -> None:
         self._values[self._state_pair()] = wire
 
-    def _charging_pair(self) -> tuple[int, int]:
-        mapping = self._family.property_overrides["CHARGING_STATUS"]
-        return mapping["siid"], mapping["piid"]
-
     def _set_charging(self, wire: int) -> None:
-        self._values[self._charging_pair()] = wire
+        mapping = self._family.property_overrides.get("CHARGING_STATUS")
+        if mapping is None:
+            return
+        self._values[(mapping["siid"], mapping["piid"])] = wire
 
     def set_value(self, siid: int, piid: int, value: object) -> None:
         """Store one property the next read will return."""
@@ -239,17 +274,18 @@ class FakeMiio:
         self.action_inputs.append(params.get("in"))
         address = (siid, aiid)
         actions = self._family.action_overrides
-        if address == (
-            actions["START"]["siid"],
-            actions["START"]["aiid"],
-        ) or address == (actions["RESUME"]["siid"], actions["RESUME"]["aiid"]):
-            self._set_state(4)
+        start = (actions["START"]["siid"], actions["START"]["aiid"])
+        resume = actions.get("RESUME")
+        resume_address = None if resume is None else (resume["siid"], resume["aiid"])
+        pause = actions.get("PAUSE")
+        if address in (start, resume_address):
+            self._set_state(_wire_for_state(self._family, StoredState.SWEEPING))
             self._set_charging(2)
-        elif address == (actions["PAUSE"]["siid"], actions["PAUSE"]["aiid"]):
-            self._set_state(5)
+        elif pause is not None and address == (pause["siid"], pause["aiid"]):
+            self._set_state(_wire_for_state(self._family, StoredState.PAUSED))
             self._set_charging(2)
         elif address == (actions["CHARGE"]["siid"], actions["CHARGE"]["aiid"]):
-            self._set_state(2)
+            self._set_state(_wire_for_state(self._family, StoredState.CHARGING))
             self._set_charging(1)
         return {"code": 0}
 

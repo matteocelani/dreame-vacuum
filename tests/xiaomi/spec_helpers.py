@@ -78,6 +78,8 @@ class SpecCase:
     version_only_controls: frozenset[tuple[int, int]] = frozenset()
     action_spec_filenames: tuple[str, ...] = ()
     previous_spec_filename: str | None = None
+    state_wire_eight: int | None = 19
+    station_shell: bool = True
 
 
 # S60+ and S60 omit the same items. Each model maps only its own extra addresses.
@@ -275,6 +277,114 @@ ROBOT_VACUUM_6_ACTION_REASONS: Final[dict[tuple[int, int], str]] = {
     (20, 16): "needs council: reading OTA info takes an opaque parameter.",
 }
 
+_SCHEDULE_REASON: Final = "needs council: schedule editing takes an order blob."
+_SWEEP_SCHEDULE_PROPERTIES: Final = tuple(range(1, 20))
+SWEEP_PROPERTY_REASONS: Final[dict[tuple[int, int], str]] = {
+    (7, 16): "needs council: remote direction is a momentary command, not a setting.",
+    (
+        7,
+        17,
+    ): "no ha meaning: consumable index is an action parameter and is not readable.",
+    (7, 20): "needs council: timezone offset is not the Dreame timezone property.",
+    (7, 21): "needs council: current language is an opaque string.",
+    (7, 24): "map: room ids stay unmapped until map support.",
+    (7, 25): "map: room clean mode stays unmapped until map support.",
+    (7, 26): "map: room clean operation stays unmapped until map support.",
+    (7, 27): "no ha meaning: clean-record start time is neither readable nor writable.",
+    (7, 28): "no ha meaning: clean-record duration is neither readable nor writable.",
+    (7, 29): "no ha meaning: clean-record area is neither readable nor writable.",
+    (7, 30): "map: clean-record map url is map data.",
+    (7, 31): "no ha meaning: clean-record mode is neither readable nor writable.",
+    (7, 32): "no ha meaning: clean-record way is neither readable nor writable.",
+    (
+        7,
+        33,
+    ): "no ha meaning: current map id parameter is neither readable nor writable.",
+    (7, 34): "no ha meaning: clean preference is neither readable nor writable.",
+    (
+        7,
+        37,
+    ): "no ha meaning: clean-record task status is neither readable nor writable.",
+    (7, 43): "no ha meaning: go-charging parameter is neither readable nor writable.",
+    (7, 45): "needs council: multi-property vacuum blob has no published fields.",
+    (7, 48): "needs council: consumables info is an opaque string.",
+    (7, 49): "map: charge pose is dock geometry.",
+    **{(8, iid): _SCHEDULE_REASON for iid in _SWEEP_SCHEDULE_PROPERTIES},
+    (9, 2): "map: zone points are map geometry.",
+    (9, 3): "map: restricted points are map geometry.",
+    (9, 4): "map: pause type is a zone-clean parameter.",
+    (9, 5): "map: target point is map geometry.",
+    (9, 6): "map: beauty point is map geometry.",
+    (9, 7): "map: map id is map geometry.",
+    (9, 8): "map: map type is map geometry.",
+    (9, 9): "map: zone timestamp is map geometry.",
+    (12, 6): "no ha meaning: DND timezone is neither readable nor writable.",
+    (12, 7): "needs council: DND period is one packed string, not a start and end.",
+    (14, 1): "no ha meaning: target voice is neither readable nor writable.",
+    (14, 2): "no ha meaning: current voice is neither readable nor writable.",
+    (14, 3): "no ha meaning: voice download status is neither readable nor writable.",
+    (14, 4): "no ha meaning: voice download progress is neither readable nor writable.",
+    (14, 5): "no ha meaning: voice url is neither readable nor writable.",
+    (14, 6): "no ha meaning: voice checksum is neither readable nor writable.",
+}
+SWEEP_ACTION_REASONS: Final[dict[tuple[int, int], str]] = {
+    (7, 3): "map: room clean takes room ids.",
+    (7, 7): "needs council: go-charging takes a start or stop parameter.",
+    (8, 1): "needs council: adding a schedule takes an order blob.",
+    (8, 2): "needs council: deleting a schedule takes an order id.",
+    (8, 3): "needs council: reading schedules returns an order blob.",
+    (8, 4): "needs council: adding a schedule takes an order blob.",
+    (8, 5): "needs council: schedule count takes a map id.",
+    (9, 1): "map: point clean stays unmapped until map support.",
+    (9, 2): "map: pausing point clean takes a pause-type parameter.",
+    (9, 3): "map: zone clean stays unmapped until map support.",
+    (9, 4): "map: pausing zone clean takes a pause-type parameter.",
+    (9, 5): "map: beauty wall takes a geometry parameter.",
+    (9, 6): "map: virtual wall takes a geometry parameter.",
+    (9, 8): "map: zone points take a geometry parameter.",
+    (12, 1): "needs council: DND schedule takes six parameters.",
+    (14, 1): "needs council: voice download takes a pack url.",
+    (14, 2): "needs council: voice download status is not a Dreame voice property.",
+    (14, 3): "no ha meaning: update log is a vendor upload, not a user control.",
+    (14, 4): "no ha meaning: clearing a voice download is not a user setting.",
+}
+SWEEP_STATE_AFTER_READ: Final[dict[int, DreameVacuumState]] = {
+    0: DreameVacuumState.IDLE,
+    1: DreameVacuumState.IDLE,
+    2: DreameVacuumState.PAUSED,
+    3: DreameVacuumState.RETURNING,
+    4: DreameVacuumState.CHARGING,
+    5: DreameVacuumState.SWEEPING,
+    6: DreameVacuumState.SWEEPING_AND_MOPPING,
+    7: DreameVacuumState.MOPPING,
+    8: DreameVacuumState.UPGRADING,
+}
+
+
+def sweep_case(
+    model: str, device_name: str, spec_filename: str, spec_type: str
+) -> SpecCase:
+    """Build the shared E10-family spec case for one released model."""
+    return SpecCase(
+        model=model,
+        device_name=device_name,
+        spec_filename=spec_filename,
+        property_reasons=SWEEP_PROPERTY_REASONS,
+        action_reasons=SWEEP_ACTION_REASONS,
+        state_after_read=SWEEP_STATE_AFTER_READ,
+        classification_counts={spec_filename: (36, 135)},
+        spec_type=spec_type,
+        reason_prefix_counts={
+            "identity": 5,
+            "map": 64,
+            "needs council": 47,
+            "no ha meaning": 19,
+        },
+        state_wire_eight=int(DreameVacuumState.UPGRADING),
+        station_shell=False,
+        action_spec_filenames=(spec_filename,),
+    )
+
 
 def load_spec_document(filename: str) -> dict[str, object]:
     """Load one published MIoT spec document."""
@@ -404,7 +514,9 @@ def mapped_addresses(family: XiaomiModel, kind: str) -> dict[tuple[int, int], st
         if control.aiid is None or control.siid is None:
             continue
         pair = (control.siid, control.aiid)
-        assert pair not in found
+        if pair in found:
+            assert control.action_parameters
+            continue
         found[pair] = control.key
     return found
 
@@ -438,7 +550,9 @@ def assert_control_matches_spec(
 ) -> None:
     """Assert one control's access, options, and range follow its spec item."""
     if control.aiid is not None:
-        assert not spec.get("in"), control.key
+        assert list(spec.get("in") or []) == [
+            piid for piid, _value in control.action_parameters
+        ], control.key
         return
     access = spec.get("access")
     assert isinstance(access, list)
@@ -479,12 +593,16 @@ def connect_device(name: str) -> DreameVacuumDevice:
 
 def assert_traffic_is_mapped(fake: FakeMiio, family: XiaomiModel) -> None:
     """Assert every write and action stayed on a mapped address."""
+    allowed = {()}
+    for control in family.controls:
+        allowed.add(control.action_parameters)
     outside_writes, outside_actions, unexpected = traffic_outside_map(
         fake.writes,
         fake.actions,
         fake.action_inputs,
         set(mapped_addresses(family, "property")),
         set(mapped_addresses(family, "action")),
+        allowed,
     )
     assert not outside_writes
     assert not outside_actions
@@ -570,7 +688,7 @@ def assert_controls_have_english_names(case: SpecCase) -> None:
 def exercise_mapped_property_reads(case: SpecCase) -> None:
     """Read every mapped property sample and keep cleaning strings off the poll."""
     family = require_family(case.model)
-    _assert_remote_state_codec(family)
+    _assert_remote_state_codec(family, case.state_wire_eight)
     specs = _property_specs(case.spec_filename)
     with FakeMiio(case.model) as fake:
         device = connect_device(case.device_name)
@@ -622,13 +740,16 @@ def exercise_status_wires(case: SpecCase) -> None:
     """Drive every published status wire through the shell state machine."""
     family = require_family(case.model)
     state = family.property_overrides["STATE"]
-    charging = family.property_overrides["CHARGING_STATUS"]
+    charging = family.property_overrides.get("CHARGING_STATUS", {})
     error = family.property_overrides["ERROR"]
     with FakeMiio(case.model) as fake:
         device = connect_device(case.device_name)
         try:
             _assert_each_status_wire(device, fake, case, state, charging, error)
-            _assert_shell_transitions(device, fake, family, state, charging, error)
+            if case.station_shell:
+                _assert_shell_transitions(device, fake, family, state, charging, error)
+            else:
+                _assert_sweep_shell_transitions(device, fake, family)
         finally:
             release_device(device)
         assert_traffic_is_mapped(fake, family)
@@ -667,7 +788,18 @@ def exercise_control_values(case: SpecCase) -> None:
 def exercise_rejected_control_traffic(case: SpecCase) -> None:
     """Assert a refused read or write leaves the stored value unchanged."""
     family = require_family(case.model)
-    alarm = next(item for item in family.controls if item.key == "xiaomi_alarm")
+    alarm = next(
+        (
+            item
+            for item in family.controls
+            if item.key == "xiaomi_alarm" and item.piid is not None
+        ),
+        None,
+    )
+    if alarm is None:
+        alarm = next(
+            item for item in family.controls if item.writable and item.piid is not None
+        )
     button = next(item for item in family.controls if item.aiid is not None)
     with FakeMiio(case.model) as fake:
         device = connect_device(case.device_name)
@@ -740,6 +872,12 @@ def _has_published_name(spec: Mapping[str, object]) -> bool:
     """Return whether the item, or every value it lists, has a description."""
     if spec.get("description"):
         return True
+    # Sweep-family items name the property in the URN and leave description blank.
+    urn = spec.get("type")
+    if isinstance(urn, str):
+        parts = urn.split(":")
+        if len(parts) >= 4 and parts[3]:
+            return True
     # Custom services name each value and leave the property description empty.
     listed = spec.get("value-list")
     if not isinstance(listed, list) or not listed:
@@ -766,15 +904,16 @@ def _reason_prefix_counts(case: SpecCase) -> dict[str, int]:
     return prefixes
 
 
-def _assert_remote_state_codec(family: XiaomiModel) -> None:
-    """Assert wire 8 is remote control on X20 Max and a raw code on this base."""
+def _assert_remote_state_codec(family: XiaomiModel, wire_eight: int | None) -> None:
+    """Assert wire 8 is remote control on X20 Max and the caller's own code."""
     x20 = resolve_family(MODEL_X20_MAX)
     vacuum_5 = resolve_family(MODEL_ROBOT_VACUUM_5)
     assert x20 is not None
     assert vacuum_5 is not None
     assert x20.convert_incoming("STATE", 8) == DreameVacuumState.REMOTE_CONTROL
     assert vacuum_5.convert_incoming("STATE", 8) == 19
-    assert family.convert_incoming("STATE", 8) == 19
+    if wire_eight is not None:
+        assert family.convert_incoming("STATE", 8) == wire_eight
 
 
 def _assert_device_is_quiet(
@@ -843,8 +982,9 @@ def _assert_cleaning_properties_are_not_polled(
 
     device._protocol.get_properties = record
     device._request_properties()
-    cleaning = family.property_overrides["CLEANING_PROPERTIES"]
-    assert (cleaning["siid"], cleaning["piid"]) not in requested
+    cleaning = family.property_overrides.get("CLEANING_PROPERTIES")
+    if cleaning is not None:
+        assert (cleaning["siid"], cleaning["piid"]) not in requested
     assert device.capability.new_state is False
 
 
@@ -876,7 +1016,12 @@ def _send_each_writable_value(
 def _assert_volume_span_and_blocked_map(
     device: DreameVacuumDevice, fake: FakeMiio, family: XiaomiModel
 ) -> None:
-    """Assert volume covered 0 through 100 and map data produced no write."""
+    """Assert volume covered its Dreame span and map data produced no write."""
+    if "VOLUME" not in family.property_overrides:
+        before = len(fake.writes)
+        assert device.set_property(DreameVacuumProperty.MAP_DATA, "blocked") is False
+        assert len(fake.writes) == before
+        return
     sent_volume = {
         value
         for siid, piid, value in fake.writes
@@ -900,11 +1045,13 @@ def _action_filenames(case: SpecCase) -> tuple[str, ...]:
 
 
 def _assert_mapped_actions_take_no_input(case: SpecCase, family: XiaomiModel) -> None:
-    """Assert every mapped action spec accepts an empty parameter list."""
-    mapped_actions = mapped_addresses(family, "action")
+    """Assert every Dreame-mapped action spec accepts an empty parameter list."""
+    dreame_actions = {
+        (item["siid"], item["aiid"]) for item in family.action_overrides.values()
+    }
     for filename in _action_filenames(case):
         for kind, siid, iid, spec in spec_items(filename):
-            if kind == "action" and (siid, iid) in mapped_actions:
+            if kind == "action" and (siid, iid) in dreame_actions:
                 assert not spec.get("in"), (filename, siid, iid)
 
 
@@ -946,16 +1093,14 @@ def _assert_each_status_wire(
 ) -> None:
     """Assert each published status wire becomes the expected shell state."""
     for wire, expected in case.state_after_read.items():
-        fake.set_value(charging["siid"], charging["piid"], 2)
+        if charging:
+            fake.set_value(charging["siid"], charging["piid"], 2)
         fake.set_value(error["siid"], error["piid"], 0)
         fake.set_value(state["siid"], state["piid"], wire)
-        device._request_properties(
-            [
-                DreameVacuumProperty.STATE,
-                DreameVacuumProperty.CHARGING_STATUS,
-                DreameVacuumProperty.ERROR,
-            ]
-        )
+        requested = [DreameVacuumProperty.STATE, DreameVacuumProperty.ERROR]
+        if charging:
+            requested.append(DreameVacuumProperty.CHARGING_STATUS)
+        device._request_properties(requested)
         assert device.status.state is expected, wire
 
 
@@ -1012,6 +1157,49 @@ def _assert_shell_transitions(
     assert device.status.state is DreameVacuumState.ERROR
 
 
+def _assert_sweep_shell_transitions(
+    device: DreameVacuumDevice,
+    fake: FakeMiio,
+    family: XiaomiModel,
+) -> None:
+    """Assert idle, start, refused pause, stop, return, and error on the sweep spec."""
+    state = family.property_overrides["STATE"]
+    error = family.property_overrides["ERROR"]
+    fake.set_value(error["siid"], error["piid"], 0)
+    fake.set_value(state["siid"], state["piid"], 1)
+    device._request_properties([DreameVacuumProperty.STATE, DreameVacuumProperty.ERROR])
+    assert device.status.state is DreameVacuumState.IDLE
+    device.start()
+    device._request_properties([DreameVacuumProperty.STATE])
+    assert device.status.state is DreameVacuumState.SWEEPING
+    before = len(fake.actions)
+    with pytest.raises(InvalidActionException):
+        device.pause()
+    assert len(fake.actions) == before
+    device._request_properties([DreameVacuumProperty.STATE])
+    assert device.status.state is DreameVacuumState.SWEEPING
+    device.start()
+    assert fake.actions[-1] == (
+        family.action_overrides["START"]["siid"],
+        family.action_overrides["START"]["aiid"],
+    )
+    device.stop()
+    assert fake.actions[-1] == (
+        family.action_overrides["STOP"]["siid"],
+        family.action_overrides["STOP"]["aiid"],
+    )
+    fake.set_value(state["siid"], state["piid"], 3)
+    device._request_properties([DreameVacuumProperty.STATE])
+    assert device.status.state is DreameVacuumState.RETURNING
+    device.return_to_base()
+    device._request_properties([DreameVacuumProperty.STATE])
+    assert device.status.state is DreameVacuumState.CHARGING
+    fake.set_value(error["siid"], error["piid"], 1)
+    fake.set_value(state["siid"], state["piid"], 1)
+    device._request_properties([DreameVacuumProperty.ERROR, DreameVacuumProperty.STATE])
+    assert device.status.state is DreameVacuumState.ERROR
+
+
 def _assert_one_control(
     case: SpecCase,
     family: XiaomiModel,
@@ -1031,6 +1219,11 @@ def _assert_one_control(
     )
     assert (kind, pair[0], pair[1]) in current
     assert_control_matches_spec(control, current[(kind, pair[0], pair[1])])
+    for piid, value in control.action_parameters:
+        listed = current[("property", control.siid, piid)].get("value-list")
+        assert isinstance(listed, list)
+        published = {item["value"] for item in listed if isinstance(item, dict)}
+        assert value in published
     if previous is None:
         return
     if pair in case.version_only_controls:
@@ -1049,10 +1242,14 @@ def _exercise_one_control(
     """Read and, when writable, send every sample for one control."""
     if control.aiid is not None:
         spec = specs[("action", control.siid, control.aiid)]
-        assert not spec.get("in")
+        assert list(spec.get("in") or []) == [
+            piid for piid, _value in control.action_parameters
+        ]
         invoke_control(device, control)
         assert fake.actions[-1] == (control.siid, control.aiid)
-        assert fake.action_inputs[-1] == []
+        assert fake.action_inputs[-1] == [
+            {"piid": piid, "value": value} for piid, value in control.action_parameters
+        ]
         return
     if control.property_name:
         _send_named_property_options(device, fake, family, control)

@@ -33,6 +33,39 @@ from .dreame import (
 )
 
 
+def description_exists(description: object, device: object) -> bool:
+    """Return whether this description's property or action is on the device map.
+
+    An action key has to be mapped. A description with neither key is a shell
+    entity that does not speak MIoT by itself.
+    """
+    action_key = description.action_key
+    if action_key is not None and action_key not in device.action_mapping:
+        return False
+    property_key = description.property_key
+    if property_key is None:
+        return True
+    if (
+        isinstance(property_key, DreameVacuumProperty)
+        and property_key.value in device.data
+    ):
+        return True
+    if (
+        isinstance(property_key, DreameVacuumAutoSwitchProperty)
+        and device.auto_switch_data
+        and property_key.name in device.auto_switch_data
+    ):
+        return True
+    return bool(
+        (
+            isinstance(property_key, DreameVacuumStrAIProperty)
+            or isinstance(property_key, DreameVacuumAIProperty)
+        )
+        and device.ai_data
+        and property_key.name in device.ai_data
+    )
+
+
 def remove_entities(hass, entry, coordinator, domain, descriptions):
     """Remove entities from registry that are no longer provided by the integration"""
 
@@ -77,27 +110,7 @@ class DreameVacuumEntityDescription:
     entity_category: str = None
     property_key: DreameVacuumProperty = None
     action_key: DreameVacuumAction = None
-    exists_fn: Callable[[object, object], bool] = lambda description, device: bool(
-        (description.action_key is not None and description.action_key in device.action_mapping)
-        or description.property_key is None
-        or (
-            isinstance(description.property_key, DreameVacuumProperty)
-            and description.property_key.value in device.data
-        )
-        or (
-            isinstance(description.property_key, DreameVacuumAutoSwitchProperty)
-            and device.auto_switch_data
-            and description.property_key.name in device.auto_switch_data
-        )
-        or (
-            (
-                isinstance(description.property_key, DreameVacuumStrAIProperty)
-                or isinstance(description.property_key, DreameVacuumAIProperty)
-            )
-            and device.ai_data
-            and description.property_key.name in device.ai_data
-        )
-    )
+    exists_fn: Callable[[object, object], bool] = description_exists
     value_fn: Callable[[object, object], Any] = None
     value_int_fn: Callable[[object, str], int] = None
     format_fn: Callable[[str, object], Any] = None

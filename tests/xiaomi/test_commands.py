@@ -14,6 +14,9 @@ from custom_components.dreame_vacuum.dreame.types import (
     DreameVacuumState,
 )
 from custom_components.dreame_vacuum.xiaomi import (
+    MODEL_E10,
+    MODEL_E10C,
+    MODEL_E12,
     MODEL_H50,
     MODEL_H50_PRO,
     MODEL_H50_PRO_ROLLER,
@@ -259,6 +262,9 @@ def test_property_reads_stay_inside_the_explicit_map():
         MODEL_S60,
         MODEL_H50_PRO_ROLLER,
         MODEL_H50_ROLLER,
+        MODEL_E10,
+        MODEL_E12,
+        MODEL_E10C,
     ):
         device, _sent = _device(model)
         requested: list[tuple[int, int]] = []
@@ -366,6 +372,13 @@ def test_property_reads_stay_inside_the_explicit_map():
             assert (2, 32) not in requested
             assert (2, 109) in requested
             assert (24, 1) not in requested
+        if model in (MODEL_E10, MODEL_E12, MODEL_E10C):
+            assert (4, 1) in requested
+            assert (4, 2) in requested
+            assert (2, 8) in requested
+            assert (7, 5) in requested
+            assert (12, 1) in requested
+            assert (2, 9) not in requested
         if model == MODEL_X20_PRO:
             assert (4, 1) in requested
             assert (5, 2) in requested
@@ -390,7 +403,55 @@ def test_property_reads_stay_inside_the_explicit_map():
             MODEL_X20_PRO,
             MODEL_H50_PRO_ROLLER,
             MODEL_H50_ROLLER,
+            MODEL_E10,
+            MODEL_E12,
+            MODEL_E10C,
         ):
             assert controls == set()
             assert (4, 1) not in requested
             assert (5, 2) not in requested
+
+
+def test_sweep_family_commands_stay_on_start_stop_and_charge():
+    """Pause and locate are not in the spec, so they are not sent."""
+    for model in (MODEL_E10, MODEL_E12, MODEL_E10C):
+        device, sent = _device(model)
+        try:
+            device.data[DreameVacuumProperty.STATE.value] = int(
+                DreameVacuumState.PAUSED
+            )
+            device.start()
+            assert sent[-1] == (2, 1)
+            device.data[DreameVacuumProperty.STATE.value] = int(
+                DreameVacuumState.SWEEPING
+            )
+            with pytest.raises(InvalidActionException):
+                device.pause()
+            assert sent[-1] == (2, 1)
+            device.data[DreameVacuumProperty.STATE.value] = int(DreameVacuumState.IDLE)
+            device.start()
+            assert sent[-1] == (2, 1)
+            device.stop()
+            assert sent[-1] == (2, 2)
+            device.return_to_base()
+            assert sent[-1] == (3, 1)
+            writes: list[tuple[int, int]] = []
+
+            def record_write(
+                siid: int,
+                piid: int,
+                value: object = None,
+                retry_count: int = 2,
+                writes: list[tuple[int, int]] = writes,
+            ) -> list[dict[str, int]]:
+                del value, retry_count
+                writes.append((siid, piid))
+                return [{"code": 0}]
+
+            device._protocol.set_property = record_write
+            assert device.set_volume(40) is False
+            assert writes == []
+            for siid, aiid in sent:
+                assert (siid, aiid) in {(2, 1), (2, 2), (3, 1)}
+        finally:
+            release_device(device)
