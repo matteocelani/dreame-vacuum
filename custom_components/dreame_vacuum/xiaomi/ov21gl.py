@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import Final
 
-from .controls import action_button, binary_reading, boolean_switch, enum_select
 from .model import MODEL_ROBOT_VACUUM_5_PRO, XiaomiModel
 from .profile import (
     DETERGENT_TIME_PROPERTIES,
@@ -16,20 +15,12 @@ from .profile import (
     STATION_ACTIONS,
     STATION_PROPERTIES,
     STATION_STATISTICS_PROPERTIES,
+    STREAM_CONTROLS,
     compose_addresses,
     compose_codes,
     compose_controls,
     control_with_options,
 )
-
-_STREAM_SERVICE: Final = 21
-_FLASH_LIGHT_PROPERTY: Final = 2
-_PET_SNAPS_PROPERTY: Final = 3
-_VIDEO_WARNING_PROPERTY: Final = 4
-_SHARED_USERS_PROPERTY: Final = 5
-_STREAM_ENABLED_PROPERTY: Final = 6
-_STREAM_LOCK_PROPERTY: Final = 8
-_FIND_PET_ACTION: Final = 3
 
 # This spec names value 0 Silent and value 2 Standard. The shared list does not.
 _WORRY_FREE_MODE: Final = control_with_options(
@@ -44,42 +35,7 @@ _WORRY_FREE_MODE: Final = control_with_options(
     ),
 )
 
-# Camera cruise and pet finding are published only by this spec.
-_STREAM_CONTROLS: Final = (
-    enum_select(
-        "xiaomi_flash_light",
-        _STREAM_SERVICE,
-        _FLASH_LIGHT_PROPERTY,
-        (
-            (0, "auto"),
-            (1, "open"),
-            (2, "close"),
-        ),
-    ),
-    boolean_switch("xiaomi_pet_snaps", _STREAM_SERVICE, _PET_SNAPS_PROPERTY),
-    enum_select(
-        "xiaomi_video_recording_warnings",
-        _STREAM_SERVICE,
-        _VIDEO_WARNING_PROPERTY,
-        (
-            (0, "voice"),
-            (1, "light"),
-            (2, "strong_reminder"),
-        ),
-    ),
-    boolean_switch(
-        "xiaomi_stream_visible_to_shared_users",
-        _STREAM_SERVICE,
-        _SHARED_USERS_PROPERTY,
-    ),
-    boolean_switch("xiaomi_stream_enabled", _STREAM_SERVICE, _STREAM_ENABLED_PROPERTY),
-    binary_reading(
-        "xiaomi_stream_physical_lock", _STREAM_SERVICE, _STREAM_LOCK_PROPERTY
-    ),
-    action_button("xiaomi_find_pet", _STREAM_SERVICE, _FIND_PET_ACTION),
-)
-
-_ADDED_CONTROLS: Final = (SOLID_DIRT_DETECTION, *_STREAM_CONTROLS)
+_ADDED_CONTROLS: Final = (SOLID_DIRT_DETECTION, *STREAM_CONTROLS)
 
 ROBOT_VACUUM_5_PRO: Final = XiaomiModel(
     model=MODEL_ROBOT_VACUUM_5_PRO,

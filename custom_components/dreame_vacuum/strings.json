@@ -804,7 +804,15 @@
         "state": {
           "hours_2": "2 hours",
           "hours_3": "3 hours",
-          "hours_4": "4 hours"
+          "hours_4": "4 hours",
+          "hours_5": "5 hours",
+          "hours_6": "6 hours",
+          "hours_7": "7 hours",
+          "hours_8": "8 hours",
+          "hours_9": "9 hours",
+          "hours_10": "10 hours",
+          "hours_11": "11 hours",
+          "hours_12": "12 hours"
         }
       },
       "xiaomi_mop_water_no_tank": {

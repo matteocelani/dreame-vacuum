@@ -9,6 +9,7 @@ from .d109gl import X20_MAX
 from .e101gb import S40C
 from .model import (
     MODEL_H40,
+    MODEL_H50,
     MODEL_H50_PRO,
     MODEL_ROBOT_VACUUM_5,
     MODEL_ROBOT_VACUUM_5_PRO,
@@ -22,6 +23,7 @@ from .model import (
 from .ov21gl import ROBOT_VACUUM_5_PRO
 from .ov31gl import ROBOT_VACUUM_5
 from .ov42gl import H50_PRO
+from .ov43gb import H50
 from .ov51gl import H40
 from .ov71gl import S40_PRO
 from .ov81gl import S40
@@ -35,6 +37,7 @@ _FAMILIES: Final[dict[str, XiaomiModel]] = {
     MODEL_S40_PRO: S40_PRO,
     MODEL_S40C: S40C,
     MODEL_H40: H40,
+    MODEL_H50: H50,
     MODEL_H50_PRO: H50_PRO,
 }
 

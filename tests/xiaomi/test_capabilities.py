@@ -192,6 +192,7 @@ def test_catalog_row_stays_until_the_xiaomi_codec_is_installed():
         "xiaomi.vacuum.e101gb",
         "xiaomi.vacuum.ov42gl",
         "xiaomi.vacuum.ov21gl",
+        "xiaomi.vacuum.ov43gb",
     ):
         copied = _load(model, None)
         assert tuple(copied.list) == _COPIED_XIAOMI_ROW
@@ -209,6 +210,7 @@ def test_s20_plus_and_x20_max_use_the_xiaomi_base():
     s40c = _load("xiaomi.vacuum.e101gb", resolve_family("xiaomi.vacuum.e101gb"))
     h50 = _load("xiaomi.vacuum.ov42gl", resolve_family("xiaomi.vacuum.ov42gl"))
     vacuum_5_pro = _load("xiaomi.vacuum.ov21gl", resolve_family("xiaomi.vacuum.ov21gl"))
+    vacuum_h50 = _load("xiaomi.vacuum.ov43gb", resolve_family("xiaomi.vacuum.ov43gb"))
     assert tuple(s20.list) == _S20_PLUS
     assert tuple(x20.list) == _X20_MAX
     assert tuple(vacuum_5.list) == _X20_MAX
@@ -217,7 +219,18 @@ def test_s20_plus_and_x20_max_use_the_xiaomi_base():
     assert tuple(h40.list) == _X20_MAX
     assert tuple(s40c.list) == _X20_MAX
     assert tuple(h50.list) == _X20_MAX
-    for capability in (s20, x20, vacuum_5, s40_pro, s40, h40, s40c, h50, vacuum_5_pro):
+    for capability in (
+        s20,
+        x20,
+        vacuum_5,
+        s40_pro,
+        s40,
+        h40,
+        s40c,
+        h50,
+        vacuum_5_pro,
+        vacuum_h50,
+    ):
         assert capability.self_wash_base is False
         assert capability.station_cleaning is False
         assert capability.lidar_navigation is False
@@ -274,6 +287,12 @@ def test_s20_plus_and_x20_max_use_the_xiaomi_base():
     assert vacuum_5_pro.detergent is True
     assert vacuum_5_pro.self_wash_base is False
     assert vacuum_5_pro.lidar_navigation is False
+    assert tuple(vacuum_h50.list) == _X20_MAX
+    assert vacuum_h50.auto_empty_base is True
+    assert vacuum_h50.auto_emptying is True
+    assert vacuum_h50.detergent is True
+    assert vacuum_h50.self_wash_base is False
+    assert vacuum_h50.lidar_navigation is False
 
 
 def test_a_mapped_wash_base_or_map_turns_only_that_flag_on():
