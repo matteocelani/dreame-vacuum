@@ -13,6 +13,8 @@ from custom_components.dreame_vacuum.const import (
 from custom_components.dreame_vacuum.xiaomi import (
     MODEL_H50,
     MODEL_H50_PRO,
+    MODEL_H50_PRO_ROLLER,
+    MODEL_H50_ROLLER,
     MODEL_ROBOT_VACUUM_5_PRO,
     MODEL_ROBOT_VACUUM_6,
     MODEL_ROBOT_VACUUM_6_MAX,
@@ -76,6 +78,8 @@ async def test_setup_creates_vacuum_and_safe_commands_for_both_models(
         (MODEL_ROBOT_VACUUM_6_PRO, "Robot Vacuum 6 Pro Sim"),
         (MODEL_S60_PLUS, "Robot Vacuum S60+ Sim"),
         (MODEL_S60, "Robot Vacuum S60 Sim"),
+        (MODEL_H50_PRO_ROLLER, "H50 Pro Roller Sim"),
+        (MODEL_H50_ROLLER, "H50 Roller Sim"),
     ):
         family = resolve_family(model)
         assert family is not None

@@ -199,6 +199,8 @@ def test_catalog_row_stays_until_the_xiaomi_codec_is_installed():
         "xiaomi.vacuum.pv21gl",
         "xiaomi.vacuum.pv51gl",
         "xiaomi.vacuum.pv81gl",
+        "xiaomi.vacuum.qv41gl",
+        "xiaomi.vacuum.qv42gl",
     ):
         copied = _load(model, None)
         assert tuple(copied.list) == _COPIED_XIAOMI_ROW
@@ -223,6 +225,10 @@ def test_s20_plus_and_x20_max_use_the_xiaomi_base():
     vacuum_6_pro = _load("xiaomi.vacuum.pv21gl", resolve_family("xiaomi.vacuum.pv21gl"))
     s60_plus = _load("xiaomi.vacuum.pv51gl", resolve_family("xiaomi.vacuum.pv51gl"))
     s60 = _load("xiaomi.vacuum.pv81gl", resolve_family("xiaomi.vacuum.pv81gl"))
+    h50_pro_roller = _load(
+        "xiaomi.vacuum.qv41gl", resolve_family("xiaomi.vacuum.qv41gl")
+    )
+    h50_roller = _load("xiaomi.vacuum.qv42gl", resolve_family("xiaomi.vacuum.qv42gl"))
     assert tuple(s20.list) == _S20_PLUS
     assert tuple(x20.list) == _X20_MAX
     assert tuple(x20_pro.list) == _X20_MAX
@@ -249,6 +255,8 @@ def test_s20_plus_and_x20_max_use_the_xiaomi_base():
         vacuum_6_pro,
         s60_plus,
         s60,
+        h50_pro_roller,
+        h50_roller,
     ):
         assert capability.self_wash_base is False
         assert capability.station_cleaning is False
@@ -356,6 +364,18 @@ def test_s20_plus_and_x20_max_use_the_xiaomi_base():
     assert s60.self_wash_base is False
     assert s60.lidar_navigation is False
     assert s60.station_cleaning is False
+    assert tuple(h50_pro_roller.list) == _S40_PRO
+    assert h50_pro_roller.auto_empty_base is True
+    assert h50_pro_roller.auto_emptying is True
+    assert h50_pro_roller.detergent is False
+    assert h50_pro_roller.self_wash_base is False
+    assert h50_pro_roller.lidar_navigation is False
+    assert tuple(h50_roller.list) == _S40_PRO
+    assert h50_roller.auto_empty_base is True
+    assert h50_roller.auto_emptying is True
+    assert h50_roller.detergent is False
+    assert h50_roller.self_wash_base is False
+    assert h50_roller.lidar_navigation is False
 
 
 def test_a_mapped_wash_base_or_map_turns_only_that_flag_on():

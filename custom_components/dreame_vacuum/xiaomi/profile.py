@@ -1025,3 +1025,74 @@ S40_CLASS_OMITTED_CONTROLS: Final[frozenset[str]] = frozenset(
         "xiaomi_sweep_carpet_first",
     }
 )
+
+# Neither roller spec publishes a mop pad or a detergent consumable.
+_H50_ROLLER_OMITTED_PROPERTIES: Final[frozenset[str]] = frozenset(
+    {
+        "DETERGENT_LEFT",
+        "MOP_PAD_LEFT",
+        "MOP_PAD_TIME_LEFT",
+    }
+)
+_H50_ROLLER_OMITTED_ACTIONS: Final[frozenset[str]] = frozenset(
+    {"RESET_DETERGENT", "RESET_MOP_PAD"}
+)
+# Dropped from the shared list when either roller spec leaves the address out.
+_H50_ROLLER_OMITTED_CONTROLS: Final[frozenset[str]] = frozenset(
+    {
+        "xiaomi_brush_outswing",
+        "xiaomi_calibrate_imu",
+        "xiaomi_call_clean",
+        "xiaomi_detergent_delivery",
+        "xiaomi_detergent_level",
+        "xiaomi_detergent_reminder",
+        "xiaomi_detergent_self_delivery",
+        "xiaomi_dust_arrest_power",
+        "xiaomi_laser_position",
+        "xiaomi_mop_outer_swing",
+        "xiaomi_mop_water_no_tank",
+        "xiaomi_obstacle_crossing",
+        "xiaomi_repeat_wash_mop",
+        "xiaomi_sewage_tank",
+        "xiaomi_start_cut_hair",
+        "xiaomi_start_eject",
+        "xiaomi_start_mop",
+        "xiaomi_start_mop_wash",
+        "xiaomi_start_station_self_clean",
+        "xiaomi_station_water_level",
+        "xiaomi_stop_cut_hair",
+        "xiaomi_stop_station_self_clean",
+    }
+)
+H50_ROLLER_PROPERTIES: Final[dict[str, dict[str, int]]] = compose_addresses(
+    STATION_PROPERTIES,
+    STATION_STATISTICS_PROPERTIES,
+    omitted=_H50_ROLLER_OMITTED_PROPERTIES,
+)
+H50_ROLLER_ACTIONS: Final[dict[str, dict[str, int]]] = compose_addresses(
+    STATION_ACTIONS,
+    omitted=_H50_ROLLER_OMITTED_ACTIONS,
+)
+# Status skips station-assist 22 and 23. Wire 24 is still returning.
+H50_ROLLER_STATES: Final[dict[int, int]] = compose_codes(
+    EXTENDED_STATION_STATES,
+    omitted=(
+        int(ExtendedStationWireState.STATION_ASSISTING),
+        int(ExtendedStationWireState.STATION_ASSISTED),
+    ),
+)
+H50_ROLLER_CONTROLS: Final[tuple[XiaomiControl, ...]] = compose_controls(
+    EXTENDED_STATION_CONTROLS,
+    (
+        ROLLER_CLEANING_MODE,
+        *select_controls(AI_CAMERA_CONTROLS, ("xiaomi_edge_sweep_frequency",)),
+        SELF_CHECK_RESULTS,
+        SWEEP_DUST_ARREST,
+        *ROLLER_CONTROLS,
+    ),
+    omitted=_H50_ROLLER_OMITTED_CONTROLS,
+    replaced={
+        "xiaomi_host_tank": HOST_TANK_WITH_NOT_INSTALLED,
+        "xiaomi_worry_free_mode": WORRY_FREE_THROUGH_BUTLER,
+    },
+)

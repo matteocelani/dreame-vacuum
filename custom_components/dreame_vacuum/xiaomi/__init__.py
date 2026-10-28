@@ -8,6 +8,8 @@ from .mapping import resolve_family
 from .model import (
     MODEL_H50,
     MODEL_H50_PRO,
+    MODEL_H50_PRO_ROLLER,
+    MODEL_H50_ROLLER,
     MODEL_ROBOT_VACUUM_5_PRO,
     MODEL_ROBOT_VACUUM_6,
     MODEL_ROBOT_VACUUM_6_MAX,
@@ -22,6 +24,8 @@ from .model import (
 __all__ = [
     "MODEL_H50",
     "MODEL_H50_PRO",
+    "MODEL_H50_PRO_ROLLER",
+    "MODEL_H50_ROLLER",
     "MODEL_ROBOT_VACUUM_5_PRO",
     "MODEL_ROBOT_VACUUM_6",
     "MODEL_ROBOT_VACUUM_6_MAX",

@@ -16,6 +16,8 @@ from custom_components.dreame_vacuum.dreame.types import (
 from custom_components.dreame_vacuum.xiaomi import (
     MODEL_H50,
     MODEL_H50_PRO,
+    MODEL_H50_PRO_ROLLER,
+    MODEL_H50_ROLLER,
     MODEL_ROBOT_VACUUM_5_PRO,
     MODEL_ROBOT_VACUUM_6,
     MODEL_ROBOT_VACUUM_6_MAX,
@@ -124,6 +126,18 @@ def test_paused_start_uses_continue_sweep_and_skips_unmapped_actions():
             "charge": (3, 1),
         },
         MODEL_H50_PRO: {
+            "resume": (2, 8),
+            "start": (2, 1),
+            "pause": (2, 7),
+            "charge": (3, 1),
+        },
+        MODEL_H50_PRO_ROLLER: {
+            "resume": (2, 8),
+            "start": (2, 1),
+            "pause": (2, 7),
+            "charge": (3, 1),
+        },
+        MODEL_H50_ROLLER: {
             "resume": (2, 8),
             "start": (2, 1),
             "pause": (2, 7),
@@ -243,6 +257,8 @@ def test_property_reads_stay_inside_the_explicit_map():
         MODEL_ROBOT_VACUUM_6_PRO,
         MODEL_S60_PLUS,
         MODEL_S60,
+        MODEL_H50_PRO_ROLLER,
+        MODEL_H50_ROLLER,
     ):
         device, _sent = _device(model)
         requested: list[tuple[int, int]] = []
@@ -292,6 +308,8 @@ def test_property_reads_stay_inside_the_explicit_map():
             MODEL_ROBOT_VACUUM_6,
             MODEL_ROBOT_VACUUM_6_MAX,
             MODEL_ROBOT_VACUUM_6_PRO,
+            MODEL_H50_PRO_ROLLER,
+            MODEL_H50_ROLLER,
         ):
             assert (4, 1) in requested
             assert (5, 2) in requested
@@ -309,6 +327,11 @@ def test_property_reads_stay_inside_the_explicit_map():
             assert (18, 1) in requested
             assert (19, 1) in requested
         if model == MODEL_ROBOT_VACUUM_6:
+            assert (9, 1) not in requested
+            assert (18, 1) not in requested
+            assert (19, 1) in requested
+            assert (24, 1) in requested
+        if model in (MODEL_H50_PRO_ROLLER, MODEL_H50_ROLLER):
             assert (9, 1) not in requested
             assert (18, 1) not in requested
             assert (19, 1) in requested
@@ -365,6 +388,8 @@ def test_property_reads_stay_inside_the_explicit_map():
             MODEL_S60_PLUS,
             MODEL_S60,
             MODEL_X20_PRO,
+            MODEL_H50_PRO_ROLLER,
+            MODEL_H50_ROLLER,
         ):
             assert controls == set()
             assert (4, 1) not in requested
