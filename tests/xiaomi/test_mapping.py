@@ -23,8 +23,12 @@ from custom_components.dreame_vacuum.xiaomi import (
     MODEL_MIJIA_6_PRO,
     MODEL_MIJIA_7_MAX,
     MODEL_MIJIA_7C,
+    MODEL_MIJIA_H40,
     MODEL_MIJIA_M30,
+    MODEL_MIJIA_M30_PRO,
     MODEL_MIJIA_M40_S,
+    MODEL_MIJIA_ROBOT_VACUUM_4,
+    MODEL_MIJIA_ROBOT_VACUUM_5,
     MODEL_MIJIA_ROBOT_VACUUM_6,
     MODEL_MIJIA_SWEEP_MOP_2,
     MODEL_ROBOT_VACUUM_5_PRO,
@@ -41,6 +45,7 @@ from custom_components.dreame_vacuum.xiaomi import (
     resolve_family,
 )
 from custom_components.dreame_vacuum.xiaomi.c101eu import X20 as X20_RECORD
+from custom_components.dreame_vacuum.xiaomi.d102ev import MIJIA_M30 as M30_RECORD
 from custom_components.dreame_vacuum.xiaomi.d102gl import X20_PRO as X20_PRO_RECORD
 from custom_components.dreame_vacuum.xiaomi.d106gl import S20 as S20_RECORD
 from custom_components.dreame_vacuum.xiaomi.mapping import (
@@ -112,6 +117,7 @@ from custom_components.dreame_vacuum.xiaomi.pv21gl import (
 from custom_components.dreame_vacuum.xiaomi.pv32gl import (
     ROBOT_VACUUM_6 as VACUUM_6_RECORD,
 )
+from custom_components.dreame_vacuum.xiaomi.pv81gl import S60 as S60_RECORD
 from custom_components.dreame_vacuum.xiaomi.qv41gl import (
     H50_PRO_ROLLER as H50_PRO_ROLLER_RECORD,
 )
@@ -995,6 +1001,10 @@ def test_station_address_literals_are_declared_once():
         "pv11cn.py",
         "pv21cn.py",
         "qv12cn.py",
+        "c107.py",
+        "d101.py",
+        "ov81cn.py",
+        "pv31cn.py",
     ):
         text = (root / name).read_text(encoding="utf-8")
         assert "siid" not in text, name
@@ -1056,6 +1066,10 @@ def test_property_and_action_names_exist_on_the_dreame_enums():
         MODEL_MIJIA_6_MAX,
         MODEL_MIJIA_6_PRO,
         MODEL_MIJIA_7_MAX,
+        MODEL_MIJIA_H40,
+        MODEL_MIJIA_M30_PRO,
+        MODEL_MIJIA_ROBOT_VACUUM_4,
+        MODEL_MIJIA_ROBOT_VACUUM_5,
     ):
         family = resolve_family(model)
         assert family is not None
@@ -1076,6 +1090,8 @@ def test_chinese_variants_leave_the_global_records_unchanged():
     assert resolve_family(MODEL_X20) is X20_RECORD
     assert resolve_family(MODEL_S20) is S20_RECORD
     assert resolve_family(MODEL_X20_PRO) is X20_PRO_RECORD
+    assert resolve_family(MODEL_S60) is S60_RECORD
+    assert resolve_family(MODEL_MIJIA_M30) is M30_RECORD
     assert resolve_family(MODEL_ROBOT_VACUUM_6_MAX) is VACUUM_6_MAX_RECORD
     assert resolve_family(MODEL_ROBOT_VACUUM_6_PRO) is VACUUM_6_PRO_RECORD
     assert resolve_family(MODEL_MIJIA_SWEEP_MOP_2).controls is X20_RECORD.controls

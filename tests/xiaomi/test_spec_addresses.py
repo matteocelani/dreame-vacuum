@@ -28,7 +28,11 @@ from custom_components.dreame_vacuum.xiaomi import (
     MODEL_MIJIA_6_PRO,
     MODEL_MIJIA_7_MAX,
     MODEL_MIJIA_7C,
+    MODEL_MIJIA_H40,
     MODEL_MIJIA_M30,
+    MODEL_MIJIA_M30_PRO,
+    MODEL_MIJIA_ROBOT_VACUUM_4,
+    MODEL_MIJIA_ROBOT_VACUUM_5,
     MODEL_MIJIA_ROBOT_VACUUM_6,
     MODEL_MIJIA_SWEEP_MOP_2,
     MODEL_ROBOT_VACUUM_5_PRO,
@@ -325,6 +329,25 @@ _PROPERTY_TEXT[MODEL_MIJIA_6_MAX] = _PROPERTY_TEXT[MODEL_ROBOT_VACUUM_6_MAX]
 _ACTION_TEXT[MODEL_MIJIA_6_MAX] = _ACTION_TEXT[MODEL_ROBOT_VACUUM_6_MAX]
 _PROPERTY_TEXT[MODEL_MIJIA_6_PRO] = _PROPERTY_TEXT[MODEL_ROBOT_VACUUM_6_PRO]
 _ACTION_TEXT[MODEL_MIJIA_6_PRO] = _ACTION_TEXT[MODEL_ROBOT_VACUUM_6_PRO]
+_PROPERTY_TEXT[MODEL_MIJIA_ROBOT_VACUUM_5] = _PROPERTY_TEXT[MODEL_H50_PRO]
+_ACTION_TEXT[MODEL_MIJIA_ROBOT_VACUUM_5] = _ACTION_TEXT[MODEL_H50_PRO]
+_PROPERTY_TEXT[MODEL_MIJIA_M30_PRO] = {
+    **_PROPERTY_TEXT[MODEL_MIJIA_M30],
+    "DETERGENT_TIME_LEFT": "Detergent Left Time",
+}
+_ACTION_TEXT[MODEL_MIJIA_M30_PRO] = _ACTION_TEXT[MODEL_MIJIA_M30]
+_PROPERTY_TEXT[MODEL_MIJIA_ROBOT_VACUUM_4] = _PROPERTY_TEXT[MODEL_S60]
+_ACTION_TEXT[MODEL_MIJIA_ROBOT_VACUUM_4] = _ACTION_TEXT[MODEL_S60]
+_PROPERTY_TEXT[MODEL_MIJIA_H40] = {
+    name: text
+    for name, text in _PROPERTY_TEXT[MODEL_X20_PRO].items()
+    if name not in {"AUTO_DUST_COLLECTING", "AUTO_EMPTY_FREQUENCY", "DETERGENT_LEFT"}
+}
+_ACTION_TEXT[MODEL_MIJIA_H40] = {
+    name: text
+    for name, text in _ACTION_TEXT[MODEL_X20_PRO].items()
+    if name not in {"RESET_DETERGENT", "START_AUTO_EMPTY"}
+}
 _PROPERTY_TEXT[MODEL_MIJIA_7_MAX] = {
     name: text
     for name, text in _PROPERTY_TEXT[MODEL_ROBOT_VACUUM_6_MAX].items()
@@ -435,6 +458,10 @@ _SPEC_FILES = {
     MODEL_MIJIA_6_MAX: ("pv11cn.json", "pv11cn_v1.json"),
     MODEL_MIJIA_6_PRO: ("pv21cn.json", "pv21cn_v1.json"),
     MODEL_MIJIA_7_MAX: ("qv12cn.json",),
+    MODEL_MIJIA_ROBOT_VACUUM_5: ("pv31cn.json",),
+    MODEL_MIJIA_M30_PRO: ("c107.json", "c107_v1.json"),
+    MODEL_MIJIA_ROBOT_VACUUM_4: ("ov81cn.json", "ov81cn_v1.json"),
+    MODEL_MIJIA_H40: ("d101.json", "d101_v1.json", "d101_v2.json"),
 }
 _ABSENT_PROPERTIES = (
     "STATUS",
@@ -545,6 +572,14 @@ def test_charging_value_three_is_not_chargeable():
         "pv21cn.json",
         "pv21cn_v1.json",
         "qv12cn.json",
+        "pv31cn.json",
+        "c107.json",
+        "c107_v1.json",
+        "ov81cn.json",
+        "ov81cn_v1.json",
+        "d101.json",
+        "d101_v1.json",
+        "d101_v2.json",
     ):
         assert _charging_value(name, 3) == "Not Chargeable"
         assert _charging_value(name, 1) == "Charging"

@@ -243,7 +243,8 @@ def test_the_record_is_its_own_station_profile_not_a_6_max_alias() -> None:
     assert "START_CUSTOM" in base.action_overrides
     assert (18, 4) not in mapped_addresses(chinese, "property")
     assert (2, 9) not in mapped_addresses(chinese, "action")
-    assert len(_FAMILIES) == _REGISTERED_BEFORE_7_MAX + 1
+    # pv31cn, c107, ov81cn, and d101 register after 7 Max.
+    assert len(_FAMILIES) == _REGISTERED_BEFORE_7_MAX + 5
 
 
 def test_preview_global_7_max_is_not_registered() -> None:
