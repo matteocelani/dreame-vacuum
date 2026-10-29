@@ -566,6 +566,37 @@ WORRY_FREE_THROUGH_BUTLER: Final = control_with_options(
     ),
 )
 
+_DRYING_TWO_HOURS: Final = 1
+_DRYING_THREE_HOURS: Final = 2
+_DRYING_FOUR_HOURS: Final = 3
+_DRYING_FIVE_HOURS: Final = 4
+_DRYING_SIX_HOURS: Final = 5
+_DRYING_SEVEN_HOURS: Final = 6
+_DRYING_EIGHT_HOURS: Final = 7
+_DRYING_NINE_HOURS: Final = 8
+_DRYING_TEN_HOURS: Final = 9
+_DRYING_ELEVEN_HOURS: Final = 10
+_DRYING_TWELVE_HOURS: Final = 11
+
+# H50 and Mijia H40 publish drying time through 12 hours.
+DRYING_TIME_THROUGH_TWELVE_HOURS: Final = control_with_options(
+    EXTENDED_STATION_CONTROLS,
+    "xiaomi_drying_time",
+    (
+        (_DRYING_TWO_HOURS, "hours_2"),
+        (_DRYING_THREE_HOURS, "hours_3"),
+        (_DRYING_FOUR_HOURS, "hours_4"),
+        (_DRYING_FIVE_HOURS, "hours_5"),
+        (_DRYING_SIX_HOURS, "hours_6"),
+        (_DRYING_SEVEN_HOURS, "hours_7"),
+        (_DRYING_EIGHT_HOURS, "hours_8"),
+        (_DRYING_NINE_HOURS, "hours_9"),
+        (_DRYING_TEN_HOURS, "hours_10"),
+        (_DRYING_ELEVEN_HOURS, "hours_11"),
+        (_DRYING_TWELVE_HOURS, "hours_12"),
+    ),
+)
+
 # The shared list stops at emptying failed.
 HOST_TANK_WITH_NOT_INSTALLED: Final = control_with_options(
     EXTENDED_STATION_CONTROLS,

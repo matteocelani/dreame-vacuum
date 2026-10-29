@@ -24,7 +24,11 @@ from custom_components.dreame_vacuum.xiaomi import (
     MODEL_MIJIA_6_PRO,
     MODEL_MIJIA_7_MAX,
     MODEL_MIJIA_7C,
+    MODEL_MIJIA_H40,
     MODEL_MIJIA_M30,
+    MODEL_MIJIA_M30_PRO,
+    MODEL_MIJIA_ROBOT_VACUUM_4,
+    MODEL_MIJIA_ROBOT_VACUUM_5,
     MODEL_MIJIA_ROBOT_VACUUM_6,
     MODEL_MIJIA_SWEEP_MOP_2,
     MODEL_ROBOT_VACUUM_5_PRO,
@@ -95,6 +99,10 @@ def test_loopback_device_start_pause_resume_and_dock_send_only_mapped_actions(
         MODEL_MIJIA_6_MAX,
         MODEL_MIJIA_6_PRO,
         MODEL_MIJIA_7_MAX,
+        MODEL_MIJIA_H40,
+        MODEL_MIJIA_M30_PRO,
+        MODEL_MIJIA_ROBOT_VACUUM_4,
+        MODEL_MIJIA_ROBOT_VACUUM_5,
     ):
         family = resolve_family(model)
         assert family is not None

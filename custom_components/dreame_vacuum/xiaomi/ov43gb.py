@@ -7,6 +7,7 @@ from typing import Final
 from .model import MODEL_H50, XiaomiModel
 from .profile import (
     DETERGENT_TIME_PROPERTIES,
+    DRYING_TIME_THROUGH_TWELVE_HOURS,
     EXTENDED_STATION_CONTROLS,
     EXTENDED_STATION_STATES,
     EXTENDED_STATION_TASKS,
@@ -21,26 +22,6 @@ from .profile import (
     compose_addresses,
     compose_codes,
     compose_controls,
-    control_with_options,
-)
-
-# This spec lists drying time through 12 hours. The shared list stops at 4.
-_DRYING_TIME: Final = control_with_options(
-    EXTENDED_STATION_CONTROLS,
-    "xiaomi_drying_time",
-    (
-        (1, "hours_2"),
-        (2, "hours_3"),
-        (3, "hours_4"),
-        (4, "hours_5"),
-        (5, "hours_6"),
-        (6, "hours_7"),
-        (7, "hours_8"),
-        (8, "hours_9"),
-        (9, "hours_10"),
-        (10, "hours_11"),
-        (11, "hours_12"),
-    ),
 )
 
 _ADDED_CONTROLS: Final = (
@@ -62,6 +43,6 @@ H50: Final = XiaomiModel(
         EXTENDED_STATION_CONTROLS,
         S40_CLASS_CONTROLS + _ADDED_CONTROLS,
         omitted=LIDAR_HARDWARE_CONTROLS,
-        replaced={"xiaomi_drying_time": _DRYING_TIME},
+        replaced={"xiaomi_drying_time": DRYING_TIME_THROUGH_TWELVE_HOURS},
     ),
 )

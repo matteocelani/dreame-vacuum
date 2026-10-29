@@ -220,6 +220,10 @@ def test_catalog_row_stays_until_the_xiaomi_codec_is_installed():
         "xiaomi.vacuum.pv11cn",
         "xiaomi.vacuum.pv21cn",
         "xiaomi.vacuum.qv12cn",
+        "xiaomi.vacuum.pv31cn",
+        "xiaomi.vacuum.c107",
+        "xiaomi.vacuum.ov81cn",
+        "xiaomi.vacuum.d101",
     ):
         copied = _load(model, None)
         assert tuple(copied.list) == _COPIED_XIAOMI_ROW
@@ -240,6 +244,9 @@ def test_chinese_variants_keep_the_global_capability_list():
         ("xiaomi.vacuum.d102gl", "xiaomi.vacuum.d102ev"),
         ("xiaomi.vacuum.pv11gl", "xiaomi.vacuum.pv11cn"),
         ("xiaomi.vacuum.pv21gl", "xiaomi.vacuum.pv21cn"),
+        ("xiaomi.vacuum.ov42gl", "xiaomi.vacuum.pv31cn"),
+        ("xiaomi.vacuum.d102ev", "xiaomi.vacuum.c107"),
+        ("xiaomi.vacuum.pv81gl", "xiaomi.vacuum.ov81cn"),
     )
     for global_model, chinese_model in pairs:
         global_capability = _load(global_model, resolve_family(global_model))
@@ -504,6 +511,17 @@ def test_apply_family_replaces_flags_when_the_capability_is_already_loaded():
     assert capability.mop_pad_lifting is False
     assert capability.self_wash_base is False
     assert tuple(capability.list) == _S20_PLUS
+
+
+def test_mijia_h40_derives_flags_without_a_dock() -> None:
+    """Dust collection and detergent are unpublished, so those flags stay off."""
+    capability = _load("xiaomi.vacuum.d101", resolve_family("xiaomi.vacuum.d101"))
+    assert tuple(capability.list) == _S20_PLUS
+    assert capability.auto_empty_base is False
+    assert capability.auto_emptying is False
+    assert capability.detergent is False
+    assert capability.self_wash_base is False
+    assert capability.lidar_navigation is False
 
 
 def test_mijia_7_max_derives_the_station_flags():
