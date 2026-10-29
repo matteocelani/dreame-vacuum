@@ -1269,6 +1269,45 @@ def with_reason_overrides(
     return merged
 
 
+# Mijia 7 Max publishes a shorter status list than Robot Vacuum 6 Max.
+_MIJIA_7_MAX_ABSENT_STATUS_WIRES: Final = frozenset({15, 16, 17, 24, 27})
+MIJIA_7_MAX_PROPERTY_REASONS: Final[dict[tuple[int, int], str]] = with_reason_overrides(
+    VACUUM_6_MAX_PROPERTY_REASONS,
+    drop=((20, 12),),
+    add={
+        (2, 104): ROBOT_VACUUM_6_PROPERTY_REASONS[(2, 104)],
+        (2, 105): ROBOT_VACUUM_6_PROPERTY_REASONS[(2, 105)],
+        (2, 106): ROBOT_VACUUM_6_PROPERTY_REASONS[(2, 106)],
+        (17, 1): "no ha meaning: unnamed field is neither readable nor writable.",
+        (17, 2): "map: AI picture data stays unmapped until map support.",
+        (20, 17): "needs council: unnamed writable string.",
+        (20, 18): "needs council: unnamed readable string.",
+        (23, 1): ROBOT_VACUUM_6_PROPERTY_REASONS[(23, 1)],
+        (23, 2): ROBOT_VACUUM_6_PROPERTY_REASONS[(23, 2)],
+        (23, 3): ROBOT_VACUUM_6_PROPERTY_REASONS[(23, 3)],
+        (26, 1): "needs council: home environment info is an opaque string.",
+    },
+)
+MIJIA_7_MAX_ACTION_REASONS: Final[dict[tuple[int, int], str]] = with_reason_overrides(
+    VACUUM_6_MAX_ACTION_REASONS,
+    drop=((20, 7),),
+    add={
+        (2, 66): ROBOT_VACUUM_6_ACTION_REASONS[(2, 66)],
+        (17, 1): (
+            "map: requesting an AI picture takes a parameter and stays "
+            "unmapped until map support."
+        ),
+        (20, 11): "needs council: entering check mode takes a parameter.",
+        (20, 16): ROBOT_VACUUM_6_ACTION_REASONS[(20, 16)],
+    },
+)
+MIJIA_7_MAX_STATE_AFTER_READ: Final[dict[int, DreameVacuumState]] = {
+    wire: state
+    for wire, state in VACUUM_6_MAX_STATE_AFTER_READ.items()
+    if wire not in _MIJIA_7_MAX_ABSENT_STATUS_WIRES
+}
+
+
 def spec_index(filename: str) -> dict[tuple[str, int, int], dict[str, object]]:
     """Index one spec by kind, siid, and iid."""
     return {(kind, siid, iid): spec for kind, siid, iid, spec in spec_items(filename)}

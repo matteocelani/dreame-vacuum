@@ -21,6 +21,7 @@ from custom_components.dreame_vacuum.xiaomi import (
     MODEL_MIJIA_5C,
     MODEL_MIJIA_6_MAX,
     MODEL_MIJIA_6_PRO,
+    MODEL_MIJIA_7_MAX,
     MODEL_MIJIA_7C,
     MODEL_MIJIA_M30,
     MODEL_MIJIA_M40_S,
@@ -993,6 +994,7 @@ def test_station_address_literals_are_declared_once():
         "d102ev.py",
         "pv11cn.py",
         "pv21cn.py",
+        "qv12cn.py",
     ):
         text = (root / name).read_text(encoding="utf-8")
         assert "siid" not in text, name
@@ -1053,6 +1055,7 @@ def test_property_and_action_names_exist_on_the_dreame_enums():
         MODEL_MIJIA_M30,
         MODEL_MIJIA_6_MAX,
         MODEL_MIJIA_6_PRO,
+        MODEL_MIJIA_7_MAX,
     ):
         family = resolve_family(model)
         assert family is not None

@@ -774,6 +774,14 @@
           "mopping_after_sweeping": "Sweep then mop"
         }
       },
+      "xiaomi_clean_mode": {
+        "name": "Clean mode",
+        "state": {
+          "general": "General",
+          "butler": "Butler",
+          "preference": "Preference"
+        }
+      },
       "xiaomi_clean_times": {
         "name": "Clean times",
         "state": {
@@ -2088,6 +2096,9 @@
       "xiaomi_dust_bag_time_left": {
         "name": "Dust bag time left"
       },
+      "xiaomi_water_tank_level": {
+        "name": "Water tank level"
+      },
       "xiaomi_water_check_status": {
         "name": "Water check",
         "state": {
@@ -2529,6 +2540,21 @@
       "xiaomi_hot_water_wash": {
         "name": "Hot water mop wash"
       },
+      "xiaomi_hot_spray": {
+        "name": "Hot spray"
+      },
+      "xiaomi_ai_improve": {
+        "name": "AI improvement"
+      },
+      "xiaomi_screen": {
+        "name": "Screen"
+      },
+      "xiaomi_auto_screen_off": {
+        "name": "Auto screen off"
+      },
+      "xiaomi_auto_screen_brightness": {
+        "name": "Auto screen brightness"
+      },
       "xiaomi_precise_diagnosis": {
         "name": "Precise diagnosis"
       },
@@ -2949,6 +2975,9 @@
       },
       "xiaomi_mop_wash_interval": {
         "name": "Mop wash interval"
+      },
+      "xiaomi_screen_brightness": {
+        "name": "Screen brightness"
       },
       "xiaomi_volume": {
         "name": "Volume"

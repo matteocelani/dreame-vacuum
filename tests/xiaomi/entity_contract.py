@@ -513,9 +513,26 @@ async def _exercise_vacuum_states(
     await _show_vacuum(
         hass, fake, entry_id, vacuum_id, state, charging, error, 2, 1, 0, "docked"
     )
-    await _show_vacuum(
-        hass, fake, entry_id, vacuum_id, state, charging, error, 15, 2, 0, "error"
-    )
+    # Released status lists can omit Error. The fault property below still sets it.
+    error_status = [
+        wire
+        for wire, stored in family.state_by_wire.items()
+        if stored == int(StoredState.ERROR)
+    ]
+    if error_status:
+        await _show_vacuum(
+            hass,
+            fake,
+            entry_id,
+            vacuum_id,
+            state,
+            charging,
+            error,
+            min(error_status),
+            2,
+            0,
+            "error",
+        )
     await _show_vacuum(
         hass, fake, entry_id, vacuum_id, state, charging, error, 1, 2, 1, "error"
     )

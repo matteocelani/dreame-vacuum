@@ -101,6 +101,7 @@ Configure a Dreame, MOVA, Mijia, or TROUVER vacuum with the upstream guides. Tho
 | Mijia Robot Vacuum 6 | `xiaomi.vacuum.pv32cn` |
 | Xiaomi Robot Vacuum 6 Max | `xiaomi.vacuum.pv11gl` |
 | Mijia 6 Max | `xiaomi.vacuum.pv11cn` |
+| Mijia Robot Vacuum 7 Max | `xiaomi.vacuum.qv12cn` |
 | Xiaomi Robot Vacuum 6 Pro | `xiaomi.vacuum.pv21gl` |
 | Mijia 6 Pro | `xiaomi.vacuum.pv21cn` |
 | Xiaomi Robot Vacuum S60+ | `xiaomi.vacuum.pv51gl` |
